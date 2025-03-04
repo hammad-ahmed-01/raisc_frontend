@@ -7,59 +7,60 @@ import { useEffect, useState } from "react";
 
 export default function Navbar() {
     const router = useRouter();
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login status
-    const [hydrated, setHydrated] = useState(false); // Ensure hydration before rendering
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [hydrated, setHydrated] = useState(false);
 
     useEffect(() => {
-        // Ensure component is hydrated
         setHydrated(true);
-
-        // Check for session_key in localStorage
         const sessionKey = localStorage.getItem("session_key");
         setIsLoggedIn(!!sessionKey);
     }, []);
 
     const handleLogout = () => {
-        // Clear local storage
         localStorage.removeItem("session_key");
         localStorage.removeItem("user_data");
-        setIsLoggedIn(false); // Update login status
+        setIsLoggedIn(false);
         router.push("/");
     };
 
-    if (!hydrated) {
-        return null; // Avoid rendering until hydration is complete
-    }
+    if (!hydrated) return null;
 
     return (
-        <nav className="navbar">
-            {/* Logo and Title */}
-            <div className="navbar-logo">
-                <Link href="/">
-                    <Image
-                        src="/raisc-logo.jpg" // Save the provided image in public as 'raisc-logo.jpg'
-                        alt="RAISC Logo"
-                        width={50}
-                        height={50}
-                    />
+        <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-500 to-teal-400 text-white shadow-lg py-4 px-6 flex justify-between items-center z-50 rounded-b-2xl">
+            {/* Logo & Title */}
+            <div className="flex items-center space-x-3">
+                <Link href="/" className="flex items-center">
+                    <Image src="/raisc-logo.jpg" alt="RAISC Logo" width={50} height={50} className="rounded-full shadow-md" />
+                    <h1 className="text-2xl font-semibold tracking-wide ml-2">RAISC</h1>
                 </Link>
-                <h1 className="navbar-title">RAISC</h1>
             </div>
 
             {/* Navigation Links */}
-            <div className="navbar-links">
-                {isLoggedIn ? (
-                    <Link href="/dashboard">Profile</Link>
-                ) : (
-                    <Link href="/">Home</Link>
+            <div className="hidden md:flex items-center space-x-6">
+                <Link href="/" className="hover:text-gray-200 transition">Home</Link>
+                <Link href="/about" className="hover:text-gray-200 transition">About</Link>
+                <Link href="/programs" className="hover:text-gray-200 transition">Programs</Link>
+                <Link href="/groups" className="hover:text-gray-200 transition">ChatGroups</Link>
+                {isLoggedIn && (
+                    <Link href="/dashboard" className="hover:text-gray-200 transition">Profile</Link>
                 )}
-                <Link href="/groups">ChatGroups</Link>
+            </div>
+
+            {/* Login / Logout Button */}
+            <div>
                 {isLoggedIn ? (
-                    <button className="logout-button" onClick={handleLogout}>
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition"
+                    >
                         Logout
                     </button>
                 ) : (
-                    <Link href="/login">Login</Link>
+                    <Link href="/login">
+                        <button className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg shadow-md transition">
+                            Login
+                        </button>
+                    </Link>
                 )}
             </div>
         </nav>

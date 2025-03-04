@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import DoctorDashboard from "@/components/DoctorDashboard";
+import PatientDashboard from "@/components/PatientDashboard";
+import ReturningPatientDashboard from "@/components/ReturningPatientDashboard";
+import NewPatientDashboard from "@/components/NewPatientDashboard";
 
 interface PatientProfile {
     level: number;
@@ -13,7 +17,7 @@ interface DoctorProfile {
     rates: string;
 }
 
-interface User {
+export interface User {
     id: number;
     username: string;
     email: string;
@@ -31,44 +35,36 @@ export default function Dashboard() {
         if (userData) {
             setUser(JSON.parse(userData));
         } else {
-            router.push("/login"); // Redirect to login if user data is missing
+            router.push("/login");
         }
     }, [router]);
 
-    if (!user) {
-        return <p>Loading...</p>; // Show loading screen while user data is being fetched
+    if (!user) return <p className="text-center text-gray-600 mt-10">Loading...</p>;
+
+    // **New Patient (Level 0) - Immersive Experience**
+    if (user.user_type === "patient" && user.patient_profile?.level === 1) {
+        return <NewPatientDashboard user={user} />;
+    }
+
+    // **Returning Patient (Level 1) - Calm & Reassuring**
+    if (user.user_type === "patient" && user.patient_profile?.level === 0) {
+        return <ReturningPatientDashboard user={user} />;
     }
 
     return (
-        <div className="dashboard-container">
-            <h1>Welcome, {user.username}!</h1>
-            <p>Email: {user.email}</p>
+        <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-3xl font-bold text-gray-800 text-center">
+                Welcome, {user.username}!
+            </h1>
+            <p className="text-center text-gray-600">Email: {user.email}</p>
 
-            {user.user_type === "patient" && user.patient_profile && (
-                <div className="patient-dashboard">
-                    <h2>Patient Dashboard</h2>
-                    <p>Level: {user.patient_profile.level}</p>
-                    <p>
-                        Associated Psychologist:{" "}
-                        {user.patient_profile.associated_psychologist || "None"}
-                    </p>
-                    <button onClick={() => router.push("/chat")}>
-                        Chat with Bot
-                    </button>
-                </div>
+            {/* Level 2+ Patient Dashboard (Structured & Engaged) */}
+            {user.user_type === "patient" && user.patient_profile?.level > 1 && (
+                <PatientDashboard user={user} />
             )}
 
-            {user.user_type === "doctor" && user.doctor_profile && (
-                <div className="doctor-dashboard">
-                    <h2>Doctor Dashboard</h2>
-                    <p>
-                        Qualification:{" "}
-                        {user.doctor_profile.professional_information.qualification}
-                    </p>
-                    <p>Nickname: {user.doctor_profile.chatgroup_nickname}</p>
-                    <p>Rates: ${user.doctor_profile.rates}</p>
-                </div>
-            )}
+            {/* Doctor Dashboard */}
+            {user.user_type === "doctor" && <DoctorDashboard user={user} />}
         </div>
     );
 }
