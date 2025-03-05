@@ -12,7 +12,10 @@ interface PatientProfile {
 }
 
 interface DoctorProfile {
-    professional_information: { qualification: string };
+    professional_information: {
+        specialization: string;
+        experience: string;
+    };
     chatgroup_nickname: string;
     rates: string;
 }
@@ -42,13 +45,18 @@ export default function Dashboard() {
     if (!user) return <p className="text-center text-gray-600 mt-10">Loading...</p>;
 
     // **New Patient (Level 0) - Immersive Experience**
-    if (user.user_type === "patient" && user.patient_profile?.level === 1) {
+    if (user.user_type === "patient" && user.patient_profile?.level === 0) {
         return <NewPatientDashboard user={user} />;
     }
 
     // **Returning Patient (Level 1) - Calm & Reassuring**
-    if (user.user_type === "patient" && user.patient_profile?.level === 0) {
+    if (user.user_type === "patient" && user.patient_profile?.level === 1) {
         return <ReturningPatientDashboard user={user} />;
+    }
+
+    // **Returning Patient (Level 1) - Calm & Reassuring**
+    if (user.user_type === "doctor") {
+        return <DoctorDashboard user={user} />;
     }
 
     return (
@@ -64,7 +72,7 @@ export default function Dashboard() {
             )}
 
             {/* Doctor Dashboard */}
-            {user.user_type === "doctor" && <DoctorDashboard user={user} />}
+            {/* {user.user_type === "doctor" && <DoctorDashboard user={user} />} */}
         </div>
     );
 }
