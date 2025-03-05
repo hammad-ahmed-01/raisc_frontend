@@ -53,6 +53,7 @@ export default function ReturningPatientDashboard({ user }: { user: User }) {
                     <span className="font-bold text-blue-700"> professional psychologist</span> who can guide you further. 
                 </p>
                 <button
+                    onClick={() => router.push("/view-professionals")}
                     className="mt-4 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-full shadow-lg transition transform hover:scale-105"
                 >
                     Learn More
