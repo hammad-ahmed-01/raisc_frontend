@@ -32,9 +32,11 @@ interface Session {
 export default function DoctorDashboard({ user }: { user: any }) {
     const [requests, setRequests] = useState<PatientRequest[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [selectedRequest, setSelectedRequest] = useState<PatientRequest | null>(null);
+    const [modalType, setModalType] = useState<"confirm" | "success" | null>(null);
+    const [actionStatus, setActionStatus] = useState<string | null>(null);
 
-    const localizer = momentLocalizer(moment); // Set the calendar's timezone
+    const localizer = momentLocalizer(moment);
 
     useEffect(() => {
         fetchSessions();
@@ -71,46 +73,47 @@ export default function DoctorDashboard({ user }: { user: any }) {
         } catch (error) {
             console.error("Error fetching patient requests:", error);
         }
-        setLoading(false);
     };
 
-    const manageRequest = async (id: number, status: string) => {
+    const openConfirmModal = (request: PatientRequest, status: string) => {
+        setSelectedRequest(request);
+        setActionStatus(status);
+        setModalType("confirm");
+    };
+
+    const manageRequest = async () => {
+        if (!selectedRequest) return;
+
         try {
-            await fetch(`http://127.0.0.1:8000/users/doctor/manage-request/${id}/`, {
+            await fetch(`http://127.0.0.1:8000/users/doctor/manage-request/${selectedRequest.id}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Token ${localStorage.getItem("session_key")}`,
                 },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ status: actionStatus }),
             });
             fetchRequests(); // Refresh request list
+            setModalType("success"); // Open success modal
         } catch (error) {
             console.error("Error updating request:", error);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-12">
-            <h1 className="text-4xl font-bold text-green-800 text-center mb-8">{user.username} - Personal Dashboard</h1>
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-6 md:p-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-green-800 text-center mb-8">
+                {user.username} - Personal Dashboard
+            </h1>
 
-            {/* Grid Layout for Better Spacing */}
+            {/* Grid Layout for Responsive Design */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left: Doctor Info */}
                 <div className="bg-white p-6 rounded-lg shadow-lg border lg:col-span-1">
                     <h2 className="text-2xl font-semibold text-green-700">Doctor Information</h2>
-                    <p className="text-gray-700 mt-2">
-                        <strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}
-                    </p>
-                    <p className="text-gray-700 mt-2">
-                        <strong>Experience:</strong> {user.doctor_profile?.professional_information.experience}
-                    </p>
-                    <p className="text-gray-700">
-                        <strong>Nickname:</strong> {user.doctor_profile?.chatgroup_nickname}
-                    </p>
-                    <p className="text-gray-700">
-                        <strong>Rates:</strong> ${user.doctor_profile?.rates}/session
-                    </p>
+                    <p className="text-gray-700 mt-2"><strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}</p>
+                    <p className="text-gray-700"><strong>Experience:</strong> {user.doctor_profile?.professional_information.experience}</p>
+                    <p className="text-gray-700"><strong>Rates:</strong> ${user.doctor_profile?.rates}/session</p>
                 </div>
 
                 {/* Middle: Calendar */}
@@ -136,13 +139,10 @@ export default function DoctorDashboard({ user }: { user: any }) {
             <div className="mt-10">
                 <h2 className="text-2xl font-semibold text-green-700 text-center">Patient Requests</h2>
 
-                {loading ? (
-                    <p className="text-center text-gray-600 text-lg">Loading requests...</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {requests.map((request) => (
-                            <div key={request.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
-                                <h3 className="text-xl font-semibold text-blue-700">{request.patient.username}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                    {requests.map((request) => (
+                        <div key={request.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
+                            <h3 className="text-xl font-semibold text-blue-700">{request.patient.username}</h3>
                                 <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
                                 <h4 className="text-xl font-semibold text-blue-700 mb-4 mt-6">Extracted Information</h4>
                                 <p className="text-gray-700"><strong>Name:</strong> {request.patient.profile_data.name}</p>
@@ -151,19 +151,30 @@ export default function DoctorDashboard({ user }: { user: any }) {
                                 <p className="text-gray-700"><strong>Medical History:</strong> {request.patient.profile_data.history}</p>
                                 <p className="text-gray-700"><strong>Current State:</strong> {request.patient.profile_data.current_state}</p>
 
-                                <div className="flex mt-4 space-x-4">
-                                    <button onClick={() => manageRequest(request.id, "approved")} className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
-                                        Accept
-                                    </button>
-                                    <button onClick={() => manageRequest(request.id, "rejected")} className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
-                                        Reject
-                                    </button>
-                                </div>
+                            <div className="flex mt-4 space-x-4">
+                                <button onClick={() => openConfirmModal(request, "approved")} className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
+                                    Accept
+                                </button>
+                                <button onClick={() => openConfirmModal(request, "rejected")} className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
+                                    Reject
+                                </button>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    ))}
+                </div>
             </div>
+
+            {/* Confirmation Modal */}
+            {modalType === "confirm" && selectedRequest && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+                        <h2 className="text-xl font-semibold">Confirm Action</h2>
+                        <p className="mt-2">Are you sure you want to <strong>{actionStatus}</strong> this request?</p>
+                        <button onClick={manageRequest} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md">Confirm</button>
+                        <button onClick={() => setModalType(null)} className="ml-4 bg-gray-500 text-white px-6 py-2 rounded-md">Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

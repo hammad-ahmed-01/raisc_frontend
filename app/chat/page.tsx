@@ -81,8 +81,8 @@ export default function ChatPage() {
             <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg border border-gray-300 flex flex-col overflow-hidden mt-12 mb-12">
                 {/* Header */}
                 <div className="bg-blue-600 text-white py-4 text-center shadow-md flex justify-center items-center">
-                    <Image src="/raisc-chatbot.svg" alt="Chatbot Icon" width={50} height={50} />
-                    <h1 className="text-2xl font-semibold ml-2">RAISC Chatbot</h1>
+                    <Image src="/raisc-chatbot.svg" alt="Chatbot Icon" width={50} height={80} />
+                    {/* <h1 className="text-2xl font-semibold ml-2">RAISC Chatbot</h1> */}
                 </div>
 
                 {/* Chat Messages with Background */}
