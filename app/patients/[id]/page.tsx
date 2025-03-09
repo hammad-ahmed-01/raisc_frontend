@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Import for navigation
+import { useParams, useRouter, useSearchParams } from "next/navigation"; // Import for navigation
+import moment from "moment"; // Import moment.js for better date formatting
 
 interface ChatbotProfile {
     id: number;
@@ -10,28 +11,39 @@ interface ChatbotProfile {
     date: string;
 }
 
-export default function PatientChatbotProfile({ params }: { params: { id: string } }) {
+export default function PatientChatbotProfile() {
+    const params = useParams(); // Get URL params safely
+    const patientId = params.id; // Extract patient ID
+    const searchParams = useSearchParams();
+    const patientName = searchParams.get("name") || "Patient";
+
     const [chatbotProfiles, setChatbotProfiles] = useState<ChatbotProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterImportant, setFilterImportant] = useState(false);
-    const [selectedDate, setSelectedDate] = useState("");
+    const [fromDate, setFromDate] = useState(""); // From Date
+    const [toDate, setToDate] = useState(""); // To Date
 
     const router = useRouter(); // Initialize router
-    const patientId = params.id; // Extract Patient ID from URL
 
     useEffect(() => {
         fetchChatbotProfiles();
-    }, [filterImportant, selectedDate]);
+    }, [filterImportant, fromDate, toDate]);
 
     const fetchChatbotProfiles = async () => {
-        const endpoint = filterImportant
+        let endpoint = filterImportant
             ? `http://127.0.0.1:8000/users/doctor/chatbot-data/${patientId}/important-messages/`
             : `http://127.0.0.1:8000/users/doctor/chatbot-data/${patientId}/`;
 
-        const url = selectedDate ? `${endpoint}?date=${selectedDate}` : endpoint;
+        if (fromDate && toDate) {
+            endpoint += `?from=${fromDate}&to=${toDate}`;
+        } else if (fromDate) {
+            endpoint += `?from=${fromDate}`;
+        } else if (toDate) {
+            endpoint += `?to=${toDate}`;
+        }
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(endpoint, {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
@@ -45,28 +57,43 @@ export default function PatientChatbotProfile({ params }: { params: { id: string
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-8">
-            <h1 className="text-4xl font-bold text-green-800 text-center mb-6">Chatbot Insights</h1>
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-8 pt-12">
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl font-bold text-green-800 text-center mb-6">Chatbot Insights - {patientName}</h1>
 
             {/* Back Button */}
-            <button
-                onClick={() => router.back()}
-                className="mb-4 px-5 py-2 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700 transition"
-            >
-                ← Back to Patients List
-            </button>
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={() => router.back()}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700 transition"
+                >
+                    ← Back to Patients List
+                </button>
+            </div>
 
             {/* Filters */}
             <div className="flex flex-wrap justify-center gap-4 mb-6">
-                <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="p-2 border rounded-lg"
-                />
+                <div className="flex items-center space-x-2">
+                    <label className="text-gray-700">From:</label>
+                    <input
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className="p-2 border rounded-lg w-40 text-sm"
+                    />
+                </div>
+                <div className="flex items-center space-x-2">
+                    <label className="text-gray-700">To:</label>
+                    <input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className="p-2 border rounded-lg w-40 text-sm"
+                    />
+                </div>
                 <button
                     onClick={() => setFilterImportant(!filterImportant)}
-                    className={`p-2 rounded-lg ${filterImportant ? "bg-blue-700 text-white" : "bg-gray-300 text-black"}`}
+                    className={`p-2 rounded-lg text-sm transition-all ${filterImportant ? "bg-blue-700 text-white" : "bg-gray-300 text-black hover:bg-gray-400"}`}
                 >
                     {filterImportant ? "Show All Data" : "Filter Important Messages"}
                 </button>
@@ -80,13 +107,17 @@ export default function PatientChatbotProfile({ params }: { params: { id: string
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {chatbotProfiles.map((profile) => (
-                        <div key={profile.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
-                            <h3 className="text-xl font-semibold text-blue-700">Date: {profile.date}</h3>
-                            <p className="text-gray-700"><strong>Summary:</strong> {profile.session_summary}</p>
+                        <div key={profile.id} className="p-6 bg-white rounded-3xl shadow-lg border border-gray-300 transition-all hover:shadow-xl">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-blue-700">
+                                    {moment(profile.date).format("Do MMMM, YYYY")} {/* Format Date */}
+                                </h3>
+                            </div>
+                            <p className="text-gray-700 mt-2"><strong>Summary:</strong> {profile.session_summary}</p>
                             {profile.important_messages && (
-                                <p className="text-red-500"><strong>Important Message:</strong> {profile.important_messages}</p>
+                                <p className="text-red-500 mt-2"><strong>Important Message:</strong> {profile.important_messages}</p>
                             )}
-                            <p className="text-gray-700"><strong>Data:</strong> {JSON.stringify(profile.collected_data)}</p>
+                            <p className="text-gray-700 mt-2"><strong>Data:</strong> {JSON.stringify(profile.collected_data)}</p>
                         </div>
                     ))}
                 </div>
