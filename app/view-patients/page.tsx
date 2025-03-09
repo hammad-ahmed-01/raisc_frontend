@@ -45,7 +45,7 @@ export default function PatientsList() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-8">
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-8 pt-12">
             <h1 className="text-4xl font-bold text-green-800 text-center mb-8">My Patients</h1>
 
             {loading ? (
@@ -55,11 +55,21 @@ export default function PatientsList() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {patients.map((patient) => (
-                        <div key={patient.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
-                            <h3 className="text-xl font-semibold text-blue-700">{patient.user.username}</h3>
-                            <p className="text-gray-700"><strong>Email:</strong> {patient.user.email}</p>
+                        <div
+                            key={patient.id}
+                            className="p-6 bg-white rounded-3xl shadow-lg border border-gray-200 transition-transform transform hover:scale-105 hover:shadow-xl"
+                        >
+                            {/* Patient Header */}
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-semibold text-blue-700">{patient.user.username}</h3>
+                            </div>
+                            <p className="text-gray-500"><strong>Email:</strong> {patient.user.email}</p>
 
-                            <h4 className="text-xl font-semibold text-blue-700 mb-4 mt-6">Profile Data</h4>
+                            {/* Divider */}
+                            <div className="border-b my-4"></div>
+
+                            {/* Patient Profile Data */}
+                            <h4 className="text-lg font-semibold text-blue-700">Profile Data</h4>
                             <p className="text-gray-700"><strong>Name:</strong> {patient.profile_data.name}</p>
                             <p className="text-gray-700"><strong>Age:</strong> {patient.profile_data.age}</p>
                             <p className="text-gray-700"><strong>Gender:</strong> {patient.profile_data.gender}</p>
@@ -68,7 +78,7 @@ export default function PatientsList() {
 
                             {/* Open Profile Button */}
                             <button
-                                onClick={() => router.push(`/patients/${patient.user.id}`)}
+                                onClick={() => router.push(`/patients/${patient.user.id}?name=${encodeURIComponent(patient.profile_data.name)}`)}
                                 className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-lg shadow-md transition-transform hover:scale-105 hover:bg-blue-700 w-full"
                             >
                                 Open Profile
