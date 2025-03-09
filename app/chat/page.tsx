@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import chatbotBg from "@/public/chatbot-background.jpg"; // Ensure correct path
 
 interface ChatMessage {
     role: string;
@@ -28,11 +30,9 @@ export default function ChatPage() {
     const fetchChatHistory = async (session_key: string) => {
         try {
             const response = await fetch(`/api/history/${session_key}`);
-
             if (!response.ok) {
-                console.log('No response')
+                console.log("No response");
             }
-
             const data = await response.json();
             setMessages(data.chat_history || []);
         } catch (error) {
@@ -55,7 +55,7 @@ export default function ChatPage() {
             });
 
             if (!response.ok) {
-                console.log('No response')
+                console.log("No response");
             }
 
             const data = await response.json();
@@ -76,35 +76,67 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="chat-container">
-            <div className="chat-header">
-                <h1>RAISC Chatbot</h1>
-            </div>
-            <div className="chat-box" ref={chatBoxRef}>
-                {messages.length === 0 && !loading && (
-                    <div className="no-chat-history">
-                        <p>Let's talk! Start by saying something...</p>
+        <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-teal-100 px-4">
+            {/* Chat Container */}
+            <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg border border-gray-300 flex flex-col overflow-hidden mt-12 mb-12">
+                {/* Header */}
+                <div className="bg-blue-600 text-white py-4 text-center shadow-md flex justify-center items-center">
+                    <Image src="/raisc-chatbot.svg" alt="Chatbot Icon" width={50} height={80} />
+                    {/* <h1 className="text-2xl font-semibold ml-2">RAISC Chatbot</h1> */}
+                </div>
+
+                {/* Chat Messages with Background */}
+                <div className="relative flex flex-col flex-grow overflow-hidden">
+                    {/* Background Image with Overlay */}
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center opacity-10"
+                        style={{ backgroundImage: `url(${chatbotBg.src})` }} 
+                    ></div>
+
+
+                    <div ref={chatBoxRef} className="relative flex flex-col flex-grow overflow-y-auto p-6 space-y-4 bg-white bg-opacity-80 backdrop-blur-md">
+                        {/* No Chat History Placeholder */}
+                        {messages.length === 0 && !loading && (
+                            <div className="text-center text-gray-500 text-lg">
+                                <p>Let's talk! Start by saying something...</p>
+                            </div>
+                        )}
+
+                        {/* Chat Messages */}
+                        {messages.map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`max-w-[80%] p-4 rounded-lg text-lg shadow-sm border ${
+                                    msg.role === "user"
+                                        ? "ml-auto bg-blue-500 text-white border-blue-300 rounded-br-none"
+                                        : "mr-auto bg-gray-100 text-gray-800 border-gray-300 rounded-bl-none"
+                                }`}
+                            >
+                                <strong>{msg.role === "user" ? "You" : "Bot"}:</strong> {msg.content}
+                            </div>
+                        ))}
+
+                        {/* Bot Typing Indicator */}
+                        {loading && <div className="text-gray-500 italic text-center">Bot is typing...</div>}
                     </div>
-                )}
-                {messages.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className={`chat-message ${msg.role === "user" ? "chat-user" : "chat-bot"
-                            }`}
+                </div>
+
+                {/* Chat Input */}
+                <div className="p-4 border-t border-gray-300 flex items-center bg-white bg-opacity-90 backdrop-blur-md">
+                    <input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        className="flex-grow p-3 border border-gray-300 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    <button
+                        onClick={sendMessage}
+                        className="ml-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-md transition transform hover:scale-105"
                     >
-                        <strong>{msg.role === "user" ? "You" : "Bot"}:</strong> {msg.content}
-                    </div>
-                ))}
-                {loading && <div className="chat-loading">Bot is typing...</div>}
-            </div>
-            <div className="chat-input">
-                <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                />
-                <button onClick={sendMessage}>Send</button>
+                        Send
+                    </button>
+                </div>
             </div>
         </div>
     );

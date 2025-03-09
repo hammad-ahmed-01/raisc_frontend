@@ -24,7 +24,7 @@ export default function Login() {
                 localStorage.setItem("user_data", JSON.stringify(data.user)); // Store user details
                 router.push("/dashboard");
             } else {
-                setErrorMessage("Invalid credentials. Please try again.");
+                setErrorMessage("Invalid username or password. Please try again.");
             }
         } catch (error) {
             console.error("Login error:", error);
@@ -33,25 +33,53 @@ export default function Login() {
     };
 
     return (
-        <div className="login-container">
-            <div className="login-box">
-                <h2>Login</h2>
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 to-teal-100">
+            <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+                <h2 className="text-3xl font-bold text-blue-600 text-center mb-4">Login</h2>
+
+                {/* Error Message */}
                 {errorMessage && (
-                    <p style={{ color: "red", marginBottom: "10px" }}>{errorMessage}</p>
+                    <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-2 rounded-md">
+                        {errorMessage}
+                    </p>
                 )}
-                <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button onClick={handleLogin}>Login</button>
+
+                {/* Input Fields */}
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                    />
+                </div>
+
+                {/* Login Button */}
+                <button
+                    onClick={handleLogin}
+                    className="w-full bg-blue-600 text-white font-semibold p-3 rounded-md hover:bg-blue-500 transition duration-300 shadow-md"
+                >
+                    Login
+                </button>
+
+                {/* Sign Up Link */}
+                <p className="mt-4 text-center text-gray-600 text-sm">
+                    Don't have an account?{" "}
+                    <a href="/register" className="text-blue-600 hover:underline">
+                        Sign up
+                    </a>
+                </p>
             </div>
         </div>
     );
