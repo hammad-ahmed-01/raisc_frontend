@@ -1,6 +1,7 @@
 export interface PatientProfile {
     level: number;
     associated_psychologist: string | null;
+    associated_psychologist_name: string | null;
 }
 
 export interface DoctorProfile {

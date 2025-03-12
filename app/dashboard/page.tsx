@@ -9,6 +9,7 @@ import NewPatientDashboard from "@/components/NewPatientDashboard";
 interface PatientProfile {
     level: number;
     associated_psychologist: string | null;
+    associated_psychologist_name: string | null;
 }
 
 interface DoctorProfile {
@@ -34,11 +35,19 @@ export default function Dashboard() {
     const router = useRouter();
 
     useEffect(() => {
-        const userData = localStorage.getItem("user_data");
-        if (userData) {
-            setUser(JSON.parse(userData));
+        // Check if page has already reloaded in this session
+        const hasReloaded = sessionStorage.getItem("hasReloaded");
+
+        if (!hasReloaded) {
+            sessionStorage.setItem("hasReloaded", "true");
+            window.location.reload();
         } else {
-            router.push("/login");
+            const userData = localStorage.getItem("user_data");
+            if (userData) {
+                setUser(JSON.parse(userData));
+            } else {
+                router.push("/login");
+            }
         }
     }, [router]);
 
@@ -52,6 +61,11 @@ export default function Dashboard() {
     // **Returning Patient (Level 1) - Calm & Reassuring**
     if (user.user_type === "patient" && user.patient_profile?.level === 1) {
         return <ReturningPatientDashboard user={user} />;
+    }
+
+    // ** Patient (Level 2) - Calm & Reassuring**
+    if (user.user_type === "patient" && user.patient_profile?.level === 2) {
+        return <PatientDashboard user={user} />;
     }
 
     // **Returning Patient (Level 1) - Calm & Reassuring**
