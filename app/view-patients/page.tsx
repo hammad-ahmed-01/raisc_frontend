@@ -10,11 +10,11 @@ interface Patient {
         email: string;
     };
     profile_data: {
-        age: string;
+        Age: string;
         name: string;
-        gender: string;
-        history: string;
-        current_state: string;
+        Gender: string;
+        History: string;
+        Condition: string;
     };
 }
 
@@ -71,10 +71,10 @@ export default function PatientsList() {
                             {/* Patient Profile Data */}
                             <h4 className="text-lg font-semibold text-blue-700">Profile Data</h4>
                             <p className="text-gray-700"><strong>Name:</strong> {patient.profile_data.name}</p>
-                            <p className="text-gray-700"><strong>Age:</strong> {patient.profile_data.age}</p>
-                            <p className="text-gray-700"><strong>Gender:</strong> {patient.profile_data.gender}</p>
-                            <p className="text-gray-700"><strong>Medical History:</strong> {patient.profile_data.history}</p>
-                            <p className="text-gray-700"><strong>Current State:</strong> {patient.profile_data.current_state}</p>
+                            <p className="text-gray-700"><strong>Age:</strong> {patient.profile_data.Age}</p>
+                            <p className="text-gray-700"><strong>Gender:</strong> {patient.profile_data.Gender}</p>
+                            <p className="text-gray-700"><strong>Medical History:</strong> {patient.profile_data.History}</p>
+                            <p className="text-gray-700"><strong>Current State:</strong> {patient.profile_data.Condition}</p>
 
                             {/* Open Profile Button */}
                             <button

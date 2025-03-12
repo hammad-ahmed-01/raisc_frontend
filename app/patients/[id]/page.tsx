@@ -110,7 +110,7 @@ export default function PatientChatbotProfile() {
                         <div key={profile.id} className="p-6 bg-white rounded-3xl shadow-lg border border-gray-300 transition-all hover:shadow-xl">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-semibold text-blue-700">
-                                    {moment(profile.date).format("Do MMMM, YYYY")} {/* Format Date */}
+                                {moment(profile.date).format("Do MMMM, YYYY h:mm A")}
                                 </h3>
                             </div>
                             <p className="text-gray-700 mt-2"><strong>Summary:</strong> {profile.session_summary}</p>
