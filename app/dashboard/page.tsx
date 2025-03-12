@@ -35,11 +35,19 @@ export default function Dashboard() {
     const router = useRouter();
 
     useEffect(() => {
-        const userData = localStorage.getItem("user_data");
-        if (userData) {
-            setUser(JSON.parse(userData));
+        // Check if page has already reloaded in this session
+        const hasReloaded = sessionStorage.getItem("hasReloaded");
+
+        if (!hasReloaded) {
+            sessionStorage.setItem("hasReloaded", "true");
+            window.location.reload();
         } else {
-            router.push("/login");
+            const userData = localStorage.getItem("user_data");
+            if (userData) {
+                setUser(JSON.parse(userData));
+            } else {
+                router.push("/login");
+            }
         }
     }, [router]);
 

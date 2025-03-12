@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css"; // Import styles
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 interface PatientRequest {
     id: number;
@@ -11,11 +12,11 @@ interface PatientRequest {
         username: string;
         email: string;
         profile_data: {
-            age: string;
+            Age: string;
             name: string;
-            gender: string;
-            history: string;
-            current_state: string;
+            Gender: string;
+            History: string;
+            Condition: string;
         };
     };
     status: string;
@@ -27,13 +28,17 @@ interface Session {
     title: string;
     description: string;
     date: string;
+    doctor_summary?: string;
 }
 
 export default function DoctorDashboard({ user }: { user: any }) {
+    const router = useRouter();
     const [requests, setRequests] = useState<PatientRequest[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
+    const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+    const [doctorSummary, setDoctorSummary] = useState("");
+    const [modalType, setModalType] = useState<"confirm" | "success" | "session-details" | "request-details" | null>(null);
     const [selectedRequest, setSelectedRequest] = useState<PatientRequest | null>(null);
-    const [modalType, setModalType] = useState<"confirm" | "success" | null>(null);
     const [actionStatus, setActionStatus] = useState<string | null>(null);
 
     const localizer = momentLocalizer(moment);
@@ -46,9 +51,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
     const fetchSessions = async () => {
         try {
             const response = await fetch("http://127.0.0.1:8000/users/doctor/sessions/", {
-                headers: {
-                    Authorization: `Token ${localStorage.getItem("session_key")}`,
-                },
+                headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -62,9 +65,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
     const fetchRequests = async () => {
         try {
             const response = await fetch("http://127.0.0.1:8000/users/doctor/requests/", {
-                headers: {
-                    Authorization: `Token ${localStorage.getItem("session_key")}`,
-                },
+                headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -83,7 +84,6 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     const manageRequest = async () => {
         if (!selectedRequest) return;
-
         try {
             await fetch(`http://127.0.0.1:8000/users/doctor/manage-request/${selectedRequest.id}/`, {
                 method: "PATCH",
@@ -93,32 +93,68 @@ export default function DoctorDashboard({ user }: { user: any }) {
                 },
                 body: JSON.stringify({ status: actionStatus }),
             });
-            fetchRequests(); // Refresh request list
-            setModalType("success"); // Open success modal
+            fetchRequests();
+            setModalType("success");
         } catch (error) {
             console.error("Error updating request:", error);
         }
     };
 
+    const openSessionModal = (session: Session) => {
+        setSelectedSession(session);
+        setDoctorSummary(session.doctor_summary || "");
+        setModalType("session-details");
+    };
+
+    const saveDoctorSummary = async () => {
+        if (!selectedSession) return;
+        try {
+            await fetch(`http://127.0.0.1:8000/users/doctor/update-summary/${selectedSession.id}/`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Token ${localStorage.getItem("session_key")}`,
+                },
+                body: JSON.stringify({ doctor_summary: doctorSummary }),
+            });
+            setModalType(null);
+            fetchSessions();
+        } catch (error) {
+            console.error("Error saving doctor summary:", error);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-6 md:p-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-green-800 text-center mb-8">
-                {user.username} - Personal Dashboard
+            <h1 className="text-4xl font-bold text-green-800 text-center mb-8">
+                Doctor Dashboard
             </h1>
 
-            {/* Grid Layout for Responsive Design */}
+            {/* Top Actions */}
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={() => router.push("/view-patients")}
+                    className="px-5 py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg shadow-md hover:scale-105 transition-transform"
+                >
+                    👨‍⚕️ View My Patients
+                </button>
+            </div>
+
+            {/* Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left: Doctor Info */}
-                <div className="bg-white p-6 rounded-lg shadow-lg border lg:col-span-1">
-                    <h2 className="text-2xl font-semibold text-green-700">Doctor Information</h2>
-                    <p className="text-gray-700 mt-2"><strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}</p>
+                {/* Left: Doctor Profile */}
+                <div className="bg-white p-6 rounded-lg shadow-lg border">
+                    <h2 className="text-2xl font-semibold text-green-700">👨‍⚕️ {user.username}</h2>
+                    <br />
+                    <p className="text-gray-700"><strong>Chatgroups NickName:</strong> {user.doctor_profile?.chatgroup_nickname}</p>
+                    <p className="text-gray-700"><strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}</p>
                     <p className="text-gray-700"><strong>Experience:</strong> {user.doctor_profile?.professional_information.experience}</p>
                     <p className="text-gray-700"><strong>Rates:</strong> ${user.doctor_profile?.rates}/session</p>
                 </div>
 
                 {/* Middle: Calendar */}
                 <div className="bg-white p-6 rounded-lg shadow-lg border lg:col-span-2">
-                    <h2 className="text-2xl font-semibold text-green-700">Your Sessions</h2>
+                    <h2 className="text-2xl font-semibold text-green-700">📅 Your Sessions</h2>
                     <Calendar
                         localizer={localizer}
                         events={sessions.map((session) => ({
@@ -131,38 +167,61 @@ export default function DoctorDashboard({ user }: { user: any }) {
                         endAccessor="end"
                         style={{ height: 400 }}
                         className="mt-4 border rounded-lg shadow-md"
+                        onSelectEvent={(event) => {
+                            const session = sessions.find(s => s.title === event.title);
+                            if (session) openSessionModal(session);
+                        }}
                     />
                 </div>
             </div>
 
             {/* Patient Requests Section */}
             <div className="mt-10">
-                <h2 className="text-2xl font-semibold text-green-700 text-center">Patient Requests</h2>
+                <h2 className="text-2xl font-semibold text-green-700 text-center">📩 Patient Requests</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                     {requests.map((request) => (
                         <div key={request.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
                             <h3 className="text-xl font-semibold text-blue-700">{request.patient.username}</h3>
-                                <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
-                                <h4 className="text-xl font-semibold text-blue-700 mb-4 mt-6">Extracted Information</h4>
-                                <p className="text-gray-700"><strong>Name:</strong> {request.patient.profile_data.name}</p>
-                                <p className="text-gray-700"><strong>Age:</strong> {request.patient.profile_data.age}</p>
-                                <p className="text-gray-700"><strong>Gender:</strong> {request.patient.profile_data.gender}</p>
-                                <p className="text-gray-700"><strong>Medical History:</strong> {request.patient.profile_data.history}</p>
-                                <p className="text-gray-700"><strong>Current State:</strong> {request.patient.profile_data.current_state}</p>
+                            <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
+                            <h3 className="text-md font-semibold text-blue-700 mb-2 mt-4">Extracted Details</h3>
+                            <p className="text-gray-700"><strong>Name:</strong> {request.patient.profile_data.name}</p>
+                            <p className="text-gray-700"><strong>Age:</strong> {request.patient.profile_data.Age}</p>
+                            <p className="text-gray-700"><strong>Gender:</strong> {request.patient.profile_data.Gender}</p>
+                            <p className="text-gray-700"><strong>Family History:</strong> {request.patient.profile_data.History}</p>
+                            <p className="text-gray-700"><strong>Current Condition:</strong> {request.patient.profile_data.Condition}</p>
 
                             <div className="flex mt-4 space-x-4">
-                                <button onClick={() => openConfirmModal(request, "approved")} className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
-                                    Accept
+                                <button onClick={() => openConfirmModal(request, "approved")} className="bg-green-500 text-white px-4 py-2 rounded-md hover:scale-105">
+                                    ✅ Accept
                                 </button>
-                                <button onClick={() => openConfirmModal(request, "rejected")} className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md shadow-md transition-transform hover:scale-105">
-                                    Reject
+                                <button onClick={() => openConfirmModal(request, "rejected")} className="bg-red-500 text-white px-4 py-2 rounded-md hover:scale-105">
+                                    ❌ Reject
                                 </button>
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
+
+            {/* Session Details Modal */}
+            {modalType === "session-details" && selectedSession && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg text-center">
+                        <h2 className="text-xl font-semibold">Session Details</h2>
+                        <p><strong>Title:</strong> {selectedSession.title}</p>
+                        <p><strong>Description:</strong> {selectedSession.description}</p>
+                        <textarea
+                            value={doctorSummary}
+                            onChange={(e) => setDoctorSummary(e.target.value)}
+                            className="w-full mt-4 p-2 border rounded-md"
+                            placeholder="Enter doctor summary..."
+                        />
+                        <button onClick={saveDoctorSummary} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md">Save</button>
+                        <button onClick={() => setModalType(null)} className="ml-4 bg-gray-500 text-white px-6 py-2 rounded-md">Close</button>
+                    </div>
+                </div>
+            )}
 
             {/* Confirmation Modal */}
             {modalType === "confirm" && selectedRequest && (
