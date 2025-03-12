@@ -3,22 +3,27 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="bg-gradient-to-br from-blue-100 to-teal-100 min-h-screen mt-8">
+    <div className="bg-gradient-to-br from-blue-100 to-teal-100 min-h-screen">
       {/* Hero Section */}
-      <section className="flex flex-col items-center text-center py-20 px-6">
-        <h1 className="text-5xl font-bold text-blue-700 mb-4">
-          Welcome to RAISC
-        </h1>
-        <p className="text-gray-700 text-lg leading-relaxed max-w-2xl">
-          Revolutionizing Mental Health through AI. Discover <span className="font-bold text-blue-700">personalized support</span>,
-          expert psychologists, and comprehensive <span className="font-bold text-blue-700">awareness programs</span> tailored to your needs.
-        </p>
-        <Link href="/login">
-          <button className="mt-6 px-6 py-3 text-lg font-semibold text-white bg-blue-600 rounded-lg shadow-md transition duration-300 hover:bg-blue-500 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
-            Get Started
-          </button>
-        </Link>
+      <section className="relative flex flex-col items-center justify-center text-center min-h-screen bg-cover bg-center px-6" style={{ backgroundImage: "url('/hero-bg.jpg')" }}>
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div> {/* Overlay for better readability */}
+
+        <div className="relative z-10 max-w-3xl">
+          <h1 className="text-6xl md:text-7xl font-extrabold text-white drop-shadow-lg mb-6">
+            Welcome to <span className="text-blue-400">RAISC</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-200 leading-relaxed max-w-2xl mx-auto">
+            Revolutionizing Mental Health through AI. Discover <span className="font-bold text-blue-300">personalized support</span>, expert psychologists, and comprehensive <span className="font-bold text-blue-300">awareness programs</span> tailored to your needs.
+          </p>
+
+          <Link href="/login">
+            <button className="mt-8 px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-full shadow-lg transition duration-300 transform hover:bg-blue-500 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300">
+              Get Started
+            </button>
+          </Link>
+        </div>
       </section>
+
 
       {/* Mental Health Awareness Programs */}
       <section className="container mx-auto px-6 py-12">
