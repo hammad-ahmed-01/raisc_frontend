@@ -167,7 +167,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
                         endAccessor="end"
                         style={{ height: 400 }}
                         className="mt-4 border rounded-lg shadow-md"
-                        onSelectEvent={(event) => {
+                        onSelectEvent={(event: any) => {
                             const session = sessions.find(s => s.title === event.title);
                             if (session) openSessionModal(session);
                         }}
