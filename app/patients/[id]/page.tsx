@@ -31,8 +31,8 @@ export default function PatientChatbotProfile() {
 
     const fetchChatbotProfiles = async () => {
         let endpoint = filterImportant
-            ? `http://127.0.0.1:8000/users/doctor/chatbot-data/${patientId}/important-messages/`
-            : `http://127.0.0.1:8000/users/doctor/chatbot-data/${patientId}/`;
+            ? `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/chatbot-data/${patientId}/important-messages/`
+            : `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/chatbot-data/${patientId}/`;
 
         if (fromDate && toDate) {
             endpoint += `?from=${fromDate}&to=${toDate}`;

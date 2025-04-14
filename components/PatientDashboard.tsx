@@ -26,7 +26,7 @@ export default function PatientDashboard({ user }: { user: any }) {
 
     const fetchSessions = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/users/patient/sessions/", {
+            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/patient/sessions/", {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
