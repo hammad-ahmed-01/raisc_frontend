@@ -10,6 +10,7 @@ interface Doctor {
     professional_information: {
         specialization: string;
         experience: string;
+        qualifications: string;
     };
     rates: string;
 }
