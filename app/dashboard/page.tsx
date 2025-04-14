@@ -82,9 +82,12 @@ export default function Dashboard() {
             <p className="text-center text-gray-600">Email: {user.email}</p>
 
             {/* Level 2+ Patient Dashboard (Structured & Engaged) */}
-            {user.user_type === "patient" && user.patient_profile?.level > 1 && (
-                <PatientDashboard user={user} />
-            )}
+            {   
+                user.user_type === "patient" &&
+                user.patient_profile !== undefined &&
+                user.patient_profile.level > 1 && 
+                (<PatientDashboard user={user} />)
+            }
 
             {/* Doctor Dashboard */}
             {/* {user.user_type === "doctor" && <DoctorDashboard user={user} />} */}
