@@ -16,6 +16,7 @@ interface DoctorProfile {
     professional_information: {
         specialization: string;
         experience: string;
+        qualifications: string;
     };
     chatgroup_nickname: string;
     rates: string;

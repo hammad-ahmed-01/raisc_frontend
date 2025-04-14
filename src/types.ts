@@ -5,7 +5,11 @@ export interface PatientProfile {
 }
 
 export interface DoctorProfile {
-    professional_information: { qualification: string };
+    professional_information: {
+        specialization: string;
+        experience: string;
+        qualifications: string;
+    };
     chatgroup_nickname: string;
     rates: string;
 }
