@@ -29,7 +29,7 @@ export default function PatientsList() {
 
     const fetchPatients = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/users/doctor/patients/", {
+            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/patients/", {
                 headers: {
                     Authorization: `Token ${localStorage.getItem("session_key")}`,
                 },

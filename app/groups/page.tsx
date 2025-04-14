@@ -13,7 +13,7 @@ export default function GroupsPage() {
     const router = useRouter();
 
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/chat/groups/")
+        fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/chat/groups/")
             .then((res) => res.json())
             .then(setGroups);
     }, []);

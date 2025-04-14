@@ -28,7 +28,7 @@ export default function ViewProfessionals() {
     const fetchDoctors = async () => {
         setLoading(true);
         try {
-            const response = await fetch("http://127.0.0.1:8000/users/doctor/list/", {
+            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/list/", {
                 headers: {
                     Authorization: `Token ${localStorage.getItem("session_key")}`,
                 },
@@ -48,7 +48,7 @@ export default function ViewProfessionals() {
     const checkDoctorRequests = async (doctors: Doctor[]) => {
         const requestsStatus: { [key: number]: boolean } = {};
         for (let doctor of doctors) {
-            const response = await fetch(`http://127.0.0.1:8000/users/doctor/check-request/${doctor.user.id}/`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/check-request/${doctor.user.id}/`, {
                 headers: {
                     Authorization: `Token ${localStorage.getItem("session_key")}`,
                 },
@@ -64,7 +64,7 @@ export default function ViewProfessionals() {
 
     const requestDoctor = async (doctorId: number, doctorName: string) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/users/doctor/request/${doctorId}/`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/request/${doctorId}/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

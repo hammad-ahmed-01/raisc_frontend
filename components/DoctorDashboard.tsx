@@ -50,7 +50,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     const fetchSessions = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/users/doctor/sessions/", {
+            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/sessions/", {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
@@ -64,7 +64,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     const fetchRequests = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/users/doctor/requests/", {
+            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/requests/", {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
@@ -85,7 +85,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
     const manageRequest = async () => {
         if (!selectedRequest) return;
         try {
-            await fetch(`http://127.0.0.1:8000/users/doctor/manage-request/${selectedRequest.id}/`, {
+            await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/manage-request/${selectedRequest.id}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
     const saveDoctorSummary = async () => {
         if (!selectedSession) return;
         try {
-            await fetch(`http://127.0.0.1:8000/users/doctor/update-summary/${selectedSession.id}/`, {
+            await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/update-summary/${selectedSession.id}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
