@@ -29,7 +29,7 @@ export default function ViewProfessionals() {
     const fetchDoctors = async () => {
         setLoading(true);
         try {
-            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/list/", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/list/`, {
                 headers: {
                     Authorization: `Token ${localStorage.getItem("session_key")}`,
                 },
