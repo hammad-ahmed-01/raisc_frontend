@@ -108,7 +108,7 @@ export default function AboutUs() {
                             <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <span className="text-blue-600 text-3xl">💻</span>
                             </div>
-                            <h3 className="text-xl font-semibold text-blue-900 mb-2">Technology Team</h3>
+                            <h3 className="text-xl font-semibold text-blue-900 mb-2">Developers Team</h3>
                             <p className="text-gray-700">
                                 Skilled developers creating secure and user-friendly solutions.
                             </p>
