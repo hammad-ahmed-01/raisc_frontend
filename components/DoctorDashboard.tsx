@@ -50,7 +50,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     const fetchSessions = async () => {
         try {
-            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/sessions/", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/sessions/`, {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
@@ -64,7 +64,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     const fetchRequests = async () => {
         try {
-            const response = await fetch("${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/requests/", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/requests/`, {
                 headers: { Authorization: `Token ${localStorage.getItem("session_key")}` },
             });
             if (response.ok) {
