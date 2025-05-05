@@ -30,7 +30,15 @@ export default function Navbar() {
             {/* Logo & Title */}
             <div className="flex items-center space-x-3">
                 <Link href="/" className="flex items-center">
-                    <Image src="/raisc-logo.jpg" alt="RAISC Logo" width={50} height={50} className="rounded-full shadow-md" />
+                    <div className="bg-white rounded-full p-1 w-fit">
+                                          <Image
+                                            src="/raisc-logo.png"
+                                            alt="RAISC Logo"
+                                            width={50}
+                                            height={50}
+                                            className="rounded-full"
+                                          />
+                                        </div>
                     <h1 className="text-2xl font-semibold tracking-wide ml-2">RAISC</h1>
                 </Link>
             </div>

@@ -29,11 +29,13 @@ export default function ChatPage() {
 
     const fetchChatHistory = async (session_key: string) => {
         try {
-            const response = await fetch(`/api/history/${session_key}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${session_key}`);
             if (!response.ok) {
                 console.log("No response");
             }
             const data = await response.json();
+
+            console.log(data);
             setMessages(data.chat_history || []);
         } catch (error) {
             console.error("Error fetching chat history:", error);
@@ -48,7 +50,7 @@ export default function ChatPage() {
         setLoading(true);
 
         try {
-            const response = await fetch(`/api/chat`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_key, message: input }),
