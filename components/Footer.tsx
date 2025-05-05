@@ -8,7 +8,16 @@ export default function Footer() {
                 {/* Logo & Brand Info */}
                 <div className="mb-6 md:mb-0 text-center md:text-left">
                     <div className="flex justify-center md:justify-start items-center space-x-3">
-                        <Image src="/raisc-logo.jpg" alt="RAISC Logo" width={50} height={50} className="rounded-full" />
+                    <div className="bg-white rounded-full p-1 w-fit">
+                      <Image
+                        src="/raisc-logo.png"
+                        alt="RAISC Logo"
+                        width={50}
+                        height={50}
+                        className="rounded-full"
+                      />
+                    </div>
+                        
                         <h1 className="text-2xl font-semibold tracking-wide">RAISC</h1>
                     </div>
                     <p className="text-gray-200 mt-2">Revolutionizing Mental Health through AI</p>

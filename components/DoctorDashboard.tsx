@@ -126,7 +126,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-6 md:p-12">
-            <h1 className="text-4xl font-bold text-green-800 text-center mb-8">
+            <h1 className="text-4xl font-bold text-green-800 text-center mb-8 pt-8">
                 Doctor Dashboard
             </h1>
 
