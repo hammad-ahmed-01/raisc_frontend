@@ -126,35 +126,36 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-6 md:p-12">
-            <h1 className="text-4xl font-bold text-green-800 text-center mb-8 pt-8">
-                Doctor Dashboard
+            <h1 className="text-4xl font-extrabold text-green-800 text-center mb-10 pt-6">
+                👨‍⚕️ Doctor Dashboard
             </h1>
 
-            {/* Top Actions */}
-            <div className="flex justify-between items-center mb-6">
+            {/* Top Action */}
+            <div className="flex justify-center mb-10">
                 <button
                     onClick={() => router.push("/view-patients")}
-                    className="px-5 py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg shadow-md hover:scale-105 transition-transform"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-full shadow-md hover:scale-105 transition-transform"
                 >
-                    👨‍⚕️ View My Patients
+                    View My Patients
                 </button>
             </div>
 
             {/* Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left: Doctor Profile */}
-                <div className="bg-white p-6 rounded-lg shadow-lg border">
-                    <h2 className="text-2xl font-semibold text-green-700">👨‍⚕️ {user.username}</h2>
-                    <br />
-                    <p className="text-gray-700"><strong>Chatgroups NickName:</strong> {user.doctor_profile?.chatgroup_nickname}</p>
-                    <p className="text-gray-700"><strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}</p>
-                    <p className="text-gray-700"><strong>Experience:</strong> {user.doctor_profile?.professional_information.experience}</p>
-                    <p className="text-gray-700"><strong>Rates:</strong> ${user.doctor_profile?.rates}/session</p>
+                {/* Doctor Profile */}
+                <div className="bg-white p-6 rounded-xl shadow-lg border">
+                    <h2 className="text-2xl font-semibold text-green-700 mb-4">👤 {user.username}</h2>
+                    <ul className="text-gray-700 space-y-2">
+                        <li><strong>Nickname:</strong> {user.doctor_profile?.chatgroup_nickname}</li>
+                        <li><strong>Specialization:</strong> {user.doctor_profile?.professional_information.specialization}</li>
+                        <li><strong>Experience:</strong> {user.doctor_profile?.professional_information.experience}</li>
+                        <li><strong>Rates:</strong> ${user.doctor_profile?.rates} / session</li>
+                    </ul>
                 </div>
 
-                {/* Middle: Calendar */}
-                <div className="bg-white p-6 rounded-lg shadow-lg border lg:col-span-2">
-                    <h2 className="text-2xl font-semibold text-green-700">📅 Your Sessions</h2>
+                {/* Calendar */}
+                <div className="bg-white p-6 rounded-xl shadow-lg border lg:col-span-2">
+                    <h2 className="text-2xl font-semibold text-green-700 mb-4">📅 Your Sessions</h2>
                     <Calendar
                         localizer={localizer}
                         events={sessions.map((session) => ({
@@ -166,7 +167,7 @@ export default function DoctorDashboard({ user }: { user: any }) {
                         startAccessor="start"
                         endAccessor="end"
                         style={{ height: 400 }}
-                        className="mt-4 border rounded-lg shadow-md"
+                        className="mt-4 border rounded-lg shadow-sm"
                         onSelectEvent={(event: any) => {
                             const session = sessions.find(s => s.title === event.title);
                             if (session) openSessionModal(session);
@@ -175,27 +176,26 @@ export default function DoctorDashboard({ user }: { user: any }) {
                 </div>
             </div>
 
-            {/* Patient Requests Section */}
-            <div className="mt-10">
-                <h2 className="text-2xl font-semibold text-green-700 text-center">📩 Patient Requests</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {/* Patient Requests */}
+            <div className="mt-12">
+                <h2 className="text-2xl font-semibold text-green-700 text-center mb-6">📩 Patient Requests</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {requests.map((request) => (
-                        <div key={request.id} className="p-6 bg-white rounded-lg shadow-lg border border-gray-300">
-                            <h3 className="text-xl font-semibold text-blue-700">{request.patient.username}</h3>
+                        <div key={request.id} className="p-6 bg-white rounded-xl shadow-lg border hover:shadow-2xl transition transform hover:-translate-y-1">
+                            <h3 className="text-xl font-bold text-blue-700 mb-2">{request.patient.username}</h3>
                             <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
-                            <h3 className="text-md font-semibold text-blue-700 mb-2 mt-4">Extracted Details</h3>
-                            <p className="text-gray-700"><strong>Name:</strong> {request.patient.profile_data.name}</p>
-                            <p className="text-gray-700"><strong>Age:</strong> {request.patient.profile_data.Age}</p>
-                            <p className="text-gray-700"><strong>Gender:</strong> {request.patient.profile_data.Gender}</p>
-                            <p className="text-gray-700"><strong>Family History:</strong> {request.patient.profile_data.History}</p>
-                            <p className="text-gray-700"><strong>Current Condition:</strong> {request.patient.profile_data.Condition}</p>
-
+                            <div className="mt-3 space-y-1 text-sm">
+                                <p><strong>Name:</strong> {request.patient.profile_data.name}</p>
+                                <p><strong>Age:</strong> {request.patient.profile_data.Age}</p>
+                                <p><strong>Gender:</strong> {request.patient.profile_data.Gender}</p>
+                                <p><strong>Family History:</strong> {request.patient.profile_data.History}</p>
+                                <p><strong>Condition:</strong> {request.patient.profile_data.Condition}</p>
+                            </div>
                             <div className="flex mt-4 space-x-4">
-                                <button onClick={() => openConfirmModal(request, "approved")} className="bg-green-500 text-white px-4 py-2 rounded-md hover:scale-105">
+                                <button onClick={() => openConfirmModal(request, "approved")} className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:scale-105 transition">
                                     ✅ Accept
                                 </button>
-                                <button onClick={() => openConfirmModal(request, "rejected")} className="bg-red-500 text-white px-4 py-2 rounded-md hover:scale-105">
+                                <button onClick={() => openConfirmModal(request, "rejected")} className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:scale-105 transition">
                                     ❌ Reject
                                 </button>
                             </div>
@@ -206,9 +206,9 @@ export default function DoctorDashboard({ user }: { user: any }) {
 
             {/* Session Details Modal */}
             {modalType === "session-details" && selectedSession && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg text-center">
-                        <h2 className="text-xl font-semibold">Session Details</h2>
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+                    <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+                        <h2 className="text-xl font-semibold mb-4 text-center">📝 Session Details</h2>
                         <p><strong>Title:</strong> {selectedSession.title}</p>
                         <p><strong>Description:</strong> {selectedSession.description}</p>
                         <textarea
@@ -217,20 +217,24 @@ export default function DoctorDashboard({ user }: { user: any }) {
                             className="w-full mt-4 p-2 border rounded-md"
                             placeholder="Enter doctor summary..."
                         />
-                        <button onClick={saveDoctorSummary} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md">Save</button>
-                        <button onClick={() => setModalType(null)} className="ml-4 bg-gray-500 text-white px-6 py-2 rounded-md">Close</button>
+                        <div className="mt-4 flex justify-center space-x-4">
+                            <button onClick={saveDoctorSummary} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-500 transition">Save</button>
+                            <button onClick={() => setModalType(null)} className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-400 transition">Close</button>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Confirmation Modal */}
             {modalType === "confirm" && selectedRequest && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-                    <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                        <h2 className="text-xl font-semibold">Confirm Action</h2>
-                        <p className="mt-2">Are you sure you want to <strong>{actionStatus}</strong> this request?</p>
-                        <button onClick={manageRequest} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md">Confirm</button>
-                        <button onClick={() => setModalType(null)} className="ml-4 bg-gray-500 text-white px-6 py-2 rounded-md">Cancel</button>
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm z-50">
+                    <div className="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
+                        <h2 className="text-xl font-semibold mb-4">⚠️ Confirm Action</h2>
+                        <p className="mb-4">Are you sure you want to <strong>{actionStatus}</strong> this request?</p>
+                        <div className="flex justify-center space-x-4">
+                            <button onClick={manageRequest} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-500 transition">Confirm</button>
+                            <button onClick={() => setModalType(null)} className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-400 transition">Cancel</button>
+                        </div>
                     </div>
                 </div>
             )}
