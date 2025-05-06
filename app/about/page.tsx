@@ -9,7 +9,7 @@ export default function AboutUs() {
                 <div className="text-center mb-16 relative">
                     <div className="absolute inset-0 bg-blue-600 opacity-10 rounded-3xl"></div>
                     <div className="relative">
-                        <h1 className="text-5xl font-bold text-blue-900 mb-6">About US</h1>
+                        <h1 className="text-5xl font-bold text-blue-900 mb-6 mt-8">About US</h1>
                         <p className="text-xl text-blue-800 max-w-3xl mx-auto">
                             Revolutionizing mental healthcare through innovative technology and compassionate care.
                         </p>

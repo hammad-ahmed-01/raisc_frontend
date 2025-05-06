@@ -78,9 +78,9 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-teal-100 px-4">
+        <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-teal-100 px-4 mt-12">
             {/* Chat Container */}
-            <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg border border-gray-300 flex flex-col overflow-hidden mt-12 mb-12">
+            <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg border border-gray-300 flex flex-col overflow-hidden mt-16 mb-12">
                 {/* Header */}
                 <div className="bg-blue-600 text-white py-4 text-center shadow-md flex justify-center items-center">
                     <Image src="/raisc-chatbot.png" alt="Chatbot Icon" width={60} height={60} />
