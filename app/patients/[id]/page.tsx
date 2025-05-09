@@ -31,7 +31,7 @@ export default function PatientChatbotProfile() {
     const [showModal, setShowModal] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [modalTitle, setModalTitle] = useState("");
-    const [sessionKey, setSessionKey] = useState('abe73788227a0116ca5a2b5fca4f948f70065e8d');
+    const [sessionKey, setSessionKey] = useState('6e50625cbd78c706dc5b5f6309b80d68d9f3bc73');
 
     const router = useRouter();
 
@@ -69,14 +69,17 @@ export default function PatientChatbotProfile() {
         }
     };
 
-    const sentimentData = chatbotProfiles.map((profile, index) => {
+    const sentimentData = [...chatbotProfiles]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((profile, index) => {
         const dataString = profile.collected_data || "";
+        console.log(dataString);
         const messageMatch = dataString.match(/(\d+) user messages/);
         const avgMatch = dataString.match(/Average compound sentiment score was ([\d\-.]+)/);
         const minMatch = dataString.match(/min: ([\d\-.]+)/);
         const maxMatch = dataString.match(/max: ([\d\-.]+)/);
-        const toneMatch = dataString.match(/indicating an overall (\w+) tone/);
-
+        const toneMatch = dataString.match(/indicating an overall\s+(\w+)\s+tone/);
+        console.log(toneMatch);
         return {
             name: `Session ${index + 1}`,
             messages: Number(messageMatch?.[1] || 0),
@@ -157,7 +160,7 @@ export default function PatientChatbotProfile() {
                                 <button
                                     onClick={() => {
                                         setModalTitle(`Chat Thread - ${moment(profile.date).format("Do MMM YYYY h:mm A")}`);
-                                        fetchChatThread(sessionKey, 0, 4);
+                                        fetchChatThread(sessionKey, profile.session_start_msg, profile.session_end_msg);
                                     }}
                                     className="mt-auto w-full px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
                                 >
