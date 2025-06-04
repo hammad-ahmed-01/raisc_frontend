@@ -6,11 +6,18 @@ const sections = ["home", "about", "services", "testimonials", "contact"];
 
 export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       let closestSection = "home";
       let minOffset = Number.POSITIVE_INFINITY;
+
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
 
       for (const id of sections) {
         const el = document.getElementById(id);
@@ -27,28 +34,37 @@ export default function Navbar() {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial trigger
-
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (id) => {
+  const scrollToSection = (id:string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <nav className="bg-[#1E3CA7] text-white shadow-md fixed top-0 left-0 w-full z-50">
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-[#1E3CA7] shadow-md"
+          : "bg-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="text-xl font-bold cursor-pointer">RAISC</div>
+        <div className={`text-xl font-bold cursor-pointer ${
+          isScrolled ? "text-white" : "text-black"
+        }`}>RAISC</div>
         <ul className="flex space-x-6">
           {sections.map((section) => (
             <li
               key={section}
               className={`capitalize cursor-pointer relative transition-all duration-200 ${
                 activeSection === section
-                  ? "font-semibold after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-white"
-                  : "opacity-80 hover:opacity-100"
+                  ? `font-semibold after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] ${
+                      isScrolled ? "text-white after:bg-white" : "text-black after:bg-black"
+                    }`
+                  : `${isScrolled ? "text-white" : "text-black"} opacity-80 hover:opacity-100`
               }`}
               onClick={() => scrollToSection(section)}
             >

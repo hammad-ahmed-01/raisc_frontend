@@ -6,17 +6,15 @@ import "./globals.css";
 
 const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"], // Add weights as needed
+  weight: ["300", "400", "500", "700"],
   style: ["normal", "italic"],
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={roboto.className}>
-      <body className="pt-12 flex flex-col min-h-screen bg-gray-50">
-        {/*<Navbar /> */}
-        <main className="flex-grow">{children}</main>
-        {/*<Footer />*/}
+      <body className="flex flex-col min-h-screen bg-gray-50">
+        <main className="relative flex-grow">{children}</main>
       </body>
     </html>
   );
