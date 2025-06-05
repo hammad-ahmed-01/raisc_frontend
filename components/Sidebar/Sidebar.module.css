@@ -1,0 +1,8 @@
+.sidebar {
+  background: linear-gradient(180deg, #1E3CA7 0%, #131413 100%);
+  border-radius: 0 24px 24px 0;
+}
+
+.activeLink {
+  background: rgba(255, 255, 255, 0.1);
+}
