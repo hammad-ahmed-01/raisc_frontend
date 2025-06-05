@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image"; // make sure to use next/image for optimization
+import logo from "@/public/raisc-logo.png"; // adjust the path if needed
 
 const sections = ["home", "about", "services", "testimonials", "contact"];
 
@@ -38,7 +40,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (id:string) => {
+  const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
@@ -46,15 +48,27 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-[#1E3CA7] shadow-md"
-          : "bg-transparent"
+        isScrolled ? "bg-[#1E3CA7] shadow-md" : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <div className={`text-xl font-bold cursor-pointer ${
-          isScrolled ? "text-white" : "text-black"
-        }`}>RAISC</div>
+        {/* Logo and Title */}
+        <div
+          className={`flex items-center space-x-2 text-xl font-bold cursor-pointer ${
+            isScrolled ? "text-white" : "text-heading"
+          }`}
+        >
+          <Image
+            src={logo}
+            alt="RAISC Logo"
+            width={40}
+            height={40}
+            className="object-contain"
+          />
+          <span>RAISC</span>
+        </div>
+
+        {/* Navigation Links */}
         <ul className="flex space-x-6">
           {sections.map((section) => (
             <li
@@ -62,9 +76,13 @@ export default function Navbar() {
               className={`capitalize cursor-pointer relative transition-all duration-200 ${
                 activeSection === section
                   ? `font-semibold after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] ${
-                      isScrolled ? "text-white after:bg-white" : "text-black after:bg-black"
+                      isScrolled
+                        ? "text-white after:bg-white"
+                        : "text-black after:bg-black"
                     }`
-                  : `${isScrolled ? "text-white" : "text-black"} opacity-80 hover:opacity-100`
+                  : `${
+                      isScrolled ? "text-white" : "text-heading"
+                    } opacity-80 hover:opacity-100`
               }`}
               onClick={() => scrollToSection(section)}
             >

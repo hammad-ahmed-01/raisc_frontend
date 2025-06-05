@@ -4,8 +4,8 @@ import React from "react";
 
 const Card = ({ image, heading, description, onLearnMore }) => {
   return (
-    <div className="p-[2px] rounded-2xl bg-gradient-to-b from-[#1E3CA7] via-[#DBE3FF] to-[#0C1741] shadow-blue-500">
-      <div className="bg-white rounded-2xl p-6 flex flex-col h-full">
+    <div className="p-[1px] mt-8 rounded-2xl bg-gradient-to-b from-[#1E3CA7] via-[#DBE3FF] to-[#0C1741] shadow-blue-500">
+      <div className="bg-white rounded-2xl p-8 flex flex-col h-full">
         <img
           src={image}
           alt={heading}
