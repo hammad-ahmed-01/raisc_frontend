@@ -2,25 +2,30 @@ import React from 'react';
 
 export default function AboutSection() {
   return (
-    <section id="about" className="text-center px-4 py-16">
-      <h2 className="inline-block px-8 py-3 text-heading font-bold text-2xl rounded-full border border-heading bg-[#F1F4FB] shadow-md mb-[6px]">
-        About RAISC
-      </h2>
-      <p className="text-normal max-w-3xl mx-auto">
-        At RAISC, we are dedicated to making mental healthcare accessible, effective, and stigma-free.
-        Our network of qualified professionals ensures tailored support to help you thrive.
-      </p>
-      <p className="text-normal mt-4 max-w-3xl mx-auto">
-        We believe in a future where anyone can receive mental health support, making it more accessible and convenient.
-      </p>
-      <div className="mt-6 flex justify-center gap-4">
-        <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90">
+    <section id="about" className="text-center px-4 py-16 min-h-screen bg-[#FAFDFF]">
+      <div className="flex flex-col items-center space-y-12 max-w-3xl mx-auto">
+        {/* Heading */}
+        <h2 className="px-8 py-3 mt-32 text-heading font-bold text-2xl rounded-full border border-heading bg-[#F1F4FB] shadow-md">
+          About RAISC
+        </h2>
+
+        {/* Paragraph 1 */}
+        <p className="text-normal">
+          At RAISC, we are dedicated to making mental healthcare accessible, effective, and personalized for everyone. Our platform connects patients with qualified mental health professionals, providing a safe and supportive environment for healing and growth.
+        </p>
+
+        {/* Paragraph 2 */}
+        <p className="text-normal">
+           We believe in the power of technology to transform mental healthcare delivery, making it more accessible and effective while maintaining the human touch that is essential for healing.
+        </p>
+
+        {/* Call to Action Button */}
+        <div>
+          <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition">
             Get Started Today
-        </button>
-        <button className="bg-white border-2 border-black text-black py-2 px-6 rounded-full shadow-sm hover:bg-blue-100">Learn More About Us</button>
+          </button>
+        </div>
       </div>
     </section>
   );
 }
-
-//#F1F4FB
