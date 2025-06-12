@@ -1,6 +1,7 @@
-import { FiBell, FiSettings } from "react-icons/fi";
+// NewPatientHome.tsx
 import Quote from "./components/Quote";
 import AIChat from "./components/AIChat";
+import TopRightIcons from "./components/Navigation";
 
 export default function NewPatientHome() {
   return (
@@ -10,23 +11,8 @@ export default function NewPatientHome() {
         backgroundImage: "url('/bg/patientbg.png')",
       }}
     >
-      {/* Icons container */}
-      <div className="absolute top-5 right-5 flex gap-6 z-20">
-        <button
-          className="text-3xl text-heading2 hover:opacity-80 transition bg-transparent border-none p-0"
-          style={{ background: "none", border: "none" }}
-          aria-label="Notifications"
-        >
-          <FiBell />
-        </button>
-        <button
-          className="text-3xl text-heading2 hover:opacity-80 transition bg-transparent border-none p-0"
-          style={{ background: "none", border: "none" }}
-          aria-label="Setting"
-        >
-          <FiSettings />
-        </button>
-      </div>
+      {/* Reusable top-right icons component */}
+      <TopRightIcons />
 
       <div className="relative min-h-screen py-10 px-4 z-10">
         <h1 className="text-heading text-6xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
