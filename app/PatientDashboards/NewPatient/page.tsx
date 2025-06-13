@@ -15,10 +15,10 @@ export default function NewPatientHome() {
       <TopRightIcons />
 
       <div className="relative min-h-screen py-10 px-4 z-10">
-        <h1 className="text-heading text-6xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
+        <h1 className="text-heading text-4xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
           Welcome to RAISC
         </h1>
-        <p className="text-center text-2xl text-heading2 mt-2">
+        <p className="text-center text-xl text-heading2 mt-2">
           The journey of thousand miles begin with one step
         </p>
 

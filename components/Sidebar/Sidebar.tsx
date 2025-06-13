@@ -28,7 +28,7 @@ const Sidebar = () => {
     >
       {/* Logo Section */}
       <div className="h-20 flex items-center justify-start px-4 relative">
-        <div className="w-12 h-12 flex items-center justify-center bg-white rounded-full">
+        <div className="w-12 h-12 flex items-center justify-center rounded-full">
           <Image
             src="/raisc-logo.png"
             alt="RAISC Logo"
