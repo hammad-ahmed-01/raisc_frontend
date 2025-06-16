@@ -1,8 +1,38 @@
-// components/TipAndSupportCard.tsx
+"use client"
 
+// components/TipAndSupportCard.tsx
 import { Lightbulb, HelpCircle, Sparkles } from "lucide-react";
+import { useEffect, useState } from 'react';
+
+interface TipData {
+  title: string;
+  content: string;
+}
 
 export default function TipAndSupportCard() {
+  const [tip, setTip] = useState<TipData>({
+    title: "Tip of the Day",
+    content: "Relax. Breathe. \nLet go a little."
+  });
+  
+  useEffect(() => {
+    const fetchTipData = async () => {
+      if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}api/tips/daily`);
+          if (response.ok) {
+            const data = await response.json();
+            setTip(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch tip data:", error);
+        }
+      }
+    };
+    
+    fetchTipData();
+  }, []);
+
   return (
     <div className="flex flex-col items-center gap-6 my-8">
       <div className="space-y-6 w-full max-w-md">
@@ -12,10 +42,14 @@ export default function TipAndSupportCard() {
             <Lightbulb size={40} />
           </div>
           <div>
-            <h3 className="font-bold text-heading2 mb-1">Tip of the Day</h3>
+            <h3 className="font-bold text-heading2 mb-1">{tip.title}</h3>
             <p className="text-heading2 text-sm leading-snug">
-              Relax. Breathe. <br />
-              Let go a little.
+              {tip.content.split('\n').map((line, i) => (
+                <span key={i}>
+                  {line}
+                  {i < tip.content.split('\n').length - 1 && <br />}
+                </span>
+              ))}
             </p>
           </div>
         </div>

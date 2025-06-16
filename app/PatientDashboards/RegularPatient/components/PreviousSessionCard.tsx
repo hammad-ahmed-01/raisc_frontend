@@ -1,7 +1,69 @@
+"use client"
+
 // components/PreviousSessionCard.tsx
 import { Brain, NotebookText, Target } from "lucide-react";
+import { useEffect, useState } from 'react';
+
+interface SessionData {
+  sessionNumber: number;
+  topic: string;
+  date: string;
+  keyPoints: {
+    icon: string;
+    text: string;
+  }[];
+  feedback: string;
+}
 
 export default function PreviousSessionCard() {
+  const [session, setSession] = useState<SessionData>({
+    sessionNumber: 4,
+    topic: "Managing Daily Anxiety",
+    date: "May 24, 2025 – 4:00 PM",
+    keyPoints: [
+      {
+        icon: "brain",
+        text: "Breathing Exercises"
+      },
+      {
+        icon: "notebook",
+        text: "Journaling habit"
+      },
+      {
+        icon: "target",
+        text: "Setting small daily goals"
+      }
+    ],
+    feedback: "You felt calmer after the session 😊✨"
+  });
+  
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}api/sessions/latest`);
+          if (response.ok) {
+            const data = await response.json();
+            setSession(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch session data:", error);
+        }
+      }
+    };
+    
+    fetchSessionData();
+  }, []);
+
+  const getIcon = (iconName: string) => {
+    switch(iconName) {
+      case 'brain': return <Brain size={18} className="text-heading2" />;
+      case 'notebook': return <NotebookText size={18} className="text-heading2" />;
+      case 'target': return <Target size={18} className="text-heading2" />;
+      default: return <Brain size={18} className="text-heading2" />;
+    }
+  };
+
   return (
     <div className="max-w-sm opacity-80 p-6 bg-gradient-to-br border-2 border-[#bfaaff] from-purple-100 to-blue-50 rounded-3xl shadow-md">
       <h2 className="text-xl font-semibold text-heading2 text-center mb-4">
@@ -11,34 +73,28 @@ export default function PreviousSessionCard() {
 
       <div className="text-heading2 space-y-4 text-left">
         <div>
-          <p className="font-semibold">Session #4:</p>
-          <p className="ml-2">Managing Daily Anxiety</p>
+          <p className="font-semibold">Session #{session.sessionNumber}:</p>
+          <p className="ml-2">{session.topic}</p>
         </div>
 
         <div>
           <p className="font-semibold">Held on:</p>
-          <p className="ml-2">May 24, 2025 – 4:00 PM</p>
+          <p className="ml-2">{session.date}</p>
         </div>
 
         <div>
           <p className="font-semibold">Key Points Covered:</p>
           <div className="ml-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Brain size={18} className="text-heading2" />
-              <span>Breathing Exercises</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <NotebookText size={18} className="text-heading2" />
-              <span>Journaling habit</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Target size={18} className="text-heading2" />
-              <span>Setting small daily goals</span>
-            </div>
+            {session.keyPoints.map((point, index) => (
+              <div key={index} className="flex items-center gap-2">
+                {getIcon(point.icon)}
+                <span>{point.text}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <p>You felt calmer after the session <span className="inline-block">😊✨</span></p>
+        <p>{session.feedback}</p>
       </div>
 
       <div className="mt-6 text-center">

@@ -1,5 +1,3 @@
-"use client"
-
 import ChatBotImage from "@/public/bg/chatbotbg.png";
 import { useEffect, useState } from 'react';
 
