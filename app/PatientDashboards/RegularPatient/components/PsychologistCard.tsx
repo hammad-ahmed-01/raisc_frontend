@@ -3,6 +3,7 @@
 // components/PsychologistCard.tsx
 import { UserCircle2, Dot, Calendar } from "lucide-react";
 import { useEffect, useState } from 'react';
+import { User } from "../../../dashboard/page";
 
 interface PsychologistData {
   name: string;
@@ -12,9 +13,13 @@ interface PsychologistData {
   upcomingSession: string;
 }
 
-export default function PsychologistCard() {
+interface PsychologistCardProps {
+  user?: User;
+}
+
+export default function PsychologistCard({ user }: PsychologistCardProps) {
   const [psychologist, setPsychologist] = useState<PsychologistData>({
-    name: "Dr. Sara Khan",
+    name: user?.patient_profile?.associated_psychologist_name || "Dr. Sara Khan",
     role: "Clinical Psychologist",
     isAvailable: true,
     imageUrl: "",

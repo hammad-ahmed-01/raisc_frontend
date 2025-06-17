@@ -10,9 +10,41 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
+    const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
+
     const handleLogin = async () => {
         setErrorMessage("");
         setIsLoading(true);
+
+        if (!isBackendConnected) {
+            const dummyUser  = {
+                id: 1,
+                username: "demo_user",
+                email: "demo@example.com",
+                user_type: "patient", // Change to "doctor" if using doctor_profile
+
+                patient_profile: {
+                    level: 0,
+                    associated_psychologist: "dr_john_doe",
+                    associated_psychologist_name: "Dr. John Doe",
+                },
+
+                // doctor_profile: {
+                //     professional_information: {
+                //         specialization: "Psychiatry",
+                //         experience: "5 years",
+                //         qualifications: "MD, PhD"
+                //     },
+                //     chatgroup_nickname: "DocDemo",
+                //     rates: "$100/hr"
+                // }
+            };
+            localStorage.setItem("session_key", "dummy-session-key");
+            localStorage.setItem("user_data", JSON.stringify(dummyUser));
+            router.push("/dashboard");
+            return;
+        }
 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/login/`, {
@@ -24,7 +56,7 @@ export default function Login() {
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem("session_key", data.token);
-                localStorage.setItem("user_data", JSON.stringify(data.user));
+                // localStorage.setItem("user_data", JSON.stringify(data.user));
                 router.push("/dashboard");
             } else {
                 setErrorMessage("Invalid username or password. Please try again.");

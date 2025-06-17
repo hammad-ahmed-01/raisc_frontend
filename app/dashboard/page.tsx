@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DoctorDashboard from "@/components/DoctorDashboard";
-import PatientDashboard from "@/components/PatientDashboard";
+import PatientDashboard from "@/app/PatientDashboards/RegularPatient/page";
 import ReturningPatientDashboard from "@/components/ReturningPatientDashboard";
-import NewPatientDashboard from "@/components/NewPatientDashboard";
+import NewPatientDashboard from "@/app/PatientDashboards/NewPatient/page";
 
 interface PatientProfile {
     level: number;
@@ -31,30 +31,79 @@ export interface User {
     doctor_profile?: DoctorProfile;
 }
 
+const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
     const router = useRouter();
 
     useEffect(() => {
-        // Check if page has already reloaded in this session
         const hasReloaded = sessionStorage.getItem("hasReloaded");
 
         if (!hasReloaded) {
             sessionStorage.setItem("hasReloaded", "true");
             window.location.reload();
         } else {
-            const userData = localStorage.getItem("user_data");
-            if (userData) {
-                setUser(JSON.parse(userData));
-            } else {
+            const sessionKey = localStorage.getItem("session_key");
+
+            if (!sessionKey) {
                 router.push("/login");
+                return;
+            }
+
+            if (isBackendConnected) {
+                const fetchUserData = async () => {
+                    try {
+                        const response = await fetch(
+                            `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/data/`,
+                            {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Token ${sessionKey}`,
+                                },
+                            }
+                        );
+
+                        const data = await response.json();
+                        setUser(data);
+                    } catch (error) {
+                        console.error("Error fetching user data:", error);
+                        router.push("/login");
+                    }
+                };
+
+                fetchUserData();
+            } else {
+                const userData = localStorage.getItem("user_data");
+                if (userData) {
+                    setUser(JSON.parse(userData));
+                } else {
+                    router.push("/login");
+                }
             }
         }
     }, [router]);
 
-    if (!user) return <p className="text-center text-gray-600 mt-10">Loading...</p>;
+    // useEffect(() => {
+    //     // Check if page has already reloaded in this session
+    //     const hasReloaded = sessionStorage.getItem("hasReloaded");
 
-    // **New Patient (Level 0) - Immersive Experience**
+    //     if (!hasReloaded) {
+    //         sessionStorage.setItem("hasReloaded", "true");
+    //         window.location.reload();
+    //     } else {
+    //         const userData = localStorage.getItem("user_data");
+    //         if (userData) {
+    //             setUser(JSON.parse(userData));
+    //         } else {
+    //             router.push("/login");
+    //         }
+    //     }
+    // }, [router]);
+
+    if (!user)
+        return <p className="text-center text-gray-600 mt-10">Loading...</p>;    // **New Patient (Level 0) - Immersive Experience**
     if (user.user_type === "patient" && user.patient_profile?.level === 0) {
         return <NewPatientDashboard user={user} />;
     }
@@ -64,7 +113,7 @@ export default function Dashboard() {
         return <ReturningPatientDashboard user={user} />;
     }
 
-    // ** Patient (Level 2) - Calm & Reassuring**
+    // ** Regular Patient (Level 2) - Calm & Reassuring**
     if (user.user_type === "patient" && user.patient_profile?.level === 2) {
         return <PatientDashboard user={user} />;
     }
@@ -79,15 +128,10 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-gray-800 text-center">
                 Welcome, {user.username}!
             </h1>
-            <p className="text-center text-gray-600">Email: {user.email}</p>
-
-            {/* Level 2+ Patient Dashboard (Structured & Engaged) */}
-            {   
-                user.user_type === "patient" &&
+            <p className="text-center text-gray-600">Email: {user.email}</p>            {/* Level 2+ Patient Dashboard (Structured & Engaged) */}
+            {user.user_type === "patient" &&
                 user.patient_profile !== undefined &&
-                user.patient_profile.level > 1 && 
-                (<PatientDashboard user={user} />)
-            }
+                user.patient_profile.level > 1 && <PatientDashboard user={user} />}
 
             {/* Doctor Dashboard */}
             {/* {user.user_type === "doctor" && <DoctorDashboard user={user} />} */}
