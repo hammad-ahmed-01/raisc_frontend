@@ -67,7 +67,7 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
             <Dot className={psychologist.isAvailable ? 'text-green-600' : 'text-red-600'} /> 
             {psychologist.isAvailable ? 'Available Now' : 'Not Available'}
           </p>
-          <a href="#" className="text-blue-600 underline text-sm">view more</a>
+          <a href="/AssociatedPsychologist" className="text-blue-600 underline text-sm">view more</a>
         </div>
       </div>
 
