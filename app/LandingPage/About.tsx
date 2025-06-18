@@ -1,6 +1,15 @@
+"use client";
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AboutSection() {
+    const router = useRouter();
+  
+    const handleGetStarted = () => {
+      router.push('/login');
+    }
+
   return (
     <section id="about" className="text-center px-4 py-16 min-h-screen bg-[#FAFDFF]">
       <div className="flex flex-col items-center space-y-12 max-w-3xl mx-auto">
@@ -21,7 +30,7 @@ export default function AboutSection() {
 
         {/* Call to Action Button */}
         <div>
-          <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition">
+          <button onClick={handleGetStarted} className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition">
             Get Started Today
           </button>
         </div>

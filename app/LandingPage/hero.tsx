@@ -1,6 +1,14 @@
+"use client";
+
 import React from 'react';
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
+  const router = useRouter();
+
+  const handleGetStarted = () => {
+    router.push('/login');
+  }
   return (
     <section 
       id="home" 
@@ -29,7 +37,7 @@ export default function HeroSection() {
             Connect with licensed psychologists and psychiatrists in a safe, confidential environment. Begin your journey to better mental health today.
           </p>
           <div className="flex gap-4">
-            <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90">
+            <button onClick={handleGetStarted} className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90">
               Get Started
             </button>
             <button className="bg-white border-2 border-black text-black py-2 px-6 rounded-full shadow-sm hover:bg-blue-100">
