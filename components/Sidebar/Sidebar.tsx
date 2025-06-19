@@ -3,17 +3,19 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { FaHome, FaHistory, FaQuoteRight, FaRobot, FaUserMd, FaBook, FaUser } from 'react-icons/fa';
 
 const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const pathname = usePathname(); // Get current path
 
   const menuItems = [
     { id: 1, title: 'Dashboard', icon: <FaHome size={20} />, path: '/dashboard' },
     { id: 2, title: 'Session History', icon: <FaHistory size={20} />, path: '/history' },
     { id: 3, title: 'Motivational Quotes', icon: <FaQuoteRight size={20} />, path: '/quotes' },
     { id: 4, title: 'Chat with AI Bot', icon: <FaRobot size={20} />, path: '/chat' },
-    { id: 5, title: 'Psychologist', icon: <FaUserMd size={20} />, path: '/psychologist' },
+    { id: 5, title: 'Psychologist', icon: <FaUserMd size={20} />, path: '/AssociatedPsychologist' },
     { id: 6, title: 'Resources', icon: <FaBook size={20} />, path: '/resources' },
     { id: 7, title: 'Profile', icon: <FaUser size={20} />, path: '/profile' },
   ];
@@ -46,28 +48,30 @@ const Sidebar = () => {
 
       {/* Navigation Items */}
       <nav className="mt-4">
-        {menuItems.map((item) => (
-          <Link href={item.path} key={item.id}>
-            <div
-              className={`flex items-center h-14 px-6 cursor-pointer transition-colors ${
-                item.title === 'Dashboard' 
-                  ? 'bg-white/10 text-white' 
-                  : 'hover:bg-white/5'
-              }`}
-            >
-              <div className="w-8 flex justify-center">
-                {item.icon}
-              </div>
-              <span
-                className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${
-                  isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+        {menuItems.map((item) => {
+          const isActive = pathname === item.path;
+
+          return (
+            <Link href={item.path} key={item.id}>
+              <div
+                className={`flex items-center h-14 px-6 cursor-pointer transition-colors ${
+                  isActive ? 'bg-white/10 text-white font-semibold' : 'hover:bg-white/5'
                 }`}
               >
-                {item.title}
-              </span>
-            </div>
-          </Link>
-        ))}
+                <div className="w-8 flex justify-center">
+                  {item.icon}
+                </div>
+                <span
+                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${
+                    isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+                  }`}
+                >
+                  {item.title}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
