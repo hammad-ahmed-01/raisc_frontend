@@ -15,7 +15,7 @@ const Sidebar = () => {
     { id: 2, title: 'Session History', icon: <FaHistory size={20} />, path: '/history' },
     { id: 3, title: 'Motivational Quotes', icon: <FaQuoteRight size={20} />, path: '/quotes' },
     { id: 4, title: 'Chat with AI Bot', icon: <FaRobot size={20} />, path: '/chat' },
-    { id: 5, title: 'Psychologist', icon: <FaUserMd size={20} />, path: '/AssociatedPsychologist' },
+    { id: 5, title: 'Psychologist', icon: <FaUserMd size={20} />, path: ['/AssociatedPsychologist', '/Doctors'] },
     { id: 6, title: 'Resources', icon: <FaBook size={20} />, path: '/resources' },
     { id: 7, title: 'Profile', icon: <FaUser size={20} />, path: '/profile' },
   ];
@@ -49,10 +49,9 @@ const Sidebar = () => {
       {/* Navigation Items */}
       <nav className="mt-4">
         {menuItems.map((item) => {
-          const isActive = pathname === item.path;
-
+          const isActive = Array.isArray(item.path) ? item.path.includes(pathname) : pathname === item.path;
           return (
-            <Link href={item.path} key={item.id}>
+            <Link href={Array.isArray(item.path) ? item.path[0] : item.path} key={item.id}>
               <div
                 className={`flex items-center h-14 px-6 cursor-pointer transition-colors ${
                   isActive ? 'bg-white/10 text-white font-semibold' : 'hover:bg-white/5'
