@@ -16,8 +16,7 @@ export default function Login() {
         setErrorMessage("");
         setIsLoading(true);
 
-        if (!isBackendConnected) {
-            const dummyUser = {
+        if (!isBackendConnected) {            const dummyUser = {
                 id: 1,
                 username: "demo_user",
                 email: "demo@example.com",
@@ -26,6 +25,7 @@ export default function Login() {
                     level: 2,
                     associated_psychologist: "dr_john_doe",
                     associated_psychologist_name: "Dr. John Doe",
+                    sent_requests: [], // ID of Dr. Sara Khan who has pending request
                 },
             };
 
