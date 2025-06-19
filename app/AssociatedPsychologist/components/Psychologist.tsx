@@ -46,7 +46,7 @@ export default function Psychologist() {
     name: "Dr. Sara Khan",
     role: "Clinical Psychologist",
     affiliation: "Pakistan Institute of Mental Health (PIMH)",
-    image: "/img/female-doc.png",
+    image: "/psychologist.jpeg", // Updated default image path to match available assets
     about: "Passionate about helping individuals manage anxiety and emotional challenges.",
     qualifications: ["MSc in Clinical Psychology", "Certified CBT Therapist"],
     languages: ["English", "Urdu"],
@@ -56,6 +56,34 @@ export default function Psychologist() {
   });
   
   useEffect(() => {
+    // First check if there's a selected doctor in localStorage
+    const selectedDoctorData = localStorage.getItem('selectedDoctor');
+    
+    if (selectedDoctorData) {
+      try {
+        const selectedDoctor = JSON.parse(selectedDoctorData);
+        
+        // Map the doctor data to our psychologist format
+        setPsychologist({
+          name: selectedDoctor.name,
+          role: selectedDoctor.specialization,
+          affiliation: selectedDoctor.location,
+          image: selectedDoctor.profile_image,
+          about: `Specializes in ${selectedDoctor.specialization} with expertise in ${selectedDoctor.expertise.join(', ')}.`,
+          qualifications: [selectedDoctor.education],
+          languages: ["English", "Urdu"], // Default languages if not available
+          experience: selectedDoctor.experience,
+          rating: selectedDoctor.rating,
+          reviews: Math.floor(selectedDoctor.rating * 20) // Generate random number of reviews based on rating
+        });
+        
+        return; // Exit the function since we already have the data
+      } catch (error) {
+        console.error("Error parsing selected doctor data:", error);
+      }
+    }
+    
+    // If no selected doctor or parsing failed, fall back to backend or default data
     const fetchData = async () => {
       if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
         try {
@@ -75,25 +103,33 @@ export default function Psychologist() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 mt-10">
-      {/* Header Card */}
+    <div className="flex flex-col gap-4 mt-10">      {/* Header Card */}
       <div className="flex items-center justify-between bg-white rounded-2xl shadow-lg p-6">
         <div className="flex items-center gap-4">
           <img
             src={psychologist.image}
-            alt="Therapist"
-            className="w-20 h-20 rounded-full border-2 border-blue-300"
+            alt={psychologist.name}
+            className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover"
           />
           <div>
-            <h2 className="text-lg font-semibold text-heading">{psychologist.name}</h2>
-            <p className="text-heading2">{psychologist.role}</p>
+            <h2 className="text-lg font-bold font-weight-700 text-heading">{psychologist.name}</h2>
+            <p className="text-heading2 font-weight-400">{psychologist.role}</p>
             <p className="text-sm text-heading2">
-              Affiliated with <strong>{psychologist.affiliation}</strong>
+              <span className="text-red-500">📍</span> Location: <strong>{psychologist.affiliation}</strong>
             </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-yellow-400">★</span>
+              <span className="font-weight-400">{psychologist.rating} Rating</span>
+            </div>
           </div>
         </div>
-        <button className="bg-[#FFF8ECDB] text-heading2 text-sm px-4 py-2 rounded-full shadow">
-          Change Therapist
+        <button 
+          onClick={() => {
+            localStorage.removeItem('selectedDoctor');
+            window.location.href = '/Doctors';
+          }} 
+          className="bg-[#FFF8ECDB] text-heading2 text-sm px-4 py-2 rounded-full shadow font-bold font-weight-700">
+          Back to Doctors
         </button>
       </div>
 

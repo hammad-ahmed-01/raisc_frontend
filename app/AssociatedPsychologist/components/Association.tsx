@@ -20,8 +20,31 @@ export default function Association() {
     email: "info@pimh.org.pk",
     website: "www.pimh.org.pk"
   });
-  
-  useEffect(() => {
+    useEffect(() => {
+    // First check if there's a selected doctor in localStorage
+    const selectedDoctorData = localStorage.getItem('selectedDoctor');
+    
+    if (selectedDoctorData) {
+      try {
+        const selectedDoctor = JSON.parse(selectedDoctorData);
+        
+        // Use the doctor's location information for the association
+        setAssociation({
+          name: `${selectedDoctor.specialization} Services in ${selectedDoctor.location}`,
+          description: `A leading healthcare provider specializing in ${selectedDoctor.specialization} and mental healthcare services.`,
+          address: `Medical District, ${selectedDoctor.location}, Pakistan`,
+          phone: "+92 51 " + Math.floor(1000000 + Math.random() * 9000000), // Generate a random phone number
+          email: `info@healthcare-${selectedDoctor.location.toLowerCase()}.org`,
+          website: `www.healthcare-${selectedDoctor.location.toLowerCase()}.org`
+        });
+        
+        return; // Exit the function since we already have the data
+      } catch (error) {
+        console.error("Error parsing selected doctor data for association:", error);
+      }
+    }
+    
+    // If no selected doctor or parsing failed, fall back to backend or default data
     const fetchData = async () => {
       if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
         try {

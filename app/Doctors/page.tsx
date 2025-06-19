@@ -555,9 +555,14 @@ export default function DoctorsPage() {
                                     <span>Expertise: {doctor.expertise.join(", ")}</span>
                                 </div>
                             </div>
-                            
-                            {/* Action buttons */}
-                            <div className="mt-5 flex justify-between">                                <button className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700">
+                              {/* Action buttons */}
+                            <div className="mt-5 flex justify-between">                                <button 
+                                    onClick={() => {
+                                        // Save selected doctor in localStorage
+                                        localStorage.setItem('selectedDoctor', JSON.stringify(doctor));
+                                        router.push('/AssociatedPsychologist');
+                                    }} 
+                                    className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700">
                                     <span>💜</span> View Profile
                                 </button>
                                 
