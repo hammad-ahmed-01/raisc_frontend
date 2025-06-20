@@ -15,11 +15,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Optional: Load different chats based on chatId
   useEffect(() => {
     if (activeChatId) {
-      // Here you can fetch the chat messages from an API/backend using the activeChatId
-      // For demonstration, we'll reset chat
       setMessages([
         { text: `This is chat ID: ${activeChatId}`, isUser: false },
         { text: "How can I help you today?", isUser: false }
@@ -58,7 +55,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   };
 
   return (
-    <div className="h-full w-full max-w-screen mx-auto flex flex-col bg-white border border-gray-300 rounded-xl shadow-md">
+    <div className="h-full w-full max-w-screen mx-auto flex flex-col bg-blue-100 border rounded-xl shadow-md">
       {/* Messages */}
       <div className="flex-grow p-4 overflow-y-auto space-y-2">
         {messages.map((msg, index) => (

@@ -21,7 +21,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen w-screen bg-white font-sans flex overflow-hidden">
+    <div className="h-screen w-screen bg-blue-100 font-sans flex overflow-hidden">
       {/* Sidebar */}
       <ChatHistory
         onSelectChat={handleSelectChat}
