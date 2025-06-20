@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image"; // make sure to use next/image for optimization
-import logo from "@/public/raisc-logo.png"; // adjust the path if needed
+import Image from "next/image";
+import logoDark from "@/public/raisc-logo.png";
+import logoWhite from "@/public/logo_white.svg"; 
 
 const sections = ["home", "about", "services", "testimonials", "contact"];
 
@@ -59,7 +60,7 @@ export default function Navbar() {
           }`}
         >
           <Image
-            src={logo}
+            src={isScrolled ? logoWhite : logoDark}
             alt="RAISC Logo"
             width={40}
             height={40}

@@ -19,14 +19,14 @@ const InputBar = ({ onSend }: { onSend: (message: string) => void }) => {
   };
 
   return (
-    <div className="flex items-center p-4 border-t border-gray-300 bg-white">
+    <div className="flex items-center p-4 bg-blue-100">
       <input
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyPress}
         placeholder="Type your message..."
-        className="flex-grow p-3 rounded-full border border-normal focus:outline-none focus:ring-2 focus:ring-heading2 transition-all"
+        className="flex-grow p-3 rounded-full border border-normal focus:outline-none focus:heading2 focus:ring-heading transition-all"
       />
       <button className="ml-3 text-white hover:text-white-300" title="Voice Input">
         <Mic size={20} />

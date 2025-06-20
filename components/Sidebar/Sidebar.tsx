@@ -32,7 +32,7 @@ const Sidebar = () => {
       <div className="h-20 flex items-center justify-start px-4 relative">
         <div className="w-12 h-12 flex items-center justify-center rounded-full">
           <Image
-            src="/raisc-logo.png"
+            src="/logo_white.svg"
             alt="RAISC Logo"
             width={32}
             height={32}
