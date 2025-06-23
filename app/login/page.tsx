@@ -22,7 +22,7 @@ export default function Login() {
                 email: "demo@example.com",
                 user_type: "patient",
                 patient_profile: {
-                    level: 2,
+                    level: 1,
                     associated_psychologist: "dr_john_doe",
                     associated_psychologist_name: "Dr. John Doe",
                     sent_requests: [], // ID of Dr. Sara Khan who has pending request
