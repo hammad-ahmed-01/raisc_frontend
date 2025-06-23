@@ -55,6 +55,10 @@ export default function Psychologist() {
     reviews: 124
   });
   
+  // State to track the request status
+  const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'accepted'>('none');
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  
   useEffect(() => {
     // First check if there's a selected doctor in localStorage
     const selectedDoctorData = localStorage.getItem('selectedDoctor');
@@ -62,6 +66,10 @@ export default function Psychologist() {
     if (selectedDoctorData) {
       try {
         const selectedDoctor = JSON.parse(selectedDoctorData);
+        setSelectedDoctor(selectedDoctor);
+        
+        // Check if this doctor has a pending or accepted request
+        setRequestStatus(selectedDoctor.requestStatus || 'none');
         
         // Map the doctor data to our psychologist format
         setPsychologist({
@@ -102,8 +110,73 @@ export default function Psychologist() {
     fetchData();
   }, []);
 
+  // Function to send a request to a doctor
+  const sendRequest = async () => {
+    if (!selectedDoctor) return;
+    
+    // Update the doctor's request status in localStorage
+    const updatedDoctor = { ...selectedDoctor, requestStatus: 'pending' };
+    localStorage.setItem('selectedDoctor', JSON.stringify(updatedDoctor));
+    
+    // Update user's sent_requests in localStorage
+    const userData = localStorage.getItem("user_data");
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      const updatedSentRequests = [
+        ...(parsedUser.patient_profile?.sent_requests || []),
+        selectedDoctor.id.toString()
+      ];
+      
+      const updatedUser = {
+        ...parsedUser,
+        patient_profile: {
+          ...(parsedUser.patient_profile || {}),
+          sent_requests: updatedSentRequests
+        }
+      };
+      
+      localStorage.setItem("user_data", JSON.stringify(updatedUser));
+    }
+    
+    setRequestStatus('pending');
+  };
+
+  // Function to remove a request
+  const removeRequest = async () => {
+    if (!selectedDoctor) return;
+    
+    // Update the doctor's request status in localStorage
+    const updatedDoctor = { ...selectedDoctor, requestStatus: 'none' };
+    localStorage.setItem('selectedDoctor', JSON.stringify(updatedDoctor));
+    
+    // Update user's sent_requests in localStorage
+    const userData = localStorage.getItem("user_data");
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      
+      if (parsedUser.patient_profile?.sent_requests) {
+        const updatedSentRequests = parsedUser.patient_profile.sent_requests.filter(
+          (id: string) => id !== selectedDoctor.id.toString()
+        );
+        
+        const updatedUser = {
+          ...parsedUser,
+          patient_profile: {
+            ...parsedUser.patient_profile,
+            sent_requests: updatedSentRequests
+          }
+        };
+        
+        localStorage.setItem("user_data", JSON.stringify(updatedUser));
+      }
+    }
+    
+    setRequestStatus('none');
+  };
+
   return (
-    <div className="flex flex-col gap-4 mt-10">      {/* Header Card */}
+    <div className="flex flex-col gap-4 mt-10">      
+      {/* Header Card */}
       <div className="flex items-center justify-between bg-white rounded-2xl shadow-lg p-6">
         <div className="flex items-center gap-4">
           <img
@@ -123,17 +196,37 @@ export default function Psychologist() {
             </div>
           </div>
         </div>
-        <button 
-          onClick={() => {
-            localStorage.removeItem('selectedDoctor');
-            window.location.href = '/Doctors';
-          }} 
-          className="bg-[#FFF8ECDB] text-heading2 text-sm px-4 py-2 rounded-full shadow font-bold font-weight-700">
-          Back to Doctors
-        </button>
+        
+        {/* Request action buttons - replace Back to Doctors with appropriate button */}
+        {requestStatus === 'none' && (
+          <button
+            onClick={sendRequest}
+            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-6 py-2 rounded-full flex items-center justify-center gap-2 font-bold whitespace-nowrap"
+          >
+            🤝 Send Request
+          </button>
+        )}
+        
+        {requestStatus === 'pending' && (
+          <div className="flex flex-col items-end">
+            <div className="flex items-center gap-2 text-blue-700 mb-2">
+              <span className="text-amber-700">⌛</span> 
+              <span className="whitespace-nowrap">Status: Pending Request</span>
+            </div>
+            <button
+              onClick={removeRequest}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap"
+            >
+              Cancel Request
+            </button>
+          </div>
+        )}
+        
+        {/* No button shown for accepted requests */}
       </div>
 
-      {/* Info Grid */}      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Info Grid */}      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left Sub-Column */}
         <div className="flex flex-col gap-4">
           {/* About Me */}
@@ -166,7 +259,8 @@ export default function Psychologist() {
             </h3>
             <p className="text-sm text-heading2">{psychologist.languages.join(", ")}</p>
           </div>
-        </div>        {/* Right Sub-Column */}
+        </div>        
+        {/* Right Sub-Column */}
         <div className="flex flex-col gap-4">
           {/* Experience */}
           <div className="bg-[#FFFEFE] p-4 rounded-xl border border-[#D7E2FE]">
