@@ -467,19 +467,19 @@ export default function DoctorsPage() {
                         className={`px-4 py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-2 border ${filterType === "experience" ? 'bg-white border-blue-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("experience")}
                     >
-                        <span className={`${filterType === "experience" ? 'text-green-600' : 'text-blue-600'}`}>⧖</span> Sort by Experience
+                        <span className={`${filterType === "experience" ? 'text-green-600' : 'text-blue-600'}`}>🧭</span> Sort by Experience
                     </button>
                     <button 
                         className={`px-4 py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-2 border ${filterType === "rating" ? 'bg-white border-yellow-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("rating")}
                     >
-                        <span className="text-yellow-400">★</span> Highest Rated
+                        <span className="text-yellow-400">⭐</span> Highest Rated
                     </button>
                     <button 
                         className={`px-4 py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-2 border ${filterType === "specialty" ? 'bg-white border-purple-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("specialty")}
                     >
-                        <span className="text-blue-500">♦</span> Specialties
+                        <span className="text-blue-500">💎</span> Specialties
                     </button>
                 </div>
                   {/* Search inputs and help text in one row */}
@@ -492,7 +492,7 @@ export default function DoctorsPage() {
                             value={searchCity}
                             onChange={(e) => setSearchCity(e.target.value)}
                         />
-                        <span className="absolute left-3 top-2.5">🔍</span>
+                        <span className=" text-[#444444] absolute left-3 top-2">🔍</span>
                     </div>
                     <div className="relative">
                         <input
@@ -502,18 +502,18 @@ export default function DoctorsPage() {
                             value={searchSpecialty}
                             onChange={(e) => setSearchSpecialty(e.target.value)}
                         />
-                        <span className="absolute left-3 top-2.5">🔍</span>
+                        <span className="absolute left-3 top-2">🔍</span>
                     </div>
                       <div className="bg-[#ECBDF94D]  rounded-full px-5 py-2 flex items-center gap-2 shadow-sm border border-purple-100">
-                        <span className="text-[#1E3CA7] font-weight-600">Not sure who to choose?</span>
-                        <a href="#" className="text-indigo-800 font-medium">View profiles to learn more</a>
+                        <span className="text-[#1E3CA7] font-weight-600 cursor-default">Not sure who to choose?</span>
+                        <span className="text-indigo-800 font-weight-600 cursor-default">View profiles to learn more</span>
                     </div>
                 </div>
                 
                 {/* Doctors grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {sortedDoctors.map((doctor) => (
-                        <div key={doctor.id} className="bg-white bg-opacity-95 rounded-xl p-6 shadow border-0">
+                        <div key={doctor.id} className="bg-white bg-opacity-95 rounded-xl p-6 shadow border-0 h-[300px] flex flex-col">
                             <div className="flex items-start gap-4">
                                 {/* Profile image */}
                                 <div className="rounded-full overflow-hidden w-20 h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
@@ -537,7 +537,8 @@ export default function DoctorsPage() {
                                 </div>
                             </div>
                             
-                            {/* Doctor details */}                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-3 text-gray-700 text-sm font-weight-400">
+                            {/* Doctor details - fixed 2x2 grid with consistent spacing */}
+                            <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-3 text-gray-700 text-sm font-weight-400">
                                 <div className="flex items-center gap-2">
                                     <span className="text-red-500">📍</span>
                                     <span>Location: {doctor.location}</span>
@@ -555,35 +556,43 @@ export default function DoctorsPage() {
                                     <span>Expertise: {doctor.expertise.join(", ")}</span>
                                 </div>
                             </div>
-                              {/* Action buttons */}
-                            <div className="mt-5 flex justify-between">                                <button 
-                                    onClick={() => {
-                                        // Save selected doctor in localStorage
-                                        localStorage.setItem('selectedDoctor', JSON.stringify(doctor));
-                                        router.push('/AssociatedPsychologist');
-                                    }} 
-                                    className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700">
-                                    <span>💜</span> View Profile
-                                </button>
+                            
+                            {/* Status and buttons section - using mt-auto to push to bottom */}
+                            <div className="mt-auto pt-4 flex flex-col items-center">
+                                {/* Status shown above both buttons when pending */}
+                                {doctor.requestStatus === 'pending' && (
+                                    <div className="mb-3 flex justify-center items-center gap-2 font-weight-700 text-[#1E3CA7]">
+                                        <span className="font-weight-700 text-[#1E3CA7]">⌛</span> Status: Pending Request
+                                    </div>
+                                )}
                                 
-                                {doctor.requestStatus === 'pending' ? (
-                                    <div className="flex flex-col items-end">
-                                        <div className="text-blue-700 mb-1.5 flex items-center gap-2 font-medium">
-                                            <span className="text-amber-700">⌛</span> Status: Pending Request
-                                        </div>                                        <button 
+                                {/* Buttons in a row */}
+                                <div className="flex justify-center gap-4 w-full">
+                                    <button 
+                                        onClick={() => {
+                                            localStorage.setItem('selectedDoctor', JSON.stringify(doctor));
+                                            router.push('/AssociatedPsychologist');
+                                        }} 
+                                        className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700">
+                                        <span>💜</span> View Profile
+                                    </button>
+                                    
+                                    {doctor.requestStatus === 'pending' ? (
+                                        <button 
                                             onClick={() => removeRequest(doctor.id)} 
-                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-1.5 rounded-full text-sm font-bold font-weight-700"
+                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full text-sm font-bold font-weight-700"
                                         >
                                             Remove Request
                                         </button>
-                                    </div>
-                                ) : (                                    <button 
-                                        onClick={() => sendRequest(doctor.id)} 
-                                        className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700"
-                                    >
-                                        🤝 Send Request
-                                    </button>
-                                )}
+                                    ) : (
+                                        <button 
+                                            onClick={() => sendRequest(doctor.id)} 
+                                            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700"
+                                        >
+                                            🤝 Send Request
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
