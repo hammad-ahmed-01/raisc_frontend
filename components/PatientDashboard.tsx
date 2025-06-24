@@ -84,8 +84,7 @@ export default function PatientDashboard({ user }: { user: any }) {
                                 You are connected with <strong className="text-green-700">doctor1</strong>.
                             </p>
                         </div>
-                    )}
-
+                    )}]
                     {/* Resources Section */}
                     <div className="bg-white p-6 rounded-xl shadow-md">
                         <h2 className="text-xl font-semibold text-green-700">Helpful Resources</h2>

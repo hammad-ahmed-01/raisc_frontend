@@ -1,5 +1,5 @@
 import HeroSection from './LandingPage/hero';
-import AboutSection from './LandingPage/About';
+import AboutSection from './LandingPage/About/page';
 import ServicesSection from './LandingPage/Services/page';
 import TestimonialSection from './LandingPage/Testimonials';
 import ContactSection from './LandingPage/Contact';

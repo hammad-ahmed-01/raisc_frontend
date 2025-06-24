@@ -1,25 +1,106 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const testimonials = [
+  {
+    name: 'Sarah J.',
+    condition: 'Anxiety Management',
+    image: '/testimonials/sarah.jpg', // Make sure this image exists in your public directory
+    text: 'RAISC has been life-changing for me. The therapist I was matched with understood my anxiety issues perfectly, and I\'ve made more progress in three months than I did in years of trying to manage on my own.',
+  },
+  {
+    name: 'Omar K.',
+    condition: 'Stress & Burnout',
+    image: '/testimonials/omar.jpg',
+    text: 'Thanks to RAISC, I learned how to manage my stress and set boundaries. Their platform is incredibly user-friendly, and the support is amazing.',
+  },
+  {
+    name: 'Aisha M.',
+    condition: 'Depression Support',
+    image: '/testimonials/aisha.jpg',
+    text: 'Finding the right therapist was effortless. The sessions were flexible, and I felt seen and heard for the first time in a long while.',
+  },
+];
 
 export default function TestimonialSection() {
+  const [current, setCurrent] = useState(0);
+  const total = testimonials.length;
+
+  const nextTestimonial = () => setCurrent((current + 1) % total);
+  const prevTestimonial = () => setCurrent((current - 1 + total) % total);
+
+  const { name, condition, image, text } = testimonials[current];
+
   return (
-    <section id="testimonials" className="text-center min-h-screen px-4 py-16">
-      <h2 className="inline-block px-8 py-3 text-heading font-bold text-2xl rounded-full border border-heading bg-[#F1F4FB] shadow-md mb-[6px]">
+    <section
+      id="testimonials"
+      className="relative text-center min-h-screen px-4 py-16 bg-blue-50 overflow-hidden"
+    >
+      <h2 className="text-heading font-bold text-2xl mb-[6px]">
         What Our Clients Say
       </h2>
-      <h2 className="text-heading2 mt-8 mb-2 max-w-xl mx-auto">
+      <h2 className="text-heading2 mt-2 mb-8 max-w-xl mx-auto">
         Real stories from people who have transformed their lives through our platform.
       </h2>
-      <div className="bg-gradient-to-r from-[#1E3CA7] via-[#DBE3FF] to-[#0C1741] p-4 rounded-[40px] max-w-3xl mt-12 mx-auto">
-        <div className="bg-white rounded-[36px] p-8 text-center">
-          <p className="text-normal text-lg leading-relaxed">
-            "RAISC has been life-changing for me. The therapist I was matched with understood my anxiety issues perfectly,
-            and I've made more progress in three months than I did in years of trying to manage on my own."
+
+      {/* Testimonial Container */}
+      <div className="p-6 rounded-[40px] bg-[#FFD2DC] max-w-3xl mx-auto flex flex-col md:flex-row items-center gap-8 shadow-xl">
+        {/* Left - Image */}
+        <div className="flex-shrink-0">
+          <img
+            src={image}
+            alt={name}
+            className="w-40 h-40 object-cover rounded-full border-4 border-white shadow-lg"
+          />
+        </div>
+
+        {/* Right - Text */}
+        <div className="text-left">
+          <p className="text-lg text-normal text-center leading-relaxed mb-4">
+            “{text}”
           </p>
-          <p className="text-normal mt-4 font-medium">Sarah J.</p>
-          <p className="text-normal">Anxiety Management</p>
+          <p className="font-medium text-heading text-center text-base">{name}</p>
+          <p className="text-normal text-center text-sm">{condition}</p>
         </div>
       </div>
 
+      {/* Navigation Arrows and Dots */}
+      <div className="mt-8 flex flex-col items-center">
+        {/* Arrows */}
+        <div className="flex items-center gap-6">
+          <button
+            onClick={prevTestimonial}
+            aria-label="Previous"
+            className="p-2 rounded-full text-heading2 bg-white shadow hover:bg-gray-100 transition"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={nextTestimonial}
+            aria-label="Next"
+            className="p-2 rounded-full text-heading2 bg-white shadow hover:bg-gray-100 transition"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+
+        {/* Pagination Dots */}
+        <div className="flex gap-2 mt-4">
+          {testimonials.map((_, index) => (
+            <span
+              key={index}
+              className={`h-3 w-3 rounded-full transition-all ${
+                index === current ? 'bg-blue-600 w-5' : 'bg-gray-300'
+              }`}
+            ></span>
+          ))}
+        </div>
+        <div className="py-2 text-heading2">
+          <p>[Add your own experience]</p>
+        </div>
+      </div>
     </section>
   );
 }
