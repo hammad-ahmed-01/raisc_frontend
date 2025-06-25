@@ -3,7 +3,7 @@ import AboutSection from './LandingPage/About/page';
 import ServicesSection from './LandingPage/Services/page';
 import TestimonialSection from './LandingPage/Testimonials';
 import ContactSection from './LandingPage/Contact';
-import Footer from './LandingPage/constants/footer';
+import Footer from '@/components/LatestFooter';
 import Navbar from './LandingPage/constants/navbar';
 
 export default function Home() {
