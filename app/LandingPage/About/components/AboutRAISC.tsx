@@ -1,6 +1,7 @@
 import React from 'react';
 import FeatureCard from './FeatureCard';
 import Button from './Button';
+import Link from 'next/link'
 
 const AboutRAISC: React.FC = () => {
   return (
@@ -24,10 +25,12 @@ const AboutRAISC: React.FC = () => {
 
             <p className="font-medium mb-4">Ready to start your journey?</p>
             <div className="flex flex-wrap gap-4">
-              <Button text="Get Started Today" variant="primary" />
-              <Button text="Learn More About Us" variant="secondary" />
+                <Button text="Get Started Today" variant="primary" />
+                <Link href="/about" passHref>
+                    <Button text="Learn More About Us" variant="secondary" />
+                </Link>
+                </div>
             </div>
-          </div>
 
           {/* Right Column */}
           <div>
