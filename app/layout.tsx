@@ -1,6 +1,4 @@
 import { ReactNode } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
 
