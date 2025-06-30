@@ -6,7 +6,7 @@ import OurTeamSection from './components/OurTeamSection';
 
 export default function Home() {
   return (
-    <main className="bg-white">
+    <main id = "about" className="bg-white">
       <Navbar />
       <AboutUsSection />
       <OurMissionSection />
