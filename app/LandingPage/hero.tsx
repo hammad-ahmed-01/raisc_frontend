@@ -40,9 +40,11 @@ export default function HeroSection() {
             <button onClick={handleGetStarted} className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90">
               Get Started
             </button>
-            <button className="bg-white border-2 border-black text-black py-2 px-6 rounded-full shadow-sm hover:bg-blue-100">
-              Learn More
-            </button>
+            <a href="#about">
+              <button className="bg-white border-2 border-black text-black py-2 px-6 rounded-full shadow-sm hover:bg-blue-100 transition duration-200">
+                Learn More
+              </button>
+            </a>
           </div>
         </div>
 

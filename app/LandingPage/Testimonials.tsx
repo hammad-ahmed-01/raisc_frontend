@@ -38,6 +38,13 @@ export default function TestimonialSection() {
       id="testimonials"
       className="relative text-center min-h-screen px-4 py-16 bg-blue-50 overflow-hidden"
     >
+      <div className="mb-8">
+         <img
+           src="/testimonials.png" 
+           alt="Services Icon"
+           className="mx-auto w-32 h-20"
+         />
+      </div>
       <h2 className="text-heading font-bold text-2xl mb-[6px]">
         What Our Clients Say
       </h2>
