@@ -56,10 +56,10 @@ export default function Quote() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg px-12 py-10 flex items-center justify-between max-w-4xl mx-auto mt-12 text-[#1E3CA7]">
+    <div className="bg-white rounded-2xl shadow-lg px-4 lg:px-12 py-6 lg:py-10 flex flex-col lg:flex-row items-center justify-between max-w-4xl mx-auto mt-8 lg:mt-12 text-[#1E3CA7]">
       {/* Back Arrow */}
       <button
-        className="text-3xl text-[#1E3CA7] hover:opacity-80 transition bg-transparent border-none p-0"
+        className="text-2xl lg:text-3xl text-[#1E3CA7] hover:opacity-80 transition bg-transparent border-none p-0 order-2 lg:order-1 mt-4 lg:mt-0"
         style={{ background: "none", border: "none" }}
         aria-label="Previous quote"
         onClick={handlePrevious}
@@ -68,21 +68,21 @@ export default function Quote() {
       </button>
 
       {/* Quote Content */}
-      <div className="flex flex-col text-center sm:text-left flex-1 px-6">
-        <div className="flex items-center justify-center sm:justify-start text-center gap-3 text-lg sm:text-xl font-medium">
-          <FaFeatherAlt className="text-pink-400 sm:text-5xl" />
-          <span>
+      <div className="flex flex-col text-center flex-1 px-2 lg:px-6 order-1 lg:order-2">
+        <div className="flex flex-col lg:flex-row items-center justify-center text-center gap-3 text-base lg:text-lg xl:text-xl font-medium">
+          <FaFeatherAlt className="text-pink-400 text-3xl lg:text-5xl mb-2 lg:mb-0" />
+          <span className="text-sm lg:text-base xl:text-lg">
             "{quotes[currentQuote].text}"
           </span>
         </div>
-        <span className="text-sm sm:text-base text-center text-gray-600 mt-4 font-normal">
+        <span className="text-xs lg:text-sm xl:text-base text-center text-gray-600 mt-2 lg:mt-4 font-normal">
           — {quotes[currentQuote].author}
         </span>
       </div>
 
       {/* Forward Arrow */}
       <button
-        className="text-3xl text-[#1E3CA7] hover:opacity-80 transition bg-transparent border-none p-0"
+        className="text-2xl lg:text-3xl text-[#1E3CA7] hover:opacity-80 transition bg-transparent border-none p-0 order-3 mt-4 lg:mt-0"
         style={{ background: "none", border: "none" }}
         aria-label="Next quote"
         onClick={handleNext}

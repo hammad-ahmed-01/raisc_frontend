@@ -102,32 +102,32 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   };
 
   return (
-    <div className="bg-[#F6FDFE] shadow-md p-6 rounded-2xl w-full max-w-sm text-heading2">
-      <h2 className="text-heading2 bg-[#D7E2FE] text-xl font-semibold p-4 mb-6 rounded-full text-center">
+    <div className="bg-[#F6FDFE] shadow-md p-3 sm:p-6 rounded-2xl w-full max-w-[280px] sm:max-w-sm text-heading2">
+      <h2 className="text-heading2 bg-[#D7E2FE] text-sm sm:text-xl font-semibold p-2 sm:p-4 mb-4 sm:mb-6 rounded-full text-center">
         Choose Your Therapist
       </h2>
 
       {hasRequest && doctor ? (
         // Selected doctor with status
         <>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
             <img
               src={doctor.profile_image || "/doctor-avatar.png"}
               alt="Therapist"
-              className="w-20 h-20 rounded-full border-heading border-2 object-cover"
+              className="w-12 sm:w-20 h-12 sm:h-20 rounded-full border-heading border-2 object-cover"
             />
             <div className="flex flex-col">
-              <p className="text-blue-800 font-semibold text-lg">{doctor.name || "Dr. Ailah Ahmed"}</p>
-              <p className="text-blue-500 text-sm">{doctor.specialization || "Cognitive Therapy"}</p>
-              <p className="text-yellow-500 text-sm">⭐ {doctor.rating || "4.7"} Rating</p>
+              <p className="text-blue-800 font-semibold text-sm sm:text-lg">{doctor.name || "Dr. Ailah Ahmed"}</p>
+              <p className="text-blue-500 text-xs sm:text-sm">{doctor.specialization || "Cognitive Therapy"}</p>
+              <p className="text-yellow-500 text-xs sm:text-sm">⭐ {doctor.rating || "4.7"} Rating</p>
             </div>
           </div>
 
           {requestStatus === 'pending' && (
             <>
-              <div className="mt-2 mb-4 text-sm font-semibold flex items-center justify-center gap-2 text-heading2">
+              <div className="mt-2 mb-3 sm:mb-4 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 sm:gap-2 text-heading2">
                 <span>Status:</span>
-                <Hourglass size={16} />
+                <Hourglass size={14} className="sm:w-4 sm:h-4" />
                 <span>Pending Request</span>
               </div>
 
@@ -162,7 +162,7 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
                     }
                   }
                 }}
-                className="w-full bg-gray-200 text-blue-800 px-4 py-2 rounded-full shadow hover:bg-gray-300 transition"
+                className="w-full bg-gray-200 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow hover:bg-gray-300 transition text-xs sm:text-sm"
               >
                 Cancel Request
               </button>
@@ -170,33 +170,33 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
           )}
 
           {requestStatus === 'accepted' && (
-            <div className="mt-2 mb-4 text-sm font-semibold flex items-center justify-center gap-2 text-green-600">
+            <div className="mt-2 mb-3 sm:mb-4 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 sm:gap-2 text-green-600">
               <span>✅ Connected Successfully</span>
             </div>
           )}
         </>
       ) : (
         // Show recommended therapists to choose from
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:gap-4">
           {recommendedDoctors.map((recommendedDoctor) => (
-            <div key={recommendedDoctor.id} className="border border-blue-100 rounded-xl p-3 hover:bg-blue-50 transition">
-              <div className="flex items-center gap-3">
+            <div key={recommendedDoctor.id} className="border border-blue-100 rounded-xl p-2 sm:p-3 hover:bg-blue-50 transition">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <img
                   src={recommendedDoctor.profile_image}
                   alt={recommendedDoctor.name}
-                  className="w-14 h-14 rounded-full border-blue-200 border object-cover"
+                  className="w-10 sm:w-14 h-10 sm:h-14 rounded-full border-blue-200 border object-cover"
                 />
                 <div className="flex flex-col flex-1">
-                  <p className="text-blue-800 font-semibold">{recommendedDoctor.name}</p>
-                  <p className="text-blue-500 text-xs">{recommendedDoctor.specialization}</p>
+                  <p className="text-blue-800 font-semibold text-xs sm:text-sm">{recommendedDoctor.name}</p>
+                  <p className="text-blue-500 text-[10px] sm:text-xs">{recommendedDoctor.specialization}</p>
                   <div className="flex items-center mt-1">
-                    <span className="text-yellow-500 text-xs">⭐ {recommendedDoctor.rating}</span>
-                    <span className="text-gray-400 text-xs ml-2">• {recommendedDoctor.location}</span>
+                    <span className="text-yellow-500 text-[10px] sm:text-xs">⭐ {recommendedDoctor.rating}</span>
+                    <span className="text-gray-400 text-[10px] sm:text-xs ml-1 sm:ml-2">• {recommendedDoctor.location}</span>
                   </div>
                 </div>
                 <button 
                   onClick={() => sendRequest(recommendedDoctor)}
-                  className="bg-[#FFF8EC] hover:bg-yellow-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold"
+                  className="bg-[#FFF8EC] hover:bg-yellow-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold"
                 >
                   Request
                 </button>
@@ -206,12 +206,12 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         </div>
       )}
 
-      <hr className="my-5 text-[#D0E3FFC7]" />
+      <hr className="my-3 sm:my-5 text-[#D0E3FFC7]" />
 
       <div className="flex justify-center">
         <button 
           onClick={onViewMoreClick}
-          className="w-fit flex items-center justify-center bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 rounded-full shadow-sm hover:opacity-90 transition"
+          className="w-fit flex items-center justify-center bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-full shadow-sm hover:opacity-90 transition text-xs sm:text-sm"
         >
           View more
         </button>

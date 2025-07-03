@@ -1,4 +1,5 @@
 import Sidebar from '@/components/Sidebar/Sidebar';
+import LatestFooter from '@/components/LatestFooter';
 
 export default function DashboardLayout({
   children,
@@ -16,6 +17,7 @@ export default function DashboardLayout({
       <main className="flex-1 w-full">
         {children}
       </main>
+      <LatestFooter />
     </div>
   );
 }

@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FaHome, FaHistory, FaQuoteRight, FaRobot, FaUserMd, FaBook, FaUser } from 'react-icons/fa';
+import { FaHome, FaHistory, FaQuoteRight, FaRobot, FaUserMd, FaBook, FaUser, FaBars, FaTimes } from 'react-icons/fa';
 
 const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname(); // Get current path
 
   const menuItems = [
@@ -21,58 +22,85 @@ const Sidebar = () => {
   ];
 
   return (
-    <div
-      className={`fixed left-0 top-0 h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out ${
-        isExpanded ? 'w-64 rounded-r-[24px]' : 'w-20'
-      }`}
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
-    >
-      {/* Logo Section */}
-      <div className="h-20 flex items-center justify-start px-4 relative">
-        <div className="w-12 h-12 flex items-center justify-center rounded-full">
-          <Image
-            src="/logo_white.svg"
-            alt="RAISC Logo"
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
-        </div>
-        {isExpanded && (
-          <span className="absolute left-20 font-bold text-xl">
-            RAISC
-          </span>
-        )}
-      </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white p-3 rounded-full shadow-lg"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+      </button>
 
-      {/* Navigation Items */}
-      <nav className="mt-4">
-        {menuItems.map((item) => {
-          const isActive = Array.isArray(item.path) ? item.path.includes(pathname) : pathname === item.path;
-          return (
-            <Link href={Array.isArray(item.path) ? item.path[0] : item.path} key={item.id}>
-              <div
-                className={`flex items-center h-14 px-6 cursor-pointer transition-colors ${
-                  isActive ? 'bg-white/10 text-white font-semibold' : 'hover:bg-white/5'
-                }`}
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed left-0 top-0 h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out z-40 ${
+          // Desktop behavior
+          'lg:block lg:w-20 lg:hover:w-64 lg:rounded-r-[20px]'
+        } ${
+          // Mobile behavior
+          isMobileMenuOpen ? 'block w-64' : 'hidden lg:block'
+        }`}
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => setIsExpanded(false)}
+      >
+        {/* Logo Section */}
+        <div className="h-20 flex items-center justify-start px-4 relative">
+          <div className="w-12 h-12 flex items-center justify-center rounded-full">
+            <Image
+              src="/logo_white.svg"
+              alt="RAISC Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+          </div>
+          {(isExpanded || isMobileMenuOpen) && (
+            <span className="absolute left-20 font-bold text-xl">
+              RAISC
+            </span>
+          )}
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="mt-4">
+          {menuItems.map((item) => {
+            const isActive = Array.isArray(item.path) ? item.path.includes(pathname) : pathname === item.path;
+            return (
+              <Link 
+                href={Array.isArray(item.path) ? item.path[0] : item.path} 
+                key={item.id}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                <div className="w-8 flex justify-center">
-                  {item.icon}
-                </div>
-                <span
-                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${
-                    isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+                <div
+                  className={`flex items-center h-14 px-6 cursor-pointer transition-colors ${
+                    isActive ? 'bg-white/10 text-white font-semibold' : 'hover:bg-white/5'
                   }`}
                 >
-                  {item.title}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+                  <div className="w-8 flex justify-center">
+                    {item.icon}
+                  </div>
+                  <span
+                    className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${
+                      (isExpanded || isMobileMenuOpen) ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+                    }`}
+                  >
+                    {item.title}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
 };
 
