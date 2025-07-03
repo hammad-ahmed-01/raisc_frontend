@@ -4,6 +4,13 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 export default function ContactSection() {
   return (
     <section id="contact" className="relative px-4 py-16 bg-[#f1f6ff] min-h-screen">
+      <div className="mb-2">
+         <img
+           src="/contact.png" 
+           alt="Services Icon"
+           className="mx-auto w-32 h-20"
+         />
+      </div>
       {/* Heading */}
       <div className="text-center mb-12">
         <h2 className="text-2xl font-bold text-[#1c2c8c] flex items-center justify-center space-x-2">

@@ -6,6 +6,15 @@ import Link from 'next/link'
 const AboutRAISC: React.FC = () => {
   return (
     <section className="py-12 px-4 md:px-16 text-gray-800">
+      {/*
+      <div className="mb-8">
+         <img
+           src="/about.png" 
+           alt="Services Icon"
+           className="mx-auto w-20 h-20"
+         />
+      </div>
+      */}
       <h2 className="text-2xl md:text-3xl text-center font-extrabold text-heading">About RAISC</h2>
       <p className="text-heading2 text-center font-semibold mt-2">Empowering mind through technology and compassion</p>
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border-2 border-blue-200">
