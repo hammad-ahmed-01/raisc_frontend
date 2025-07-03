@@ -449,74 +449,75 @@ export default function DoctorsPage() {
 
 
     return (
-        <div className="min-h-screen py-8" 
+        <div className="min-h-screen py-4 sm:py-8" 
              style={{
                 backgroundImage: "url('/bg/patientbg.png')",
                 backgroundSize: "cover",
                 backgroundPosition: "center"
              }}>
-            <div className="max-w-6xl mx-auto px-4">
-                <div className="text-center mb-6">
-                    <h1 className="text-3xl font-bold text-blue-800 mb-1 font-weight-700">Welcome, {user.username}</h1>
-                    <p className="text-lg text-blue-600">Choose your support companion <span role="img" aria-label="heart">💖</span></p>
+            <div className="max-w-6xl mx-auto px-2 sm:px-4">
+                <div className="text-center mb-4 sm:mb-6">
+                    <h1 className="text-xl sm:text-3xl font-bold text-blue-800 mb-1 font-weight-700">Welcome, {user.username}</h1>
+                    <p className="text-sm sm:text-lg text-blue-600">Choose your support companion <span role="img" aria-label="heart">💖</span></p>
                 </div>
                 
                 {/* Filter options */}
-                <div className="flex flex-wrap justify-center gap-4 mb-6">
+                <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
                     <button 
-                        className={`px-4 py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-2 border ${filterType === "experience" ? 'bg-white border-blue-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
+                        className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "experience" ? 'bg-white border-blue-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("experience")}
                     >
                         <span className={`${filterType === "experience" ? 'text-green-600' : 'text-blue-600'}`}>🧭</span> Sort by Experience
                     </button>
                     <button 
-                        className={`px-4 py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-2 border ${filterType === "rating" ? 'bg-white border-yellow-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
+                        className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "rating" ? 'bg-white border-yellow-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("rating")}
                     >
                         <span className="text-yellow-400">⭐</span> Highest Rated
                     </button>
                     <button 
-                        className={`px-4 py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-2 border ${filterType === "specialty" ? 'bg-white border-purple-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
+                        className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "specialty" ? 'bg-white border-purple-300 font-medium' : 'bg-white border-gray-200 shadow-sm'}`}
                         onClick={() => setFilterType("specialty")}
                     >
                         <span className="text-blue-500">💎</span> Specialties
                     </button>
                 </div>
-                  {/* Search inputs and help text in one row */}
-                <div className="flex flex-wrap justify-center items-center gap-4 mb-7">
-                    <div className="relative">
+
+                {/* Search inputs and help text */}
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4 sm:mb-7">
+                    <div className="relative w-full sm:w-auto">
                         <input
                             type="text"
                             placeholder="Search by city e.g, Lahore"
-                            className="pl-10 pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-64 shadow-sm text-[#444444]"
+                            className="pl-8 sm:pl-10 pr-3 sm:pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
                             value={searchCity}
                             onChange={(e) => setSearchCity(e.target.value)}
                         />
-                        <span className=" text-[#444444] absolute left-3 top-2">🔍</span>
+                        <span className="text-[#444444] absolute left-2 sm:left-3 top-2 text-xs sm:text-sm">🔍</span>
                     </div>
-                    <div className="relative">
+                    <div className="relative w-full sm:w-auto">
                         <input
                             type="text"
                             placeholder="Search by specialties e.g, CBT"
-                            className="pl-10 pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-64 shadow-sm text-[#444444]"
+                            className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
                             value={searchSpecialty}
                             onChange={(e) => setSearchSpecialty(e.target.value)}
                         />
-                        <span className="absolute left-3 top-2">🔍</span>
+                        <span className="absolute left-2 sm:left-3 top-2 text-xs sm:text-sm">🔍</span>
                     </div>
-                      <div className="bg-[#ECBDF94D]  rounded-full px-5 py-2 flex items-center gap-2 shadow-sm border border-purple-100">
-                        <span className="text-[#1E3CA7] font-weight-600 cursor-default">Not sure who to choose?</span>
-                        <span className="text-indigo-800 font-weight-600 cursor-default">View profiles to learn more</span>
+                    <div className="bg-[#ECBDF94D] rounded-full px-3 sm:px-5 py-1.5 sm:py-2 flex flex-col sm:flex-row items-center gap-1 sm:gap-2 shadow-sm border border-purple-100 w-full sm:w-auto">
+                        <span className="text-[#1E3CA7] font-weight-600 cursor-default text-xs sm:text-sm text-center">Not sure who to choose?</span>
+                        <span className="text-indigo-800 font-weight-600 cursor-default text-xs sm:text-sm text-center">View profiles to learn more</span>
                     </div>
                 </div>
                 
                 {/* Doctors grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                     {sortedDoctors.map((doctor) => (
-                        <div key={doctor.id} className="bg-white bg-opacity-95 rounded-xl p-6 shadow border-0 h-[300px] flex flex-col">
-                            <div className="flex items-start gap-4">
+                        <div key={doctor.id} className="bg-white bg-opacity-95 rounded-xl p-3 sm:p-6 shadow border-0 min-h-[280px] sm:h-[300px] flex flex-col">
+                            <div className="flex items-start gap-2 sm:gap-4">
                                 {/* Profile image */}
-                                <div className="rounded-full overflow-hidden w-20 h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
+                                <div className="rounded-full overflow-hidden w-12 sm:w-20 h-12 sm:h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
                                     <Image 
                                         src={doctor.profile_image} 
                                         alt={doctor.name}
@@ -528,66 +529,66 @@ export default function DoctorsPage() {
                                 
                                 {/* Doctor info */}
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-blue-800 font-weight-700">{doctor.name}</h3>
-                                    <p className="text-blue-600 font-weight-400">{doctor.specialization}</p>
+                                    <h3 className="text-sm sm:text-xl font-bold text-blue-800 font-weight-700">{doctor.name}</h3>
+                                    <p className="text-blue-600 font-weight-400 text-xs sm:text-base">{doctor.specialization}</p>
                                     <div className="flex items-center mt-1">
-                                        <span className="text-yellow-400">★</span>
-                                        <span className="ml-1 font-medium text-gray-700 font-weight-400">{doctor.rating} Rating</span>
+                                        <span className="text-yellow-400 text-xs sm:text-base">★</span>
+                                        <span className="ml-1 font-medium text-gray-700 font-weight-400 text-xs sm:text-base">{doctor.rating} Rating</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            {/* Doctor details - fixed 2x2 grid with consistent spacing */}
-                            <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-3 text-gray-700 text-sm font-weight-400">
-                                <div className="flex items-center gap-2">
+                            {/* Doctor details */}
+                            <div className="mt-2 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-2 sm:gap-x-3 text-gray-700 text-xs sm:text-sm font-weight-400">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-red-500">📍</span>
                                     <span>Location: {doctor.location}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-gray-600">💬</span>
                                     <span>Experience: {doctor.experience}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-blue-600">🎓</span>
-                                    <span>{doctor.education}</span>
+                                    <span className="truncate">{doctor.education}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-pink-400">💖</span>
-                                    <span>Expertise: {doctor.expertise.join(", ")}</span>
+                                    <span className="truncate">Expertise: {doctor.expertise.join(", ")}</span>
                                 </div>
                             </div>
                             
-                            {/* Status and buttons section - using mt-auto to push to bottom */}
-                            <div className="mt-auto pt-4 flex flex-col items-center">
-                                {/* Status shown above both buttons when pending */}
+                            {/* Status and buttons section */}
+                            <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center">
                                 {doctor.requestStatus === 'pending' && (
-                                    <div className="mb-3 flex justify-center items-center gap-2 font-weight-700 text-[#1E3CA7]">
+                                    <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
                                         <span className="font-weight-700 text-[#1E3CA7]">⌛</span> Status: Pending Request
                                     </div>
                                 )}
                                 
-                                {/* Buttons in a row */}
-                                <div className="flex justify-center gap-4 w-full">
+                                {/* Buttons */}
+                                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full">
                                     <button 
                                         onClick={() => {
                                             localStorage.setItem('selectedDoctor', JSON.stringify(doctor));
                                             router.push('/AssociatedPsychologist');
                                         }} 
-                                        className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700">
+                                        className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold font-weight-700 text-xs sm:text-sm"
+                                    >
                                         <span>💜</span> View Profile
                                     </button>
                                     
                                     {doctor.requestStatus === 'pending' ? (
                                         <button 
                                             onClick={() => removeRequest(doctor.id)} 
-                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full text-sm font-bold font-weight-700"
+                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold font-weight-700"
                                         >
                                             Remove Request
                                         </button>
                                     ) : (
                                         <button 
                                             onClick={() => sendRequest(doctor.id)} 
-                                            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-6 py-2 rounded-full flex items-center gap-2 font-bold font-weight-700"
+                                            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold font-weight-700 text-xs sm:text-sm"
                                         >
                                             🤝 Send Request
                                         </button>
@@ -600,9 +601,9 @@ export default function DoctorsPage() {
                 
                 {/* Empty state */}
                 {sortedDoctors.length === 0 && (
-                    <div className="text-center py-10">
-                        <p className="text-xl text-gray-600">No doctors found matching your criteria.</p>
-                        <p className="text-gray-500 mt-2">Try adjusting your search filters.</p>
+                    <div className="text-center py-6 sm:py-10">
+                        <p className="text-lg sm:text-xl text-gray-600">No doctors found matching your criteria.</p>
+                        <p className="text-gray-500 mt-2 text-sm sm:text-base">Try adjusting your search filters.</p>
                     </div>
                 )}
             </div>

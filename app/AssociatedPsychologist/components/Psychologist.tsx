@@ -175,74 +175,74 @@ export default function Psychologist() {
   };
 
   return (
-    <div className="flex flex-col gap-4 mt-10">      
+    <div className="flex flex-col gap-2 sm:gap-4 mt-6 sm:mt-10">      
       {/* Header Card */}
-      <div className="flex items-center justify-between bg-white rounded-2xl shadow-lg p-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white rounded-2xl shadow-lg p-3 sm:p-6 gap-3 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
           <img
             src={psychologist.image}
             alt={psychologist.name}
-            className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover"
+            className="w-16 sm:w-20 h-16 sm:h-20 rounded-full border-2 border-blue-300 object-cover"
           />
-          <div>
-            <h2 className="text-lg font-bold font-weight-700 text-heading">{psychologist.name}</h2>
-            <p className="text-heading2 font-weight-400">{psychologist.role}</p>
-            <p className="text-sm text-heading2">
+          <div className="text-center sm:text-left">
+            <h2 className="text-sm sm:text-lg font-bold font-weight-700 text-heading">{psychologist.name}</h2>
+            <p className="text-heading2 font-weight-400 text-xs sm:text-base">{psychologist.role}</p>
+            <p className="text-xs sm:text-sm text-heading2">
               <span className="text-red-500">📍</span> Location: <strong>{psychologist.affiliation}</strong>
             </p>
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center justify-center sm:justify-start gap-1 mt-1">
               <span className="text-yellow-400">★</span>
-              <span className="font-weight-400">{psychologist.rating} Rating</span>
+              <span className="font-weight-400 text-xs sm:text-sm">{psychologist.rating} Rating</span>
             </div>
           </div>
         </div>
         
-        {/* Request action buttons - replace Back to Doctors with appropriate button */}
-        {requestStatus === 'none' && (
-          <button
-            onClick={sendRequest}
-            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-6 py-2 rounded-full flex items-center justify-center gap-2 font-bold whitespace-nowrap"
-          >
-            🤝 Send Request
-          </button>
-        )}
-        
-        {requestStatus === 'pending' && (
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-2 text-blue-700 mb-2">
-              <span className="text-amber-700">⌛</span> 
-              <span className="whitespace-nowrap">Status: Pending Request</span>
-            </div>
+        {/* Request action buttons */}
+        <div className="w-full sm:w-auto flex justify-center">
+          {requestStatus === 'none' && (
             <button
-              onClick={removeRequest}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap"
+              onClick={sendRequest}
+              className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold whitespace-nowrap text-xs sm:text-sm"
             >
-              Cancel Request
+              🤝 Send Request
             </button>
-          </div>
-        )}
-        
-        {/* No button shown for accepted requests */}
+          )}
+          
+          {requestStatus === 'pending' && (
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1 sm:gap-2 text-blue-700 mb-1 sm:mb-2 text-xs sm:text-sm">
+                <span className="text-amber-700">⌛</span> 
+                <span className="whitespace-nowrap">Status: Pending Request</span>
+              </div>
+              <button
+                onClick={removeRequest}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap"
+              >
+                Cancel Request
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Info Grid */}      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
         {/* Left Sub-Column */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:gap-4">
           {/* About Me */}
-          <div className="bg-[#FFF8ECDB] p-4 rounded-xl">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2">
+          <div className="bg-[#FFF8ECDB] p-3 sm:p-4 rounded-xl">
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
               <span role="img" aria-label="about">👤</span> About Me
             </h3>
-            <p className="text-sm text-heading2">
+            <p className="text-xs sm:text-sm text-heading2">
               {psychologist.about}
             </p>
 
             {/* Qualifications */}
-            <h3 className="font-semibold text-heading mt-3 mb-1 flex items-center gap-2">
+            <h3 className="font-semibold text-heading mt-2 sm:mt-3 mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
               <span role="img" aria-label="qualification">🎓</span> Qualification
             </h3>
-            <p className="text-sm text-heading2">
+            <p className="text-xs sm:text-sm text-heading2">
               {psychologist.qualifications.map((qual, index) => (
                 <span key={index}>
                   {qual}
@@ -253,34 +253,35 @@ export default function Psychologist() {
           </div>
 
           {/* Languages */}
-          <div className="bg-[#FFFEFE] p-4 rounded-xl border border-[#D7E2FE]">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2">
+          <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-xl border border-[#D7E2FE]">
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
               <span role="img" aria-label="languages">💬</span> Languages Spoken
             </h3>
-            <p className="text-sm text-heading2">{psychologist.languages.join(", ")}</p>
+            <p className="text-xs sm:text-sm text-heading2">{psychologist.languages.join(", ")}</p>
           </div>
         </div>        
+
         {/* Right Sub-Column */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:gap-4">
           {/* Experience */}
-          <div className="bg-[#FFFEFE] p-4 rounded-xl border border-[#D7E2FE]">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2">
+          <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-xl border border-[#D7E2FE]">
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
               <span role="img" aria-label="experience">🧳</span> Experience
             </h3>
-            <p className="text-sm text-heading2">
+            <p className="text-xs sm:text-sm text-heading2">
               {psychologist.experience}
             </p>
           </div>
 
           {/* Ratings */}
-          <div className="bg-[#FFFEFE] p-4 rounded-2xl border border-[#D7E2FE] shadow-sm">
-            <h3 className="font-semibold text-heading2 text-lg mb-2 flex items-center gap-2">
+          <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-2xl border border-[#D7E2FE] shadow-sm">
+            <h3 className="font-semibold text-heading2 text-sm sm:text-lg mb-2 flex items-center gap-1 sm:gap-2">
               <span>⭐</span> Rating / Reviews
             </h3>
-            <p className="text-heading2 mb-3 flex items-center gap-1">
+            <p className="text-heading2 mb-2 sm:mb-3 flex items-center gap-1 text-xs sm:text-sm">
               <span>⭐</span> {psychologist.rating} rating
             </p>
-            <button className="w-full bg-[#E9F5FE] text-heading2 font-medium py-2 rounded-full hover:bg-blue-100 transition">
+            <button className="w-full bg-[#E9F5FE] text-heading2 font-medium py-1.5 sm:py-2 rounded-full hover:bg-blue-100 transition text-xs sm:text-sm">
               Submit your rating
             </button>
             <RatingStars rating={4.6} />
