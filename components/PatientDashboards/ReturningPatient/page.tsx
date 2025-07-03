@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { QuoteCarousel } from './components/QuoteCarousel';
 import { Resources } from './components/Resources';
 import { TherapistCard } from './components/TherapistCard';
+import TopRightIcons from "./components/Navigation";
 import { ChatBot } from './components/ChatBot';
 
 interface User {
@@ -70,23 +71,25 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
   
   return (
     <div
-      className="flex min-h-screen bg-cover bg-center"
+      className="flex min-h-screen bg-cover bg-center px-2 sm:px-4 lg:px-0"
       style={{ backgroundImage: "url('/bg/returningbg.png')" }}
     >
-      <div className="flex-1 px-6 py-6">
+      <div className="flex-1 px-1 sm:px-2 lg:px-6 py-4 sm:py-6">
         {/* Header */}
+      <TopRightIcons />
+
         <Header name={currentUser?.username || "Hira"} />
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 mt-24 gap-6">
+        <div className="mb-8 sm:mb-16 grid grid-cols-1 lg:grid-cols-3 mt-8 sm:mt-12 lg:mt-24 gap-3 sm:gap-4 lg:gap-6">
           {/* Column 1: Quote + Resources */}
-          <div className="flex flex-col items-center justify-center gap-6">
+          <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 lg:gap-6 order-2 lg:order-1">
             <QuoteCarousel />
             <Resources />
           </div>
 
           {/* Column 2: Therapist Card */}
-          <div className="flex justify-center">
+          <div className="mb-8 sm:mb-16 flex justify-center order-1 lg:order-2">
             <TherapistCard 
               doctor={requestedDoctor}
               hasRequest={!!requestedDoctor}
@@ -96,7 +99,7 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
           </div>
 
           {/* Column 3: ChatBot */}
-          <div className="flex justify-center items-end">
+          <div className="flex justify-center items-end order-3 mb-8 sm:mb-16">
             <ChatBot />
           </div>
         </div>
