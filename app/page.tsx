@@ -5,6 +5,7 @@ import TestimonialSection from './LandingPage/Testimonials';
 import ContactSection from './LandingPage/Contact';
 import Footer from '@/components/LatestFooter';
 import Navbar from './LandingPage/constants/navbar';
+import PatientsPage from './Patient/page';
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
       <TestimonialSection />
       <ContactSection />
       <Footer />
+      <PatientsPage />
     </main>
   );
 }
