@@ -22,3 +22,12 @@ export interface User {
     patient_profile?: PatientProfile;
     doctor_profile?: DoctorProfile;
 }
+
+export interface Patient {
+    id: string;
+    name: string;
+    age: number;
+    gender: 'Male' | 'Female' | 'Other';
+    condition: string;
+}
+
