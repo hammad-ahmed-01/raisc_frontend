@@ -17,7 +17,6 @@ export default function Home() {
       <TestimonialSection />
       <ContactSection />
       <Footer />
-      <PatientsPage />
     </main>
   );
 }
