@@ -28,7 +28,7 @@ export const QuoteSection: React.FC = () => {
     <div 
       className="bg-[#EBF5FF] rounded-[40px] p-6 shadow-md max-w-3xl mx-auto"
       style={{ 
-        boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.05)',
+        boxShadow: '0px 4px 4px 0px #00000040',
         border: '1px solid #65B6F9'
       }}
     >
