@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DoctorDashboard from "@/components/DoctorDashboard";
+import DoctorDashboard from "@/components/DoctorDashboard/page";
 import PatientDashboard from "@/components/PatientDashboards/RegularPatient/page";
 import ReturningPatientDashboard from "@/components/PatientDashboards/ReturningPatient/page";
 import NewPatientDashboard from "@/components/PatientDashboards/NewPatient/page";
