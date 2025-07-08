@@ -28,7 +28,7 @@ export default function Login() {
         //   associated_psychologist: "dr_john_doe",
         //   associated_psychologist_name: "Dr. John Doe",
         //   sent_requests: [], // ID of Dr. Sara Khan who has pending request
-        // },
+        // }
         doctor_profile: {
             professional_information: {
                 specialization: "Psychiatry",
@@ -37,7 +37,7 @@ export default function Login() {
             },
             chatgroup_nickname: "DocDemo",
             rates: "$100/hr"
-    }
+        }
       };
 
       localStorage.setItem("session_key", "dummy-session-key");

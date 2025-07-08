@@ -14,7 +14,10 @@ interface NextSessionBoxProps {
 
 export const NextSessionBox: React.FC<NextSessionBoxProps> = ({ nextSession }) => {
   return (
-    <div className="bg-white border-2 border-[#2196F3] rounded-[24px] p-6 shadow-sm h-full flex flex-col">
+    <div 
+      className="bg-white border-2 border-[#2196F3] rounded-[24px] p-6 shadow-sm h-full flex flex-col"
+      style={{ boxShadow: '0px 4px 4px 0px #00000040' }}
+    >
       <h3 className="text-3xl font-bold text-[#1E3CA7] mb-2 text-center" style={{ fontWeight: 700 }}>
         Next Session
       </h3>

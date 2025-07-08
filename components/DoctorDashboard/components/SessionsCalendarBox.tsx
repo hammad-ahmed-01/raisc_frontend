@@ -52,7 +52,10 @@ export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessio
   };
 
   return (
-    <div className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-2xl p-6 shadow-sm">
+    <div 
+      className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-2xl p-6 shadow-sm"
+      style={{ boxShadow: '0px 4px 4px 0px #00000040' }}
+    >
       <h3 className="text-2xl font-bold text-[#1E3CA7] text-center mb-4">
         Your sessions
       </h3>
