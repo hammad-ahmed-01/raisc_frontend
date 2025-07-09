@@ -50,14 +50,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
         <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="relative">
             <CreateSessionForm />
-
-            {/* Close button */}
-            <button
-              onClick={() => setShowForm(false)}
-              className="absolute -top-4 -right-4 bg-white rounded-full p-1 shadow-md hover:bg-gray-200"
-            >
-              ✕
-            </button>
           </div>
         </div>
       )}
