@@ -9,7 +9,7 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({ text, variant = 'primary' }) => {
   const baseClasses = 'px-6 py-2 rounded-full font-medium shadow-md transition-all';
   const variants = {
-    primary: 'bg-[#DBE3FF] font-semibold text-[#1E3CA7] hover:bg-blue-700',
+    primary: 'bg-[#DBE3FF] font-semibold text-[#1E3CA7] hover:bg-blue-700 hover:text-white',
     secondary: 'bg-white font-semibold text-[#1E3CA7] border border-blue-300 hover:bg-blue-100',
   };
 

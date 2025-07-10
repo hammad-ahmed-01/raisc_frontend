@@ -17,7 +17,6 @@ export default function DashboardLayout({
       <main className="flex-1 w-full">
         {children}
       </main>
-      <LatestFooter />
     </div>
   );
 }

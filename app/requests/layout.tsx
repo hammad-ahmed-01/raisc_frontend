@@ -17,7 +17,6 @@ export default function RequestsLayout({
       <main className="flex-1 w-full">
         {children}
       </main>
-      <LatestFooter />
     </div>
   );
 }
