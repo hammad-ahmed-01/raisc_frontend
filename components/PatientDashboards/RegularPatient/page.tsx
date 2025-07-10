@@ -22,7 +22,7 @@ export default function RegularPatientHome({ user }: RegularPatientHomeProps) {
     >
       <TopRightIcons />
 
-      <div className="relative py-10 px-4 z-10 text-center pt-16 lg:pt-10">
+      <div className="relative ml-8 py-10 px-4 z-10 text-center pt-16 lg:pt-10">
         <h1 className="text-heading text-2xl lg:text-4xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
           Welcome back, {user.username}
         </h1>

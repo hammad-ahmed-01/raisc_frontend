@@ -71,7 +71,7 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
   
   return (
     <div
-      className="flex min-h-screen bg-cover bg-center px-2 sm:px-4 lg:px-0"
+      className="flex min-h-screen bg-cover bg-center ml-8 px-2 sm:px-4 lg:px-0"
       style={{ backgroundImage: "url('/bg/returningbg.png')" }}
     >
       <div className="flex-1 px-1 sm:px-2 lg:px-6 py-4 sm:py-6">

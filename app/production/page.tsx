@@ -7,31 +7,47 @@ export default function SiteInProduction() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#FFFFFF] text-center px-6">
+    <div className="relative flex flex-col items-center justify-center min-h-screen px-6 py-20 bg-[url('/bg/patientbg.png')] bg-cover bg-center text-center">
+      {/* Transparent logo watermark */}
       <img
-        src="/wellbeing.gif"
-        alt="Site in production"
-        className="w-64 h-64 object-contain"
+        src="/raisc-logo.png"
+        alt="RAISC Logo"
+        className="absolute inset-0 w-full h-full object-contain opacity-5 z-0"
       />
 
-      <h1 className="text-3xl md:text-4xl font-bold text-[#4ae3e6] mt-6">
-        We're Launching Soon
-      </h1>
+      {/* Foreground content */}
+      <div className="relative z-10 max-w-2xl">
+        <h1 className="text-2xl md:text-4xl font-bold text-heading2 mb-6">
+          Thank You For Joining RAISC!
+        </h1>
 
-      <p className="text-lg text-normal mt-3 max-w-xl">
-        Our platform is currently under development to serve you better.
-      </p>
+        <p className="text-normal text-lg">
+          We’re thrilled to have you on board.
+        </p>
 
-      <p className="text-md text-normal mt-1">
-        Thank you for your patience.
-      </p>
+        <p className="text-normal text-base mb-6">
+          Our team is working hard to bring you a platform that offers accessible and efficient mental health support.
+        </p>
 
-      <Button
-        className="mt-6 bg-[#4ae3e6] hover:bg-[#279597] text-white font-semibold rounded-full px-6 py-2"
-        onClick={() => router.push("/")}
-      >
-        Back to Home
-      </Button>
+        <p className="text-normal text-base">
+          You’ll be among the first to know when we launch.
+        </p>
+
+        <p className="text-normal text-base mb-6">
+          In the meantime, take a deep breath—your journey to better mental health is about to begin. 
+        </p>
+
+        <p className="text-xl md:text-xl font-bold text-heading2 mb-6">
+          We’ll notify you via email once RAISC is live.
+        </p>
+
+        <Button
+          className="bg-heading2 hover:bg-heading text-white font-semibold rounded-full px-6 py-2"
+          onClick={() => router.push("/")}
+        >
+          Back to Home
+        </Button>
+      </div>
     </div>
   );
 }

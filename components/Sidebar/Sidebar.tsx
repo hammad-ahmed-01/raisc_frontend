@@ -52,13 +52,13 @@ const Sidebar = () => {
         onMouseLeave={() => setIsExpanded(false)}
       >
         {/* Logo Section */}
-        <div className="h-20 flex items-center justify-start px-4 relative">
-          <div className="w-12 h-12 flex items-center justify-center rounded-full">
+        <div className="h-20 flex items-center justify-start px-2 relative">
+          <div className="w-16 h-16 flex items-center justify-center rounded-full">
             <Image
               src="/logo_white.svg"
               alt="RAISC Logo"
-              width={32}
-              height={32}
+              width={64}
+              height={64}
               className="rounded-full"
             />
           </div>

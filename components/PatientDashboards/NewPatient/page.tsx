@@ -19,7 +19,7 @@ export default function NewPatientHome({ user }: NewPatientHomeProps) {
       {/* Reusable top-right icons component */}
       <TopRightIcons />
 
-      <div className="relative min-h-screen py-10 px-4 z-10 pt-16 lg:pt-10">
+      <div className="relative min-h-screen ml-8 py-10 px-4 z-10 pt-16 lg:pt-10">
         <h1 className="text-heading text-2xl lg:text-4xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)] text-center">
           Welcome {user.username} to RAISC
         </h1>
