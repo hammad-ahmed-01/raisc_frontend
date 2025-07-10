@@ -7,7 +7,10 @@ export default function AboutPage() {
   return (
     <section 
       id="about" 
-      className="relative min-h-screen px-4 pt-20 md:pt-24 lg:pt-28 pb-32 bg-blue-50 overflow-hidden text-center"
+      className="relative px-4 py-20 bg-blue-50 min-h-screen overflow-hidden"
+      style={{ 
+        borderBottom: '5px solid #D0E3FFC7'
+      }}
     >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
@@ -19,9 +22,9 @@ export default function AboutPage() {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-6xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <AboutRAISC />
-      </main>
+      </div>
     </section>
   );
 }

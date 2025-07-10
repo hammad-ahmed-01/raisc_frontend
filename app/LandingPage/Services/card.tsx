@@ -5,8 +5,13 @@ import React from "react";
 const Card = ({ image, heading, description, backgroundColor = "#ffffff" }) => {
   return (
     <div
-      className="mt-8 rounded-2xl border"
-      style={{ borderColor: "#2196F3", borderWidth: "2px" }}
+      className="mt-8 rounded-2xl border transition-all duration-300 hover:shadow-lg transform hover:-translate-y-2"
+      style={{
+        borderColor: "#2196F3",
+        borderWidth: "2px",
+        boxShadow: "0px 4px 4px 0px #00000040",
+        borderBottom: "5px solid #D0E3FFC7",
+      }}
     >
       <div
         className="rounded-2xl p-8 flex flex-col h-full"
