@@ -14,6 +14,16 @@ export default function ChatPage() {
     const [loading, setLoading] = useState(false);
     const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
+    const dummyMessages: ChatMessage[] = [
+        { role: "user", content: "Hello, who are you?" },
+        { role: "assistant", content: "I'm your AI assistant. How can I help you today?" },
+        { role: "user", content: "Tell me a joke." },
+        { role: "assistant", content: "Why don’t scientists trust atoms? Because they make up everything!" },
+    ];
+
+    const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
+
     useEffect(() => {
         const session_key = localStorage.getItem("session_key");
         if (session_key) fetchChatHistory(session_key);
@@ -28,17 +38,21 @@ export default function ChatPage() {
     }, [messages]);
 
     const fetchChatHistory = async (session_key: string) => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${session_key}`);
-            if (!response.ok) {
-                console.log("No response");
-            }
-            const data = await response.json();
+        if (isBackendConnected) {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${session_key}`);
+                if (!response.ok) {
+                    console.log("No response");
+                }
+                const data = await response.json();
 
-            console.log(data);
-            setMessages(data.chat_history || []);
-        } catch (error) {
-            console.error("Error fetching chat history:", error);
+                console.log(data);
+                setMessages(data.chat_history || []);
+            } catch (error) {
+                console.error("Error fetching chat history:", error);
+            }
+        } else {
+            setMessages(dummyMessages);
         }
     };
 

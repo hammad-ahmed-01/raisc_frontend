@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Header = () => (
-  <div className="bg-[#EEE7FD] border border-[#D1D5DB] p-6 rounded-[28px] flex flex-col md:flex-row justify-between items-center md:items-stretch min-h-28">
+  <div className="bg-[#EEE7FD] border border-[#D1D5DB] p-6 rounded-[28px] flex flex-col md:flex-row justify-between items-center md:items-stretch min-h-28 font-quicksand">
     {/* Left Column */}
     <div className="flex flex-col justify-center text-center md:text-left">
       <h2 className="text-2xl font-bold text-heading">Welcome, Hira</h2>
