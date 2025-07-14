@@ -1,0 +1,79 @@
+.custom-calendar {
+  background-color: white;
+  color: #1E3CA7; /* Text color for everything */
+  font-weight: normal;
+}
+
+/* Toolbar */
+.custom-calendar .rbc-toolbar {
+  background-color: #D0E9FF;
+  color: #1E3CA7;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Toolbar buttons */
+.custom-calendar .rbc-toolbar button {
+  background-color: #F6E9F9;
+  color: #1E3CA7;
+  font-weight: bold;
+  border: 1px solid #2196F3;
+  padding: 6px 12px;
+  margin-right: 5px;
+  border-radius: 5px;
+}
+
+.custom-calendar .rbc-toolbar button.rbc-active {
+  background-color: #2196F3;
+  color: white;
+}
+
+/* Month view layout */
+.custom-calendar .rbc-month-view {
+  border-color: #2196F3;
+  background-color: white;
+}
+
+/* Weekday header row */
+.custom-calendar .rbc-month-header {
+  background-color: white;
+  color: #1E3CA7;
+}
+
+.custom-calendar .rbc-header {
+  font-weight: 600; /* Semibold for days (Sun, Mon, etc.) */
+  color: #1E3CA7;
+  text-align: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid #2196F3;
+}
+
+/* Date cells */
+.custom-calendar .rbc-month-row {
+  height: 60px;
+}
+
+.custom-calendar .rbc-date-cell {
+  padding: 2px 4px;
+}
+
+.custom-calendar .rbc-day-bg {
+  background-color: white;
+  border: 1px solid #2196F3;
+}
+
+.custom-calendar .rbc-off-range-bg {
+  background-color: #7A8BA0;
+  color: white;
+}
+
+/* Events */
+.custom-calendar .rbc-event {
+  background-color: #D7E2FE;
+  color: #1E3CA7;
+  font-weight: bold;
+  border: none;
+  font-size: 12px;
+  padding: 1px 4px;
+}
