@@ -30,12 +30,16 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
   onBackToDashboard
 }) => {
   return (
-    <div className="w-full md:w-[280px] min-h-full bg-[#B2D5F1] text-heading rounded-tr-3xl rounded-br-3xl p-6 flex flex-col justify-between shadow-lg">
+    <div className="w-full md:w-[280px] min-h-full bg-[#B2D5F1] text-heading rounded-tr-3xl rounded-br-3xl p-6 flex flex-col justify-between shadow-lg font-quicksand">
       <div>
         {/* Back Button */}
         <button
           onClick={onBackToDashboard}
-          className="flex items-center gap-2 bg-white text-heading2 border border-[#1E3CA7] font-semibold px-4 py-2 rounded-full hover:bg-blue-100 transition mb-6"
+          className="flex items-center gap-2 bg-white text-heading2 font-semibold px-4 py-2 rounded-full hover:bg-blue-100 transition mb-6"
+          style={{ 
+            boxShadow: '0px 4px 4px 0px #00000040',
+            border: '1px solid #1E3CA7'
+          }}
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -51,7 +55,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
             <div
               key={chat.id}
               onClick={() => onSelectChat(chat.id)}
-              className="cursor-pointer pl-2 py-1 hover:bg-heading2 rounded text-sm transition"
+              className="cursor-pointer pl-2 py-1 hover:bg-heading2 hover:text-white rounded text-sm transition"
             >
               {chat.title}
             </div>
@@ -67,7 +71,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
             <div
               key={chat.id}
               onClick={() => onSelectChat(chat.id)}
-              className="cursor-pointer pl-2 py-1 hover:bg-heading2 rounded text-sm transition"
+              className="cursor-pointer pl-2 py-1 hover:bg-heading2 hover:text-white rounded text-sm transition"
             >
               {chat.title}
             </div>
@@ -83,7 +87,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
             <div
               key={chat.id}
               onClick={() => onSelectChat(chat.id)}
-              className="cursor-pointer pl-2 py-1 hover:bg-heading2 rounded text-sm transition"
+              className="cursor-pointer pl-2 py-1 hover:text-white hover:bg-heading2 rounded text-sm transition"
             >
               {chat.title}
             </div>
@@ -95,7 +99,11 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
       <div className="pt-6">
         <button
           onClick={onNewChat}
-          className="flex items-center justify-center gap-2 bg-white border border-[#1E3CA7] text-heading font-semibold w-full py-2 rounded-full hover:bg-blue-100 transition"
+          className="flex items-center justify-center gap-2 bg-white text-heading font-semibold w-full py-2 rounded-full hover:bg-blue-100 transition"
+          style={{ 
+            boxShadow: '0px 4px 4px 0px #00000040',
+            border: '1px solid #1E3CA7'
+          }}
         >
           <PencilLine className="w-4 h-4" />
           New Chat
