@@ -44,7 +44,7 @@ export default function Login() {
       localStorage.setItem("user_data", JSON.stringify(dummyUser));
       
       // Route based on user type
-      router.push("/dashboard");
+      router.push("/production");
 
       setIsLoading(false);
       return;
