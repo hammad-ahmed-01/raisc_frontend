@@ -1,0 +1,135 @@
+"use client";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
+export default function ChangePasswordPage() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveChanges = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("New password and confirmation do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const sessionKey = localStorage.getItem("session_key");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/change-password/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${sessionKey}`,
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update password.");
+      alert("Password updated successfully.");
+    } catch (error) {
+      console.error("Error updating password:", error);
+      alert("Something went wrong. Please try again.");
+    }
+
+    setSaving(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#E9F5FE] p-8">
+      <h1 className="text-2xl font-bold text-left text-heading2 mb-12 ml-4">Change Password</h1>
+
+      <div className="flex justify-center">
+        <div className="bg-[#E9F5FE] border border-[#2196F3] rounded-2xl shadow-xl p-6 w-full max-w-xl flex flex-col justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-center text-blue-800 mb-1">Update Your Password</h2>
+            <p className="text-center text-[#444444] mb-6">Enter Your Current Password and a New Password.</p>
+
+            <div className="space-y-4">
+              {/* Current Password */}
+              <div className="relative">
+                <input
+                  type={showCurrent ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current Password"
+                  className="w-full p-3 pr-10 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <span
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-600"
+                  onClick={() => setShowCurrent(!showCurrent)}
+                >
+                  {showCurrent ? <EyeOff size={20} /> : <Eye size={20} />}
+                </span>
+              </div>
+
+              {/* New Password */}
+              <div className="relative">
+                <input
+                  type={showNew ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New Password"
+                  className="w-full p-3 pr-10 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <span
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-600"
+                  onClick={() => setShowNew(!showNew)}
+                >
+                  {showNew ? <EyeOff size={20} /> : <Eye size={20} />}
+                </span>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm New Password"
+                  className="w-full p-3 pr-10 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <span
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-600"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                >
+                  {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Buttons Row */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              onClick={() => {
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+              className="px-5 py-2 rounded-full bg-white border border-[#2196F3] text-heading2 hover:bg-blue-100 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveChanges}
+              disabled={saving}
+              className="px-5 py-2 rounded-full bg-heading2 text-white hover:bg-blue-900 font-semibold"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -6,7 +6,7 @@ const settingsNavItems = [
   { href: "/settings/account", label: "My Account", id: "account" },
   { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
   { href: "/settings/change-password", label: "Change Password", id: "change-password" },
-  { href: "/settings/email", label: "Email", id: "email" },
+  { href: "/settings/change-email", label: "Email", id: "email" },
   { href: "/settings/notifications", label: "Notifications", id: "notifications" },
   { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
   { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
@@ -37,7 +37,7 @@ export default function SettingsSidebar() {
 
       {/* Delete Account Button */}
       <div className="mt-auto py-8">
-        <button className="w-full px-12 py-4 text-left bg-transparent py-2 text-[#A71515] font-semibold text-md hover:bg-red-50 transition-all duration-200">
+        <button className="w-full px-12 py-4 text-center bg-transparent text-[#A71515] font-semibold text-md hover:bg-red-50 transition-all duration-200">
           Delete My Account
         </button>
       </div>
