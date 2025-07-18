@@ -127,9 +127,9 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3">
+    <div className="max-h-[1200px] overflow-y-auto p-3">
       <div className="max-w-5xl mx-auto h-full flex flex-col">
-        <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-8">
+        <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-16">
           Edit Profile
         </h1>
 
@@ -159,12 +159,12 @@ export default function EditProfilePage() {
                   <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">
                     {profile.display_name}
                   </h2>
-                  <p className="text-sm text-[#1E3CA7]">
+                  <p className="text-md text-[#1E3CA7]">
                     {profile.specialization}
                   </p>
                 </div>
               </div>
-              <button className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700">
+              <button className="bg-[#1E3CA7] text-white px-8 py-2 rounded-full text-md font-semibold hover:opacity-70">
                 Edit Profile Picture
               </button>
             </div>
@@ -172,11 +172,11 @@ export default function EditProfilePage() {
 
           {/* Profile Fields */}
           <div
-            className="bg-white rounded-2xl mt-6 px-4 py-2 mb-4"
+            className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2"
             style={{ border: "1px solid #2196F3" }}
           >
             {/* Display Name */}
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
               <div>
                 <label className="text-base font-bold text-[#444444]">Display Name</label>
                 {editingField === 'display_name' ? (
@@ -185,7 +185,7 @@ export default function EditProfilePage() {
                       type="text"
                       value={tempValue}
                       onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      className="px-2 py-1 border border-gray-300 rounded text-md"
                     />
                     <button
                       onClick={() => handleSave('display_name')}
@@ -201,13 +201,13 @@ export default function EditProfilePage() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-sm text-[#444444] mt-1">{profile.display_name}</p>
+                  <p className="text-md text-[#444444] mt-1">{profile.display_name}</p>
                 )}
               </div>
               {editingField !== 'display_name' && (
                 <button
                   onClick={() => handleEdit('display_name', profile.display_name)}
-                  className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700"
+                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
                 >
                   Edit
                 </button>
@@ -215,18 +215,18 @@ export default function EditProfilePage() {
             </div>
 
             {/* Username */}
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
               <div>
                 <label className="text-base font-bold text-[#444444]">Username</label>
-                <p className="text-sm text-[#444444] mt-1">Ali_Hamza123</p>
+                <p className="text-md text-[#444444] mt-1">Ali_Hamza123</p>
               </div>
-              <button className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700">
+              <button className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70">
                 Edit
               </button>
             </div>
 
             {/* Email */}
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
               <div>
                 <label className="text-base font-bold text-[#444444]">Email</label>
                 {editingField === 'email' ? (
@@ -235,7 +235,7 @@ export default function EditProfilePage() {
                       type="email"
                       value={tempValue}
                       onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      className="px-2 py-1 border border-gray-300 rounded text-md"
                     />
                     <button
                       onClick={() => handleSave('email')}
@@ -251,13 +251,13 @@ export default function EditProfilePage() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-sm text-[#444444] mt-1">{profile.email}</p>
+                  <p className="text-md text-[#444444] mt-1">{profile.email}</p>
                 )}
               </div>
               {editingField !== 'email' && (
                 <button
                   onClick={() => handleEdit('email', profile.email)}
-                  className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700"
+                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
                 >
                   Edit
                 </button>
@@ -274,7 +274,7 @@ export default function EditProfilePage() {
                       type="tel"
                       value={tempValue}
                       onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      className="px-2 py-1 border border-gray-300 rounded text-md"
                       placeholder="Add a phone number"
                     />
                     <button
@@ -291,7 +291,7 @@ export default function EditProfilePage() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-md text-gray-500 mt-1">
                     {profile.phone || "You haven't added a phone number yet."}
                   </p>
                 )}
@@ -299,7 +299,7 @@ export default function EditProfilePage() {
               {editingField !== 'phone' && (
                 <button
                   onClick={() => handleEdit('phone', profile.phone)}
-                  className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700"
+                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
                 >
                   Edit
                 </button>
@@ -314,22 +314,22 @@ export default function EditProfilePage() {
           >
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-bold text-[#444444]">Qualification</h3>
-              <button className="bg-[#1E3CA7] text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-700">
+              <button className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70">
                 Edit
               </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <p className="text-sm text-[#444444]">MSc in Clinical Psychology</p>
-                <p className="text-sm text-[#444444]">Certified CBT Therapist</p>
+                <p className="text-md text-[#444444]">MSc in Clinical Psychology</p>
+                <p className="text-md text-[#444444]">Certified CBT Therapist</p>
               </div>
 
               <div className="text-right space-y-1">
-                <p className="text-sm font-semibold text-[#444444]">
+                <p className="text-md font-semibold text-[#444444]">
                   University of XYZ: 2021-2023
                 </p>
-                <p className="text-sm font-semibold text-[#444444]">
+                <p className="text-md font-semibold text-[#444444]">
                   University of XYZ: 2024
                 </p>
               </div>
@@ -337,7 +337,7 @@ export default function EditProfilePage() {
           </div>
 
           {message && (
-            <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-sm">
+            <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-md">
               {message}
             </div>
           )}
