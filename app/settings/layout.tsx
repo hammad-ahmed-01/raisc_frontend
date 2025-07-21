@@ -1,25 +1,14 @@
 "use client";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
-import Sidebar from '@/components/Sidebar/Sidebar';
+
 import SettingsSidebar from '@/components/Settings/SettingsSidebar';
 
-const settingsNavItems = [
-  { href: "/settings/account", label: "My Account", id: "account" },
-  { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
-  { href: "/settings/change-password", label: "Change Password", id: "change-password" },
-  { href: "/settings/change-email", label: "Email", id: "email" },
-  { href: "/settings/notifications", label: "Notifications", id: "notifications" },
-  { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
-  { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
-];
 
 export default function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
 
   return (
     <div className="flex h-screen overflow-hidden bg-contain bg-no-repeat bg-left"
