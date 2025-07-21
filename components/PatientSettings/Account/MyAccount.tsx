@@ -6,143 +6,123 @@ interface PatientProps {
 
 export default function MyAccount({ patient }: PatientProps) {
   return (
-    <div className="h-full overflow-hidden p-5">
-      <div className="max-w-6xl mx-auto h-full flex flex-col">
-        <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-16">
+    <div className="h-full overflow-hidden p-4">
+      <div className="max-w-5xl mx-auto h-full flex flex-col">
+        <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-4">
           My Account
         </h1>
 
+        {/* Main Account Container */}
         <div
-          className="bg-[#E9F5FE] rounded-3xl p-5 relative flex-1"
-          style={{ border: "1px solid #2196F3" }}
+          className="bg-[#E6F3FF] rounded-2xl p-4 relative flex-1 overflow-y-auto"
+          style={{ border: "1px solid #87CEEB" }}
         >
           {/* Patient Profile Header */}
-          <div
-            className="bg-white rounded-2xl p-5 mb-5 absolute top-0 -translate-y-1/2 w-[calc(100%-2.5rem)]"
-            style={{ border: "1px solid #2196F3" }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between mb-4 p-4 rounded-2xl">
+            <div className="flex items-center space-x-3">
                 <div
                   className="w-14 h-14 rounded-full overflow-hidden"
                   style={{ border: "2px solid #1E3CA7" }}
                 >
                   <img
-                    src="/patient-avatar.png"
-                    alt="Patient"
+                    src="/patient.png"
+                    alt="Doctor"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-[#1E3CA7] mb-1">
-                    {patient.displayName}
-                  </h2>
-                  <p className="text-base text-[#1E3CA7] font-normal">
-                    Patient
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-xl font-bold text-[#1E3CA7]">
+                  {patient.displayName || "Ayesha Khan"}
+                </h2>
               </div>
+            </div>
 
-              <div className="text-right">
-                <div className="mb-1">
-                  <span className="text-base font-bold text-[#1E3CA7]">
-                    Sessions: {patient.sessionsCompleted}
-                  </span>
-                </div>
-                <p className="text-md font-normal text-[#444444]">
-                  Last Session: {patient.lastSession}
-                </p>
-              </div>
+            <div className="text-right">
+              <span className="text-sm font-normal text-[#444444]">
+                Last Login: {patient.lastLogin || "17 July,2025"}
+              </span>
             </div>
           </div>
 
-          {/* Account Detail Header */}
-          <div className="flex items-center justify-between pt-10 mb-4">
-            <h3 className="text-xl font-bold text-[#1E3CA7]">Account Detail</h3>
-            <span className="text-md font-normal text-[#444444]">
-              Last Login: {patient.lastLogin}
-            </span>
-          </div>
+          {/* Account Detail Section */}
+          <div
+            className="bg-white rounded-2xl py-4 mb-4"
+            style={{ border: "1px solid #87CEEB" }}
+          >
+            <h3 className="px-4 text-lg font-bold text-[#1E3CA7] mb-4">
+              Account Detail
+            </h3>
 
-          <div className="flex gap-5 mb-5">
-            {/* Left Column */}
-            <div
-              className="w-[60%] bg-white rounded-xl p-4 space-y-4"
-              style={{ border: "1px solid #2196F3" }}
-            >
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
+            <div className="px-4 space-y-3 bg-[#F0F9FFC7] py-4" style={{ borderTop: "1px solid #2196F3", borderBottom: "1px solid #2196F3" }}>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-base font-semibold text-[#000000]">
                   Display Name
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {patient.displayName}
-                </p>
+                </span>
+                <span className="text-base font-normal text-[#444444]">
+                  {patient.displayName || "Ayesha"}
+                </span>
               </div>
 
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Username
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {patient.username}
-                </p>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-base font-semibold text-[#000000]">Username</span>
+                <span className="text-base font-normal text-[#444444]">
+                  {patient.username || "Ayesha_123"}
+                </span>
               </div>
 
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Email
-                </label>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-base font-semibold text-[#000000]">Email</span>
                 <div className="flex items-center space-x-2">
-                  <p className="text-base font-normal mb-0 text-[#444444]">
-                    {patient.email}
-                  </p>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    {patient.emailVerified ? "✓ Verified" : "Not Verified"}
+                  <span className="text-base font-normal text-[#444444]">
+                    {patient.email || "Ayesha123@gmail.com"}
+                  </span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                    <span className="text-green-600 mr-1">✓</span>
+                    Verified
                   </span>
                 </div>
               </div>
+            </div>
+        
+            <div className="pt-2">
+            <button className="text-[#1E3CA7] px-4 bg-transparent text-base font-semibold hover:underline">
+                Add a phone number
+            </button>
+            </div>        
+          </div>
 
-              <div className="flex justify-start">
-                <button className="text-[#1E3CA7] p-0 text-md bg-transparent text-left font-semibold hover:underline">
-                  Add a phone number
-                </button>
-              </div>
+          {/* Bottom Section with Therapy Focus and Sessions */}
+          <div className="flex gap-4 mb-4">
+            <div
+              className="flex-1 bg-white rounded-2xl p-4"
+              style={{ border: "1px solid #87CEEB" }}
+            >
+              <h4 className="text-base font-bold text-[#000000] mb-2">Therapy Focus</h4>
+              <p className="text-sm font-normal text-[#444444]">
+                {patient.therapyFocus || "Managing Stress and Anxiety."}
+              </p>
             </div>
 
-            {/* Right Column */}
-            <div className="w-[40%] flex flex-col gap-4">
-              <div
-                className="bg-white rounded-xl p-4 flex-1 flex flex-col justify-center"
-                style={{ border: "1px solid #2196F3" }}
-              >
-                <label className="text-md font-semibold text-[#444444] block mb-3 text-center">
-                  Therapy Focus
-                </label>
-                <div className="text-center">
-                  <p className="text-base font-normal text-[#444444]">
-                    {patient.therapyFocus}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="bg-white rounded-xl p-4 flex-1 flex flex-col justify-center"
-                style={{ border: "1px solid #2196F3" }}
-              >
-                <label className="text-md font-semibold text-[#444444] text-center">
-                  Sessions Completed: {patient.sessionsCompleted}
-                </label>
-              </div>
+            <div
+              className="flex-1 bg-white rounded-2xl p-4"
+              style={{ border: "1px solid #87CEEB" }}
+            >
+              <h4 className="text-base font-bold text-[#000000] mb-2">
+                Sessions Completed: {patient.sessionsCompleted || "4"}
+              </h4>
+              <p className="text-sm font-normal text-[#444444]">
+                Last Session: {patient.lastSession || "17 July,2025"}
+              </p>
             </div>
           </div>
 
-          {/* Update Profile Link */}
-          <div className="text-center">
-            <p className="text-md font-normal text-[#1E3CA7]">
+          {/* Bottom Link - Positioned at the bottom of container */}
+          <div className="absolute bottom-4 left-0 right-0 text-center">
+            <p className="text-base font-normal text-[#1E3CA7]">
               Want to update your details?{" "}
               <a
                 href="/settings/edit-profile"
-                className="underline font-semibold"
+                className="underline font-semibold hover:text-[#3A59AD]"
               >
                 Go to Edit Profile
               </a>
