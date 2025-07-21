@@ -5,8 +5,6 @@ const goToSettings = () => {
   window.location.href = "/settings";
 }
 
-
-
 export default function TopRightIcons() {
   return (
     <div className="absolute top-5 right-5 flex gap-4 lg:gap-6 z-20">
