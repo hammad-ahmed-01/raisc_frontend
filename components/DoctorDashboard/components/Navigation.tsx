@@ -1,4 +1,9 @@
+// components/TopRightIcons.tsx
 import { FiBell, FiSettings } from "react-icons/fi";
+
+const goToSettings = () => {
+  window.location.href = "/settings";
+}
 
 export default function TopRightIcons() {
   return (
@@ -13,6 +18,7 @@ export default function TopRightIcons() {
       <button
         className="text-2xl lg:text-3xl text-[#1E3CA7] hover:opacity-80 transition bg-transparent border-none p-0"
         style={{ background: "none", border: "none" }}
+        onClick={goToSettings}
         aria-label="Settings"
       >
         <FiSettings />
