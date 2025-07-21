@@ -19,10 +19,15 @@ export default function ChangePasswordPage() {
       return;
     }
 
+    const userData = localStorage.getItem("user_data");
+    const userType = userData ? JSON.parse(userData).user_type : "doctor";
+
+    const user = userType === "doctor" ? "doctor" : "patient";
+
     setSaving(true);
     try {
       const sessionKey = localStorage.getItem("session_key");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/change-password/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/${user}/change-password/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
