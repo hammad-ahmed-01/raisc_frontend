@@ -41,7 +41,7 @@ export default function MyAccount({ patient }: PatientProps) {
               <span className="text-sm font-normal text-[#444444]">
                 Last Login: {patient.lastLogin || "17 July,2025"}
               </span>
-            </div>
+            </div>  
           </div>
 
           {/* Account Detail Section */}
