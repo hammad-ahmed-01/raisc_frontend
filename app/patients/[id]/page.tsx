@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import moment from "moment";
 
 interface ChatbotProfile {
@@ -91,24 +93,160 @@ export default function PatientChatbotProfile() {
         };
     });
 
+const generateReport = () => {
+  const doc = new jsPDF("p", "mm", "a4");
+
+  const userData = localStorage.getItem("user_data");
+  const user = userData ? JSON.parse(userData) : null;
+
+  // Header
+  doc.setFontSize(22);
+  doc.setTextColor("#1e3a8a");
+  doc.text("Chatbot Summary Report", 14, 20);
+
+  doc.setFontSize(12);
+  doc.setTextColor("#4b5563");
+  doc.text(`Generated On: ${moment().format("Do MMM YYYY, h:mm A")}`, 14, 28);
+
+  // Doctor Info Box
+  if (user?.doctor_profile) {
+    const d = user.doctor_profile;
+
+    doc.setFillColor(219, 234, 254); // Light blue background
+    doc.roundedRect(12, 35, 186, 45, 3, 3, "F");
+
+    doc.setFontSize(12);
+    doc.setTextColor("#1e40af");
+    doc.text(`Doctor Name:`, 16, 42);
+    doc.setTextColor("#111827");
+    doc.text(`${user.username}`, 60, 42);
+
+    doc.setTextColor("#1e40af");
+    doc.text(`Email:`, 16, 48);
+    doc.setTextColor("#111827");
+    doc.text(`${user.email}`, 60, 48);
+
+    doc.setTextColor("#1e40af");
+    doc.text(`Specialization:`, 16, 54);
+    doc.setTextColor("#111827");
+    doc.text(`${d.professional_information.specialization}`, 60, 54);
+
+    doc.setTextColor("#1e40af");
+    doc.text(`Experience:`, 16, 60);
+    doc.setTextColor("#111827");
+    doc.text(`${d.professional_information.experience}`, 60, 60);
+
+    doc.setTextColor("#1e40af");
+    doc.text(`Qualifications:`, 16, 66);
+    doc.setTextColor("#111827");
+    doc.text(`${d.professional_information.qualifications}`, 60, 66);
+  }
+
+  // Patient Session Insights
+  doc.setFontSize(14);
+  doc.setTextColor("#1e3a8a");
+  doc.text("Patient Session Insights", 14, 85);
+
+  const sessionTableData = chatbotProfiles.map((profile, index) => [
+    index + 1,
+    moment(profile.date).format("Do MMM, YYYY h:mm A"),
+    profile.session_summary,
+  ]);
+
+  autoTable(doc, {
+    startY: 90,
+    head: [["#", "Date", "Summary"]],
+    body: sessionTableData,
+    styles: {
+      fontSize: 10,
+      textColor: "#1e293b",
+      lineColor: [203, 213, 225],
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: [191, 219, 254],
+      textColor: "#1e3a8a",
+      fontStyle: "bold",
+    },
+    alternateRowStyles: {
+      fillColor: [240, 249, 255],
+    },
+    margin: { left: 14, right: 14 },
+    didDrawPage: (data) => {
+      // Add Semantic Section right after this table
+      const finalY = (data.cursor?.y ?? 0) + 10;
+
+      doc.setFontSize(14);
+      doc.setTextColor("#1e3a8a");
+      doc.text("Semantic Analysis Summary", 14, finalY);
+
+      const sentimentTableData = sentimentData.map((item, idx) => [
+        idx + 1,
+        item.name,
+        item.messages,
+        item.avg.toFixed(2),
+        item.min.toFixed(2),
+        item.max.toFixed(2),
+        item.tone.charAt(0).toUpperCase() + item.tone.slice(1),
+      ]);
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [["#", "Session", "Messages", "Avg Sentiment", "Min", "Max", "Tone"]],
+        body: sentimentTableData,
+        styles: {
+          fontSize: 10,
+          textColor: "#1e293b",
+          lineColor: [203, 213, 225],
+          lineWidth: 0.2,
+        },
+        headStyles: {
+          fillColor: [191, 219, 254],
+          textColor: "#1e3a8a",
+          fontStyle: "bold",
+        },
+        alternateRowStyles: {
+          fillColor: [240, 249, 255],
+        },
+        margin: { left: 14, right: 14 },
+      });
+    },
+  });
+
+  doc.save(`Psychologist_Report_${patientName}.pdf`);
+};
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 py-10">
-            <div className="max-w-7xl mx-auto px-4">
-                <h1 className="text-4xl font-bold text-center text-green-900 mb-6 pt-8">
-                    Chatbot Insights
-                    <span className="block text-lg text-gray-600 font-normal mt-2">
-                        for {patientName}
-                    </span>
-                </h1>
-
-                <div className="flex justify-center mb-8">
-                    <button
-                        onClick={() => router.back()}
-                        className="px-6 py-2 rounded-full bg-gray-700 text-white shadow hover:bg-gray-800 transition"
-                    >
-                        ← Back to Patients List
-                    </button>
+            <div className="max-w-7xl mx-auto px-4 pt-8">
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => router.back()}
+                    className="px-6 py-2 bg-gray-700 text-white font-medium rounded-full hover:bg-gray-800 shadow-md transition"
+                  >
+                    ← Back to Patients List
+                  </button>
                 </div>
+                
+                <div className="max-w-4xl mx-auto text-center mb-12">
+                  <h1 className="text-4xl font-extrabold text-green-900 mb-2">
+                    🧠 Chatbot Insights
+                  </h1>
+                  <p className="text-lg text-gray-600">
+                    for <span className="font-medium text-green-800">{patientName}</span>
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+                    <button
+                      onClick={generateReport}
+                      className="px-6 py-3 bg-green-600 text-white font-medium rounded-full hover:bg-green-700 shadow-md transition"
+                    >
+                      📝 Generate Psychologist Report
+                    </button>
+                  </div>
+                </div>
+
 
                 {sentimentData.length > 0 && (
                     <div className="bg-white rounded-2xl shadow p-6 mb-12">
