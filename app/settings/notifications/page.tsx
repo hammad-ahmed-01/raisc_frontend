@@ -18,7 +18,9 @@ interface PatientNotificationSettings {
   platform_updates: boolean;
 }
 
-type NotificationSettings = DoctorNotificationSettings | PatientNotificationSettings;
+type NotificationSettings =
+  | DoctorNotificationSettings
+  | PatientNotificationSettings;
 
 export default function NotificationsPage() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
@@ -26,7 +28,8 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+  const isBackendConnected =
+    process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
   useEffect(() => {
     const userDataRaw = localStorage.getItem("user_data");
@@ -104,22 +107,38 @@ export default function NotificationsPage() {
     );
   }
 
-  return (
-    <div className="h-full overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-4xl mx-auto h-fit">
-        <h1 className="text-3xl font-bold text-blue-800 mb-6">Notifications</h1>
+  const orderedPatientKeys = [
+    "session_alerts",
+    "reschedule_cancel",
+    "doctor_updates",
+    "platform_updates",
+  ];
 
-        <div className="space-y-4">
-          {Object.entries(settings).map(([key, value]) => (
+  const settingEntries =
+    userType === "patient"
+      ? orderedPatientKeys.map((key) => [key, settings[key as keyof PatientNotificationSettings]])
+      : Object.entries(settings);
+
+  return (
+    <div>
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl text-left font-bold text-heading2 mb-4">
+          Notifications
+        </h1>
+
+        <div className="divide-y divide-[#dce9fb] border border-[#2196F3] rounded-[20px] max-h-[600px] overflow-y-auto">
+          {settingEntries.map(([key, value], idx, arr) => (
             <div
               key={key}
-              className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+              className={`flex items-center justify-between px-6 py-5 bg-white ${
+                idx !== arr.length - 1 ? "border-b border-[#dce9fb]" : ""
+              }`}
             >
               <div>
-                <h3 className="font-medium text-gray-800">
+                <h3 className="font-semibold text-[#444444]">
                   {formatKeyTitle(key)}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mt-1">
                   {getNotificationDescription(key, userType)}
                 </p>
               </div>
@@ -132,14 +151,14 @@ export default function NotificationsPage() {
                   className="sr-only peer"
                   disabled={saving}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#2196F3] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
               </label>
             </div>
           ))}
         </div>
 
         {saving && (
-          <div className="mt-4 text-center text-blue-600">
+          <div className="mt-4 text-center text-blue-600 font-medium">
             Saving changes...
           </div>
         )}
@@ -170,7 +189,13 @@ function getDummySettings(userType: string): NotificationSettings {
 }
 
 function formatKeyTitle(key: string): string {
-  return key
+  const map: Record<string, string> = {
+    session_alerts: "Session Alerts",
+    reschedule_cancel: "Reschedule / Cancel Session",
+    doctor_updates: "Doctor Updates",
+    platform_updates: "Platform Updates",
+  };
+  return map[key] || key
     .replace(/_/g, " ")
     .replace(/\b\w/g, (l) => l.toUpperCase());
 }
@@ -188,12 +213,12 @@ function getNotificationDescription(key: string, userType: string): string {
 
   const patientDescriptions: Record<string, string> = {
     session_alerts: "Receive reminders for upcoming sessions",
-    reschedule_cancel: "Get notified if a session is rescheduled or canceled",
-    doctor_updates: "Alert for request approval",
-    platform_updates: "Stay informed about new features and system updates",
+    reschedule_cancel: "Get notified if a session reschedule or canceled",
+    doctor_updates: "Alert for request approval.",
+    platform_updates: "Stay informed about new features and system updates.",
   };
 
-  return userType === "patient"
+  return userType === "doctor"
     ? doctorDescriptions[key] || ""
     : patientDescriptions[key] || "";
 }
