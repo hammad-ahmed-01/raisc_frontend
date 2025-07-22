@@ -4,27 +4,56 @@ import TopRightIcons from "./components/Navigation";
 import Psychologist from "./components/Psychologist";
 import Association from "./components/Association";
 import { useEffect, useState } from 'react';
+import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 export default function NewPatientHome() {
   const [userName, setUserName] = useState("Patient");
+  const [authError, setAuthError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}api/user/current`);
-          if (response.ok) {
-            const data = await response.json();
-            setUserName(data.name || "Patient");
-          }
-        } catch (error) {
-          console.error("Failed to fetch user data:", error);
-        }
+    const performAuthCheck = async () => {
+      const authResult = await checkAuth();
+      
+      if (!authResult.isAuthenticated) {
+        setAuthError(authResult.error || "Authentication failed");
+        setTimeout(() => {
+          redirectToLogin();
+        }, 2000);
+        return;
       }
+      
+      // Check if user is a doctor (not allowed to access this page)
+      if (authResult.user?.user_type === 'doctor') {
+        setAuthError("Doctors cannot access the Associated Psychologist page");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 2000);
+        return;
+      }
+      
+      setUserName(authResult.user?.username || "Patient");
+      setIsLoading(false);
     };
-    
-    fetchUserData();
+
+    performAuthCheck();
   }, []);
+
+  if (authError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-red-50">
+        <div className="text-center p-6 bg-white rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Unauthorized Access</h2>
+          <p className="text-gray-700 mb-4">{authError}</p>
+          <p className="text-sm text-gray-500">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <p className="text-center text-gray-600 mt-10">Loading...</p>;
+  }
 
   return (
     <div
