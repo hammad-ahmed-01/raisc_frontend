@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import jsPDF from "jspdf";
 
 interface PatientRequest {
     id: number;
@@ -124,6 +125,83 @@ export default function DoctorDashboard({ user }: { user: any }) {
         }
     };
 
+    const downloadRequestPDF = (request: PatientRequest, doctor: any) => {
+      const doc = new jsPDF("p", "mm", "a4");
+
+      // Header
+      doc.setFontSize(18);
+      doc.setTextColor("#1e3a8a");
+      doc.text("Patient Request Summary", 14, 20);
+
+      // Highlighted Patient Name and Email
+      doc.setFontSize(14);
+      doc.setTextColor("#ffffff");
+      doc.setFillColor(59, 130, 246); // blue highlight
+      doc.rect(14, 30, 182, 10, "F");
+      doc.text(`Name: ${request.patient.profile_data.name}`, 18, 37);
+
+      doc.setFillColor(20, 184, 166); // teal highlight
+      doc.rect(14, 45, 182, 10, "F");
+      doc.text(`Email: ${request.patient.email}`, 18, 52);
+
+      // Patient Details
+      doc.setFontSize(12);
+      doc.setTextColor("#1f2937");
+      let y = 65;
+      const spacing = 8;
+
+      doc.text(`Username: ${request.patient.username}`, 14, y); y += spacing;
+      doc.text(`Age: ${request.patient.profile_data.Age}`, 14, y); y += spacing;
+      doc.text(`Gender: ${request.patient.profile_data.Gender}`, 14, y); y += spacing;
+      doc.text(`Family History: ${request.patient.profile_data.History}`, 14, y); y += spacing;
+      doc.text(`Condition: ${request.patient.profile_data.Condition}`, 14, y); y += spacing;
+      doc.text(`Request Status: ${request.status}`, 14, y); y += spacing;
+      doc.text(`Requested At: ${moment(request.requested_at).format("Do MMM YYYY, h:mm A")}`, 14, y); y += spacing + 5;
+
+      // Doctor Info Box
+      doc.setFontSize(14);
+      doc.setTextColor("#1e3a8a");
+      doc.text("Requested Doctor Information", 14, y); y += spacing;
+
+      doc.setFillColor(219, 234, 254); // Light blue background
+      doc.roundedRect(12, y - 4, 186, 45, 3, 3, "F");
+
+      doc.setFontSize(12);
+      doc.setTextColor("#1e40af");
+      doc.text(`Doctor Name:`, 16, y + 4);
+      doc.setTextColor("#111827");
+      doc.text(`${doctor.username}`, 60, y + 4);
+
+      doc.setTextColor("#1e40af");
+      doc.text(`Email:`, 16, y + 10);
+      doc.setTextColor("#111827");
+      doc.text(`${doctor.email}`, 60, y + 10);
+
+      doc.setTextColor("#1e40af");
+      doc.text(`Specialization:`, 16, y + 16);
+      doc.setTextColor("#111827");
+      doc.text(`${doctor.doctor_profile?.professional_information.specialization}`, 60, y + 16);
+
+      doc.setTextColor("#1e40af");
+      doc.text(`Experience:`, 16, y + 22);
+      doc.setTextColor("#111827");
+      doc.text(`${doctor.doctor_profile?.professional_information.experience}`, 60, y + 22);
+
+      doc.setTextColor("#1e40af");
+      doc.text(`Qualifications:`, 16, y + 28);
+      doc.setTextColor("#111827");
+      doc.text(`${doctor.doctor_profile?.professional_information.qualifications}`, 60, y + 28);
+
+      doc.setTextColor("#1e40af");
+      doc.text(`Rates:`, 16, y + 34);
+      doc.setTextColor("#111827");
+      doc.text(`$${doctor.doctor_profile?.rates} / session`, 60, y + 34);
+
+      doc.save(`Request_${request.patient.username}.pdf`);
+    };
+
+
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-100 p-6 md:p-12">
             <h1 className="text-4xl font-extrabold text-green-800 text-center mb-10 pt-6">
@@ -181,25 +259,38 @@ export default function DoctorDashboard({ user }: { user: any }) {
                 <h2 className="text-2xl font-semibold text-green-700 text-center mb-6">📩 Patient Requests</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {requests.map((request) => (
-                        <div key={request.id} className="p-6 bg-white rounded-xl shadow-lg border hover:shadow-2xl transition transform hover:-translate-y-1">
-                            <h3 className="text-xl font-bold text-blue-700 mb-2">{request.patient.username}</h3>
-                            <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
-                            <div className="mt-3 space-y-1 text-sm">
-                                <p><strong>Name:</strong> {request.patient.profile_data.name}</p>
-                                <p><strong>Age:</strong> {request.patient.profile_data.Age}</p>
-                                <p><strong>Gender:</strong> {request.patient.profile_data.Gender}</p>
-                                <p><strong>Family History:</strong> {request.patient.profile_data.History}</p>
-                                <p><strong>Condition:</strong> {request.patient.profile_data.Condition}</p>
-                            </div>
-                            <div className="flex mt-4 space-x-4">
-                                <button onClick={() => openConfirmModal(request, "approved")} className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:scale-105 transition">
-                                    ✅ Accept
-                                </button>
-                                <button onClick={() => openConfirmModal(request, "rejected")} className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:scale-105 transition">
-                                    ❌ Reject
-                                </button>
-                            </div>
+                    <div key={request.id} className="p-6 bg-white rounded-xl shadow-lg border hover:shadow-2xl transition transform hover:-translate-y-1">
+                      <h3 className="text-xl font-bold text-blue-700 mb-2">{request.patient.username}</h3>
+                      <p className="text-gray-700"><strong>Email:</strong> {request.patient.email}</p>
+                      <div className="mt-3 space-y-1 text-sm text-gray-700">
+                        <p><strong>Age:</strong> {request.patient.profile_data.Age}</p>
+                        <p><strong>Gender:</strong> {request.patient.profile_data.Gender}</p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2 italic">📄 More details available in PDF</p>
+
+                      <div className="flex flex-col mt-4 space-y-2">
+                        <div className="flex space-x-4">
+                          <button
+                            onClick={() => openConfirmModal(request, "approved")}
+                            className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:scale-105 transition"
+                          >
+                            ✅ Accept
+                          </button>
+                          <button
+                            onClick={() => openConfirmModal(request, "rejected")}
+                            className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:scale-105 transition"
+                          >
+                            ❌ Reject
+                          </button>
                         </div>
+                        <button
+                          onClick={() => downloadRequestPDF(request, user)}
+                          className="bg-blue-600 text-white w-full px-4 py-2 rounded-md hover:scale-105 transition"
+                        >
+                          🖨️ Download PDF
+                        </button>
+                      </div>
+                    </div>
                     ))}
                 </div>
             </div>
