@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FaHome, FaHistory, FaQuoteRight, FaRobot, FaUserMd, FaBook, FaUser, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaHistory, FaQuoteRight, FaRobot, FaUserMd, FaBook, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 
 const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -99,6 +99,24 @@ const Sidebar = () => {
             );
           })}
         </nav>
+
+        {/* Logout Icon at Bottom */}
+        <div className="absolute bottom-8 left-0 w-full">
+          <Link href="/logout" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="flex items-center h-14 px-6 cursor-pointer transition-colors hover:bg-white/5 text-white w-full">
+              <div className="w-8 flex justify-center">
+                <FaSignOutAlt size={20} />
+              </div>
+              <span
+                className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${
+                  (isExpanded || isMobileMenuOpen) ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+                }`}
+              >
+                Logout
+              </span>
+            </div>
+          </Link>
+        </div>
       </div>
     </>
   );

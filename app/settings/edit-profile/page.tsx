@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import EditPatientProfile from "@/components/PatientSettings/EditProfile/EditProfile";
 import EditDoctorProfile from "@/components/DoctorSettings/EditProfile/EditProfile";
+import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 interface ProfileData {
   display_name: string;
@@ -39,6 +40,8 @@ export default function EditProfilePage() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
   const [message, setMessage] = useState("");
+  const [authVerified, setAuthVerified] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
@@ -81,6 +84,21 @@ export default function EditProfilePage() {
 
     fetchProfile();
   }, [isBackendConnected, userType]);
+
+  useEffect(() => {
+    const performAuthCheck = async () => {
+      const authResult = await checkAuth();
+      if (!authResult.isAuthenticated) {
+        setAuthError(authResult.error || "Authentication required");
+        setTimeout(() => {
+          redirectToLogin();
+        }, 2000);
+        return;
+      }
+      setAuthVerified(true);
+    };
+    performAuthCheck();
+  }, []);
 
   const setDummyProfile = () => {
     if (userType === 'patient') {
@@ -152,7 +170,15 @@ export default function EditProfilePage() {
     setTempValue("");
   };
 
-  if (loading) {
+  if (authError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-xl text-red-600">{authError}</div>
+      </div>
+    );
+  }
+
+  if (!authVerified || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-xl text-gray-600">Loading...</div>

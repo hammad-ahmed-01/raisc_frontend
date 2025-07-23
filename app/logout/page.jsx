@@ -10,7 +10,7 @@ export default function LogoutPage() {
     localStorage.clear();
     
     // Redirect to home page
-    router.push("/");
+    router.push("/login");
   }, [router]);
 
   return (

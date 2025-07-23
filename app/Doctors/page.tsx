@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { checkAuth, redirectToLogin } from "@/lib/auth";
 import Image from "next/image";
 
 interface PatientProfile {
@@ -136,9 +137,35 @@ export default function DoctorsPage() {
     const [searchCity, setSearchCity] = useState("");
     const [searchSpecialty, setSearchSpecialty] = useState("");
     const [filterType, setFilterType] = useState<"experience" | "rating" | "specialty">("experience");
+    const [authError, setAuthError] = useState("");
+    const [authVerified, setAuthVerified] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
+        const performAuthCheck = async () => {
+            const authResult = await checkAuth();
+            if (!authResult.isAuthenticated) {
+                setAuthError(authResult.error || "Authentication failed");
+                setTimeout(() => {
+                    redirectToLogin();
+                }, 2000);
+                return;
+            }
+            if (authResult.user?.user_type === "doctor") {
+                setAuthError("Doctors cannot access the Doctors page");
+                setTimeout(() => {
+                    router.push("/dashboard");
+                }, 2000);
+                return;
+            }
+            setAuthVerified(true);
+        };
+        performAuthCheck();
+    }, [router]);
+
+    useEffect(() => {
+        if (!authVerified) return;
+
         const sessionKey = localStorage.getItem("session_key");
 
         if (!sessionKey) {
@@ -193,7 +220,7 @@ export default function DoctorsPage() {
                 router.push("/login");
             }
         }
-    }, [router]);
+    }, [router, authVerified]);
     
     // Function to fetch doctors from backend
     const fetchDoctors = async (sessionKey: string, userData: User) => {
@@ -437,7 +464,19 @@ export default function DoctorsPage() {
         return 0;
     });
     
-    if (!user) {
+    if (authError) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-red-50">
+                <div className="text-center p-6 bg-white rounded-lg shadow-lg">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Unauthorized Access</h2>
+                    <p className="text-gray-700 mb-4">{authError}</p>
+                    <p className="text-sm text-gray-500">Redirecting...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!authVerified || !user) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-blue-50">
                 <p className="text-xl text-gray-600">Loading...</p>
