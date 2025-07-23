@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 interface DoctorNotificationSettings {
   appointment_reminders: boolean;
@@ -27,6 +28,8 @@ export default function NotificationsPage() {
   const [userType, setUserType] = useState<string>("doctor");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [authVerified, setAuthVerified] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   const isBackendConnected =
     process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
@@ -67,6 +70,21 @@ export default function NotificationsPage() {
     fetchNotificationSettings();
   }, [isBackendConnected]);
 
+  useEffect(() => {
+    const performAuthCheck = async () => {
+      const authResult = await checkAuth();
+      if (!authResult.isAuthenticated) {
+        setAuthError(authResult.error || "Authentication required");
+        setTimeout(() => {
+          redirectToLogin();
+        }, 2000);
+        return;
+      }
+      setAuthVerified(true);
+    };
+    performAuthCheck();
+  }, []);
+
   const handleToggle = async (key: string) => {
     if (!settings) return;
 
@@ -99,7 +117,15 @@ export default function NotificationsPage() {
     }
   };
 
-  if (loading || !settings) {
+  if (authError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-xl text-red-600">{authError}</div>
+      </div>
+    );
+  }
+
+  if (!authVerified || loading || !settings) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-xl text-gray-600">Loading...</div>

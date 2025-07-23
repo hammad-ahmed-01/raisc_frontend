@@ -4,36 +4,41 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import logoDark from "@/public/raisc-logo.png";
 import logoWhite from "@/public/logo_white.svg"; 
+import { useRouter } from "next/navigation";
 
 const sections = ["home", "about", "services", "testimonials", "contact"];
 
 export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
+    // Always update isScrolled for navbar style
     const handleScroll = () => {
-      let closestSection = "home";
-      let minOffset = Number.POSITIVE_INFINITY;
-
       if (window.scrollY > 20) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
       }
 
-      for (const id of sections) {
-        const el = document.getElementById(id);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top >= -100 && rect.top < minOffset) {
-            minOffset = rect.top;
-            closestSection = id;
+      // Only update activeSection on landing page
+      const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+      if (isLandingPage) {
+        let closestSection = "home";
+        let minOffset = Number.POSITIVE_INFINITY;
+        for (const id of sections) {
+          const el = document.getElementById(id);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.top >= -100 && rect.top < minOffset) {
+              minOffset = rect.top;
+              closestSection = id;
+            }
           }
         }
+        setActiveSection(closestSection);
       }
-
-      setActiveSection(closestSection);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -41,9 +46,29 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Set activeSection based on pathname if not on landing page
+  useEffect(() => {
+    const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+    if (!isLandingPage) {
+      // Use the last part of the path as the section name if it matches
+      const path = window.location.pathname.replace("/", "");
+      if (sections.includes(path)) {
+        setActiveSection(path);
+      } else {
+        setActiveSection(""); // No highlight if not a known section
+      }
+    }
+  }, []);
+
   const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+    if (isLandingPage) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      // Navigate to landing page, then scroll to section after navigation
+      window.location.href = id === "home" ? "/" : `/#${id}`;
+    }
   };
 
   return (
@@ -69,29 +94,47 @@ export default function Navbar() {
           <span>RAISC</span>
         </div>
 
-        {/* Navigation Links */}
-        <ul className="flex space-x-6">
-          {sections.map((section) => (
-            <li
-              key={section}
-              className={`capitalize cursor-pointer relative transition-all duration-200 ${
-                activeSection === section
-                  ? `font-semibold after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] ${
-                      isScrolled
-                        ? "text-white after:bg-white"
-                        : "text-black after:bg-black"
-                    }`
-                  : `${
-                      isScrolled ? "text-white" : "text-heading"
-                    } opacity-80 hover:opacity-100`
-              }`}
-              onClick={() => scrollToSection(section)}
+        {/* Navigation Links and Login Button */}
+        <div className="flex items-center space-x-6">
+          <ul className="flex space-x-6">
+            {sections.map((section) => (
+              <li
+                key={section}
+                className={`capitalize cursor-pointer relative transition-all duration-200 ${
+                  activeSection === section
+                    ? `font-semibold after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] ${
+                        isScrolled
+                          ? "text-white after:bg-white"
+                          : "text-black after:bg-black"
+                      }`
+                    : `${
+                        isScrolled ? "text-white" : "text-heading"
+                      } opacity-80 hover:opacity-100`
+                }`}
+                onClick={() => scrollToSection(section)}
+              >
+                {section}
+              </li>
+            ))}
+          </ul>
+          {/* Login Button */}
+          <div>
+            <a
+              href="/login"
+              className={`px-6 py-2 shadow-sm rounded-full font-semibold transition
+                ${
+                  isScrolled
+                    ? "bg-white text-[#1E3CA7] border-none hover:bg-blue-50"
+                    : "bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white hover:opacity-90"
+                }
+              `}
             >
-              {section}
-            </li>
-          ))}
-        </ul>
+              Login
+            </a>
+          </div>
+        </div>
       </div>
     </nav>
   );
 }
+

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import DoctorMyAccount from "@/components/DoctorSettings/Account/MyAccount";
 import PatientMyAccount from "@/components/PatientSettings/Account/MyAccount";
+import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 export interface Doctor {
   id: number;
@@ -35,6 +36,8 @@ export interface Patient {
 
 export default function AccountPage() {
   const [loading, setLoading] = useState(true);
+  const [authVerified, setAuthVerified] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [userTypeS, setUserTypeS] = useState<string>("");
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -42,7 +45,20 @@ export default function AccountPage() {
   const isBackendConnected =
     process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
-
+  useEffect(() => {
+    const performAuthCheck = async () => {
+      const authResult = await checkAuth();
+      if (!authResult.isAuthenticated) {
+        setAuthError(authResult.error || "Authentication required");
+        setTimeout(() => {
+          redirectToLogin();
+        }, 2000);
+        return;
+      }
+      setAuthVerified(true);
+    };
+    performAuthCheck();
+  }, []);
 
   useEffect(() => {
     // Get user type from localStorage
@@ -53,7 +69,6 @@ export default function AccountPage() {
       let userData = userDataRaw ? JSON.parse(userDataRaw) : {};
       const userType = userData ? userData.user_type : "doctor";
       setUserTypeS(userType);
-
 
       if (isBackendConnected) {
         try {
@@ -106,50 +121,56 @@ export default function AccountPage() {
 
   const getDummyPatient = (): Patient => {
     return {
-        displayName: "Ayesha Khan",
-        username: "ayesha_khan22",
-        email: "ayesha.khan22@example.com",
-        emailVerified: true,
-        lastLogin: "19 July, 2025",
-        therapyFocus: "Anxiety & Stress Management",
-        sessionsCompleted: 12,
-        lastSession: "15 July, 2025",
+      displayName: "Ayesha Khan",
+      username: "ayesha_khan22",
+      email: "ayesha.khan22@example.com",
+      emailVerified: true,
+      lastLogin: "19 July, 2025",
+      therapyFocus: "Anxiety & Stress Management",
+      sessionsCompleted: 12,
+      lastSession: "15 July, 2025",
     };
-  }
-
-  const getDummyDoctor = ():Doctor=> {
-    return {
-        id: 1,
-        username: "Ali_Hamza123",
-        email: "AliHamza123@gmail.com",
-        emailVerified: "✓ Verified",
-        display_name: "Dr. Ali Hamza",
-        user_type: "doctor",
-        phone: "+92 300 1234567",
-        last_login: "17 July, 2025",
-        member_since: "Mar, 2024",
-        rating: 4.7,
-        organization: "Pakistan Institute of Mental Health (PIMH)",
-        location: "Rawalpindi, Pakistan",
-        patients_assigned: 8,
-        qualifications: [
-          "MSc in Clinical Psychology",
-          "Certified CBT Therapist",
-        ],
-        university: "University of XYZ",
-        graduation_year: "2021-2023",
-    }
   };
 
+  const getDummyDoctor = (): Doctor => {
+    return {
+      id: 1,
+      username: "Ali_Hamza123",
+      email: "AliHamza123@gmail.com",
+      emailVerified: "✓ Verified",
+      display_name: "Dr. Ali Hamza",
+      user_type: "doctor",
+      phone: "+92 300 1234567",
+      last_login: "17 July, 2025",
+      member_since: "Mar, 2024",
+      rating: 4.7,
+      organization: "Pakistan Institute of Mental Health (PIMH)",
+      location: "Rawalpindi, Pakistan",
+      patients_assigned: 8,
+      qualifications: [
+        "MSc in Clinical Psychology",
+        "Certified CBT Therapist",
+      ],
+      university: "University of XYZ",
+      graduation_year: "2021-2023",
+    };
+  };
 
-  if (loading) {
+  if (authError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-xl text-red-600">{authError}</div>
+      </div>
+    );
+  }
+
+  if (!authVerified || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
   }
-
 
   if (!doctor && !patient) {
     return (

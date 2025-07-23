@@ -22,7 +22,13 @@ export default function PatientsPage() {
         }, 2000);
         return;
       }
-
+      if (authResult.user?.user_type === "patient") {
+        setAuthError("Patients cannot access the Patient page");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
+        return;
+      }
       setAuthVerified(true);
     };
 
@@ -37,7 +43,7 @@ export default function PatientsPage() {
             Unauthorized Access
           </h2>
           <p className="text-gray-700 mb-4">{authError}</p>
-          <p className="text-sm text-gray-500">Redirecting to login page...</p>
+          <p className="text-sm text-gray-500">Redirecting...</p>
         </div>
       </div>
     );
