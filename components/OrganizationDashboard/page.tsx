@@ -209,7 +209,7 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
               style={{
                 width: "90%",
                 overflowY: doctors.length > 3 ? "auto" : "visible",
-                maxHeight: doctors.length > 3 ? "420px" : "none",
+                maxHeight: doctors.length > 3 ? "440px" : "none",
                 boxShadow: "0px 4px 12px 0px #D0E3FFC7",
               }}
             >
@@ -278,12 +278,6 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
               {/* Scrollbar for more than 3 psychologists */}
               {doctors.length > 3 && (
                 <div className="w-full flex justify-center mt-2">
-                  <span
-                    className="text-[#1E3CA7] text-sm"
-                    style={{ fontWeight: 400 }}
-                  >
-                    Scroll to see more psychologists...
-                  </span>
                 </div>
               )}
             </div>
