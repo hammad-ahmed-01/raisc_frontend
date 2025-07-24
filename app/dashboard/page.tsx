@@ -6,7 +6,7 @@ import DoctorDashboard from "@/components/DoctorDashboard/page";
 import PatientDashboard from "@/components/PatientDashboards/RegularPatient/page";
 import ReturningPatientDashboard from "@/components/PatientDashboards/ReturningPatient/page";
 import NewPatientDashboard from "@/components/PatientDashboards/NewPatient/page";
-
+import OrganizationDashboard from "@/components/OrganizationDashboard/page";
 interface PatientProfile {
     level: number;
     associated_psychologist: string | null;
@@ -23,6 +23,19 @@ interface DoctorProfile {
     rates: string;
 }
 
+interface OrganizationProfile {
+    name: string;
+    total_psychologists: number;
+    total_patients: number;
+    sessions_today: number;
+    new_join_requests: number;
+    todays_sessions: {
+        doctor: string;
+        therapy_type: string;
+        time: string;
+    }[];
+}
+
 export interface User {
     id: number;
     username: string;
@@ -30,6 +43,7 @@ export interface User {
     user_type: string;
     patient_profile?: PatientProfile;
     doctor_profile?: DoctorProfile;
+    organization_profile?: OrganizationProfile;
 }
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
@@ -96,9 +110,13 @@ export default function Dashboard() {
         return <PatientDashboard user={user} />;
     }
 
-    // **Returning Patient (Level 1) - Calm & Reassuring**
+    // **Doctor
     if (user.user_type === "doctor") {
         return <DoctorDashboard user={user} />;
+    }
+
+    if (user.user_type === "organization") {
+        return <OrganizationDashboard user={user} />;
     }
 
     return (
