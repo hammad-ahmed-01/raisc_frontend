@@ -22,22 +22,35 @@ export default function Login() {
         id: 2,
         username: "demo_user",
         email: "demo@example.com",
-        user_type: "patient",
-        patient_profile: {
-         level: 0,
-         associated_psychologist: "dr_john_doe",
-         associated_psychologist_name: "Dr. John Doe",
-         sent_requests: [], // ID of Dr. Sara Khan who has pending request
+        user_type: "organization",
+        // patient_profile: {
+        //   level: 0,
+        //   associated_psychologist: "dr_john_doe",
+        //   associated_psychologist_name: "Dr. John Doe",
+        //   sent_requests: []
+        // }
+        // doctor_profile: {
+        //   professional_information: {
+        //     specialization: "Psychiatry",
+        //     experience: "5 years",
+        //     qualifications: "MD, PhD"
+        //   },
+        //   chatgroup_nickname: "DocDemo",
+        //   rates: "$100/hr"
+        // }
+        organization_profile: {
+          name: "Pakistan Institute of Mental Health",
+          total_psychologists: 10,
+          total_patients: 30,
+          sessions_today: 4,
+          new_join_requests: 2,
+          todays_sessions: [
+            { doctor: "Dr. Ali Hamza", therapy_type: "Cognitive Therapy", time: "9:00 AM" },
+            { doctor: "Dr. Alisha", therapy_type: "Cognitive Therapy", time: "11:00 AM" },
+            { doctor: "Dr. Sara Ali", therapy_type: "Cognitive Therapy", time: "10:00 AM" },
+            { doctor: "Dr. Zahra", therapy_type: "Cognitive Therapy", time: "3:00 PM" }
+          ]
         }
-        //  doctor_profile: {
-        //      professional_information: {
-        //          specialization: "Psychiatry",
-        //          experience: "5 years",
-        //          qualifications: "MD, PhD"
-        //      },
-        //      chatgroup_nickname: "DocDemo",
-        //      rates: "$100/hr"
-        //  }
       };
 
       localStorage.setItem("session_key", "dummy-session-key");
