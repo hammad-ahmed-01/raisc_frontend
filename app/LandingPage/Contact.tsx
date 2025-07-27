@@ -173,7 +173,7 @@ export default function ContactSection() {
                 <Phone className="w-4 h-4" />
                 <span>Phone</span>
               </h4>
-              <p>+92 XXX XXXXXXX</p>
+              <p>+92 302 2222363</p>
             </div>
 
             {/* Email */}
@@ -182,8 +182,7 @@ export default function ContactSection() {
                 <Mail className="w-4 h-4" />
                 <span>Email</span>
               </h4>
-              <p>contact@raisc.com</p>
-              <p>support@raisc.com</p>
+              <p>info@raisc.org</p>
             </div>
 
             {/* Location */}
