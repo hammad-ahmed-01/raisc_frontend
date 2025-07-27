@@ -1,6 +1,9 @@
 "use client";
 import React from "react";
 import TopRightIcons from "./Navigation";
+import TodaysSessions from "./components/Calendar/TodaysSessions";
+import CalendarView from "./components/Calendar/CalendarView";
+
 
 interface User {
   username: string;
@@ -283,6 +286,8 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
             </div>
           </div>
         </div>
+        <CalendarView />
+        <TodaysSessions />
       </div>
     </div>
   );

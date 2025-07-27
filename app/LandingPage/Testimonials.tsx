@@ -106,7 +106,7 @@ export default function TestimonialSection() {
 					))}
 				</div>
 				<div className="py-2 text-heading2">
-					<p>[Add your own experience]</p>
+					<p>[Contact to add your own experience]</p>
 				</div>
 			</div>
 		</section>
