@@ -11,18 +11,14 @@ const sections = ["home", "about", "services", "testimonials", "contact"];
 export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Always update isScrolled for navbar style
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 20);
 
-      // Only update activeSection on landing page
       const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
       if (isLandingPage) {
         let closestSection = "home";
@@ -46,27 +42,33 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Set activeSection based on pathname if not on landing page
   useEffect(() => {
     const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
     if (!isLandingPage) {
-      // Use the last part of the path as the section name if it matches
       const path = window.location.pathname.replace("/", "");
       if (sections.includes(path)) {
         setActiveSection(path);
       } else {
-        setActiveSection(""); // No highlight if not a known section
+        setActiveSection("");
       }
     }
   }, []);
 
+  useEffect(() => {
+    // Check for session_key in localStorage
+    if (typeof window !== "undefined") {
+      const key = localStorage.getItem("session_key");
+      setIsLoggedIn(!!key && key !== "null" && key !== "");
+    }
+  }, []);
+
   const scrollToSection = (id: string) => {
+    setMenuOpen(false);
     const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
     if (isLandingPage) {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: "smooth" });
     } else {
-      // Navigate to landing page, then scroll to section after navigation
       window.location.href = id === "home" ? "/" : `/#${id}`;
     }
   };
@@ -77,7 +79,7 @@ export default function Navbar() {
         isScrolled ? "bg-[#1E3CA7] shadow-md" : "bg-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo and Title */}
         <div
           className={`flex items-center space-x-2 text-xl font-bold cursor-pointer ${
@@ -94,8 +96,19 @@ export default function Navbar() {
           <span>RAISC</span>
         </div>
 
-        {/* Navigation Links and Login Button */}
-        <div className="flex items-center space-x-6">
+        {/* Hamburger for mobile */}
+        <button
+          className="sm:hidden flex flex-col justify-center items-center w-9 h-9 rounded-md focus:outline-none"
+          aria-label="Open menu"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <span className={`block w-6 h-0.5 bg-current mb-1 transition-all ${menuOpen ? "rotate-45 translate-y-2" : ""}`}></span>
+          <span className={`block w-6 h-0.5 bg-current mb-1 transition-all ${menuOpen ? "opacity-0" : ""}`}></span>
+          <span className={`block w-6 h-0.5 bg-current transition-all ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
+        </button>
+
+        {/* Desktop Nav */}
+        <div className="hidden sm:flex items-center space-x-6">
           <ul className="flex space-x-6">
             {sections.map((section) => (
               <li
@@ -117,22 +130,90 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          {/* Login Button */}
+          {/* Login/Logout Button */}
           <div>
-            <a
-              href="/login"
-              className={`px-6 py-2 shadow-sm rounded-full font-semibold transition
-                ${
-                  isScrolled
-                    ? "bg-white text-[#1E3CA7] border-none hover:bg-blue-50"
-                    : "bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white hover:opacity-90"
-                }
-              `}
-            >
-              Login
-            </a>
+            {isLoggedIn ? (
+              <a
+                href="/logout"
+                className={`px-6 py-2 shadow-sm rounded-full font-semibold transition bg-red-50 text-red-600 border border-red-200 hover:bg-red-50`}
+              >
+                Logout
+              </a>
+            ) : (
+              <a
+                href="/login"
+                className={`px-6 py-2 shadow-sm rounded-full font-semibold transition
+                  ${
+                    isScrolled
+                      ? "bg-white text-[#1E3CA7] border-none hover:bg-blue-50"
+                      : "bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white hover:opacity-90"
+                  }
+                `}
+              >
+                Login
+              </a>
+            )}
           </div>
         </div>
+
+        {/* Mobile Nav */}
+        {menuOpen && (
+          <div className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-40">
+            <div className="absolute top-0 left-0 w-full bg-[#1E3CA7] shadow-md rounded-b-3xl pb-8">
+              <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                <div className="flex items-center space-x-2 text-xl font-bold text-white">
+                  <Image
+                    src={logoWhite}
+                    alt="RAISC Logo"
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                  />
+                  <span>RAISC</span>
+                </div>
+                <button
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-[#12225f] text-white text-2xl"
+                  aria-label="Close menu"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <ul className="flex flex-col items-center mt-2 space-y-1">
+                {sections.map((section) => (
+                  <li
+                    key={section}
+                    className={`capitalize cursor-pointer w-full text-center py-3 text-base font-semibold rounded transition-all duration-200 ${
+                      activeSection === section
+                        ? "bg-[#12225f] text-white"
+                        : "text-white hover:bg-[#243b7a] hover:text-white"
+                    }`}
+                    onClick={() => scrollToSection(section)}
+                  >
+                    {section}
+                  </li>
+                ))}
+                <li className="w-full flex justify-center mt-4">
+                  {isLoggedIn ? (
+                    <a
+                      href="/logout"
+                      className="w-11/12 max-w-xs text-center px-6 py-3 rounded-full font-semibold bg-white text-red-600 shadow hover:bg-red-50 transition text-base"
+                    >
+                      Logout
+                    </a>
+                  ) : (
+                    <a
+                      href="/login"
+                      className="w-11/12 max-w-xs text-center px-6 py-3 rounded-full font-semibold bg-white text-[#1E3CA7] shadow hover:bg-blue-50 transition text-base"
+                    >
+                      Login
+                    </a>
+                  )}
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

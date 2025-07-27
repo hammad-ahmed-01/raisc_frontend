@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../LandingPage/constants/navbar";
 
@@ -9,6 +9,16 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const router = useRouter();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const key = localStorage.getItem("session_key");
+      if (key && key !== "null" && key !== "") {
+        router.push("/dashboard");
+      }
+    }
+  }, [router]);
 
   const isBackendConnected =
     process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
