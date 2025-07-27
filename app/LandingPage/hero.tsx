@@ -19,7 +19,12 @@ export default function HeroSection() {
         <img
           src="/bg/landingpagebg.png"
           alt="Background"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover hidden sm:block"
+        />
+        <img
+          src="/landingpagebg_mobile.png"
+          alt="Background Mobile"
+          className="w-full h-full object-cover block sm:hidden"
         />
       </div>
 
