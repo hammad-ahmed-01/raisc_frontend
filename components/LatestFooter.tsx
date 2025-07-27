@@ -61,8 +61,8 @@ const LatestFooter: React.FC = () => {
             <div className="text-center lg:text-left w-full max-w-[280px] sm:max-w-full overflow-hidden">
               <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4">Contact</h4>
               <ul className="space-y-1 sm:space-y-2">
-                <li className="font-normal text-xs sm:text-sm lg:text-base break-words">Email: help@raisc.com</li>
-                <li className="font-normal text-xs sm:text-sm lg:text-base break-words">Phone: +92-XXX-XXXXXX</li>
+                <li className="font-normal text-xs sm:text-sm lg:text-base break-words">Email: info@raisc.org</li>
+                <li className="font-normal text-xs sm:text-sm lg:text-base break-words">Phone: +92 302 2222363</li>
                 <li className="font-normal text-xs sm:text-sm lg:text-base break-words">Location: Islamabad, PK</li>
               </ul>
             </div>

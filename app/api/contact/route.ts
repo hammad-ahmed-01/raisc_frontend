@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
             <p>Dear ${sanitizedData.firstName},</p>
             <p>Thank you for reaching out to RAISC. We have successfully received your message and our team will review it shortly.</p>
-            <p>We appreciate your interest in our mental health services and will get back to you within 24-48 hours.</p>
+            <p>We appreciate your interest in our mental health services. We will notify you once RAISC is live. Thank you for your confidence in us</p>
           </div>
 
           <div style="background-color: #e9f5fe; padding: 15px; border-radius: 6px; margin: 20px 0;">
@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
               If you have any urgent concerns, please don't hesitate to call us directly.
             </p>
             <p style="color: #1E3CA7; font-weight: bold;">
-              Phone: +92 XXX XXXXXXX<br>
-              Email: contact@raisc.com
+              Phone: +92 302 2222363<br>
+              Email: info@raisc.org
             </p>
           </div>
 
