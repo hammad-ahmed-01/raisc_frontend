@@ -3,6 +3,7 @@ import React from "react";
 import TopRightIcons from "./Navigation";
 import TodaysSessions from "./components/Calendar/TodaysSessions";
 import CalendarView from "./components/Calendar/CalendarView";
+import { useRouter } from "next/navigation";
 
 
 interface User {
@@ -73,6 +74,7 @@ const dummyDoctors = [
 ];
 
 const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
+  const router = useRouter();
   const org = user?.organization_profile || dummyOrg;
   const isBackendConnected =
     process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
@@ -195,6 +197,7 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
             </h2>
             <div className="mr-8">
               <button
+                onClick={() => router.push("/Organization")}
                 className="bg-[#1E3CA7] text-white font-semibold px-6 py-2 rounded-full shadow hover:opacity-70"
                 style={{
                   border: "1px solid #2196F3",
