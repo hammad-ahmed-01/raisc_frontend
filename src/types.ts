@@ -14,13 +14,24 @@ export interface DoctorProfile {
     rates: string;
 }
 
+export interface OrganizationProfile {
+    organization_name: string;
+    description: string;
+    logo_url?: string;
+    contact_email: string;
+    contact_numbers: string[];
+    location: string;
+    linkedin?: string;
+}
+
 export interface User {
     id: number;
     username: string;
     email: string;
-    user_type: string; // "patient" or "doctor"
+    user_type: string; // "patient" | "doctor" | "organization"
     patient_profile?: PatientProfile;
     doctor_profile?: DoctorProfile;
+    organization_profile?: OrganizationProfile;
 }
 
 export interface Patient {

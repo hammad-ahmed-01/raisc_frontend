@@ -2,18 +2,37 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const settingsNavItems = [
-  { href: "/settings/account", label: "My Account", id: "account" },
-  { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
-  { href: "/settings/change-password", label: "Change Password", id: "change-password" },
-  { href: "/settings/change-email", label: "Email", id: "email" },
-  { href: "/settings/notifications", label: "Notifications", id: "notifications" },
-  { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
-  { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
-];
 
 export default function SettingsSidebar() {
   const pathname = usePathname();
+
+  const { checkAuth } = require("@/lib/auth");
+
+  const authResult = checkAuth();
+
+  const userType = authResult.user?.user_type;
+
+  let settingsNavItems = [
+    { href: "/settings/account", label: "My Account", id: "account" },
+    { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
+    { href: "/settings/change-password", label: "Change Password", id: "change-password" },
+    { href: "/settings/change-email", label: "Email", id: "email" },
+    { href: "/settings/notifications", label: "Notifications", id: "notifications" },
+    { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
+    { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
+  ];
+
+  if(userType==="organization"){
+    settingsNavItems = [
+      { href: "/settings/account", label: "My Account", id: "account" },
+      { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
+      { href: "/settings/manage-team", label: "Manage Team", id: "manage-team" },
+      { href: "/settings/doctor-permissions", label: "Doctor Permissions", id: "doctor-permissions" },
+      { href: "/settings/notifications", label: "Notifications", id: "notifications" },
+      { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
+      { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
+    ];
+  }
 
   return (
     <div className="fixed left-0 top-0 w-80 h-screen bg-transparent shadow-lg overflow-y-auto z-10 flex flex-col">

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import EditPatientProfile from "@/components/PatientSettings/EditProfile/EditProfile";
 import EditDoctorProfile from "@/components/DoctorSettings/EditProfile/EditProfile";
+import EditOrganizationProfile from "@/components/OrganizationSettings/EditProfile/EditProfile";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 interface ProfileData {
@@ -20,6 +21,13 @@ interface ProfileData {
   emergency_contact?: string;
   user_type?: string;
   therapyFocus?: string;
+  // Organization specific fields
+  organization_name?: string;
+  description?: string;
+  logo_url?: string;
+  contact_email?: string;
+  contact_numbers?: string[];
+  linkedin?: string;
 }
 
 export default function EditProfilePage() {
@@ -45,63 +53,9 @@ export default function EditProfilePage() {
 
   const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
-  useEffect(() => {
-    // Get user type from localStorage
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
-      const parsed = JSON.parse(userData);
-      setUserType(parsed.user_type || 'doctor');
-    }
-
-    const fetchProfile = async () => {
-      if (isBackendConnected) {
-        try {
-          const sessionKey = localStorage.getItem("session_key");
-          const userData = localStorage.getItem("user_data");
-          const userType = userData ? JSON.parse(userData).user_type : "doctor";
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/${userType}/profile/`,
-            {
-              headers: {
-                Authorization: `Token ${sessionKey}`,
-              },
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            setProfile(data);
-          }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
-          setDummyProfile();
-        }
-      } else {
-        setDummyProfile();
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, [isBackendConnected, userType]);
-
-  useEffect(() => {
-    const performAuthCheck = async () => {
-      const authResult = await checkAuth();
-      if (!authResult.isAuthenticated) {
-        setAuthError(authResult.error || "Authentication required");
-        setTimeout(() => {
-          redirectToLogin();
-        }, 2000);
-        return;
-      }
-      setAuthVerified(true);
-    };
-    performAuthCheck();
-  }, []);
-
-  const setDummyProfile = () => {
-    if (userType === 'patient') {
+  // Move setDummyProfile outside useEffect to avoid dependency issues
+  const setDummyProfile = (type: string) => {
+    if (type === 'patient') {
       setProfile({
         display_name: "John Doe",
         email: "patient@example.com",
@@ -113,6 +67,20 @@ export default function EditProfilePage() {
         location: "Islamabad, Pakistan",
         bio: "Patient seeking mental health support.",
         user_type: "patient",
+      });
+    } else if (type === 'organization') {
+      setProfile({
+        display_name: "",
+        email: "",
+        phone: "",
+        bio: "",
+        location: "",
+        organization_name: "Pakistan Institute Of Mental Health",
+        description: "Pakistan Institute Of Mental Health",
+        logo_url: "/org-logo.png",
+        contact_email: "info@pimh.org",
+        contact_numbers: ["+92300-xxxxxxx", "+92300-xxxxxxx"],
+        linkedin: "linkedin.com",
       });
     } else {
       setProfile({
@@ -130,19 +98,111 @@ export default function EditProfilePage() {
     }
   };
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // Check if window object exists (client-side only)
+        if (typeof window === 'undefined') {
+          setLoading(false);
+          return;
+        }
+
+        // Get user type from localStorage with error handling
+        let currentUserType = 'doctor';
+        try {
+          const userData = localStorage.getItem("user_data");
+          if (userData) {
+            const parsed = JSON.parse(userData);
+            currentUserType = parsed.user_type || 'doctor';
+            setUserType(currentUserType);
+          }
+        } catch (error) {
+          console.error("Error parsing user data from localStorage:", error);
+        }
+
+        if (isBackendConnected) {
+          try {
+            const sessionKey = localStorage.getItem("session_key");
+            
+            if (!sessionKey) {
+              throw new Error("No session key found");
+            }
+
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/${currentUserType}/profile/`,
+              {
+                headers: {
+                  Authorization: `Token ${sessionKey}`,
+                },
+              }
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              setProfile(data);
+            } else {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+            setDummyProfile(currentUserType);
+          }
+        } else {
+          setDummyProfile(currentUserType);
+        }
+      } catch (error) {
+        console.error("General error in fetchProfile:", error);
+        setDummyProfile('doctor');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [isBackendConnected]); // Removed userType from dependencies to prevent infinite loop
+
+  useEffect(() => {
+    const performAuthCheck = async () => {
+      try {
+        const authResult = await checkAuth();
+        if (!authResult.isAuthenticated) {
+          setAuthError(authResult.error || "Authentication required");
+          setTimeout(() => {
+            redirectToLogin();
+          }, 2000);
+          return;
+        }
+        setAuthVerified(true);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setAuthError("Authentication check failed");
+      }
+    };
+    
+    // Only run auth check on client side
+    if (typeof window !== 'undefined') {
+      performAuthCheck();
+    }
+  }, []);
+
   const handleEdit = (field: string, currentValue: string) => {
     setEditingField(field);
     setTempValue(currentValue);
   };
 
   const handleSave = async (field: string) => {
-    const updatedProfile = { ...profile, [field]: tempValue };
-    setProfile(updatedProfile);
-    setEditingField(null);
-    
-    if (isBackendConnected) {
-      try {
+    try {
+      const updatedProfile = { ...profile, [field]: tempValue };
+      setProfile(updatedProfile);
+      setEditingField(null);
+      
+      if (isBackendConnected) {
         const sessionKey = localStorage.getItem("session_key");
+        
+        if (!sessionKey) {
+          throw new Error("No session key found");
+        }
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/profile/`,
           {
@@ -158,10 +218,14 @@ export default function EditProfilePage() {
         if (response.ok) {
           setMessage("Profile updated successfully!");
           setTimeout(() => setMessage(""), 3000);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      } catch (error) {
-        console.error("Error updating profile:", error);
       }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setMessage("Error updating profile. Please try again.");
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
@@ -170,6 +234,7 @@ export default function EditProfilePage() {
     setTempValue("");
   };
 
+  // Show error state
   if (authError) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -178,6 +243,7 @@ export default function EditProfilePage() {
     );
   }
 
+  // Show loading state
   if (!authVerified || loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -202,7 +268,23 @@ export default function EditProfilePage() {
     );
   }
 
-  // Render Doctor Edit Profile 
+  // Render Organization Edit Profile
+  if (userType === 'organization') {
+    return (
+      <EditOrganizationProfile
+        profile={profile}
+        editingField={editingField}
+        tempValue={tempValue}
+        message={message}
+        handleEdit={handleEdit}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
+        setTempValue={setTempValue}
+      />
+    );
+  }
+
+  // Render Doctor Edit Profile (default)
   return (
     <EditDoctorProfile 
       profile={profile}
