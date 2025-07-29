@@ -1,3 +1,5 @@
+import { FaRegEdit } from "react-icons/fa";
+
 interface OrganizationProfileData {
   organization_name?: string;
   description?: string;
@@ -30,238 +32,251 @@ export default function EditOrganizationProfile({
   setTempValue
 }: EditOrganizationProfileProps) {
   return (
-    <div className="max-h-[1200px] overflow-y-auto p-3">
-      <div className="max-w-5xl mx-auto h-full flex flex-col">
-        <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-16">
-          Edit Organization Profile
+    <div className="h-full flex flex-col justify-center px-2 py-2">
+        {/* Header */}
+        <h1 className="text-[24px] font-bold text-[#1E3CA7] mb-6 text-left">
+          Edit Profile
         </h1>
-        <div
-          className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1"
-          style={{ border: "1px solid #2196F3" }}
-        >
-          {/* Logo Section */}
-          <div
-            className="absolute top-0 -translate-y-1/2 w-[calc(100%-2rem)] bg-white rounded-2xl p-4"
-            style={{ border: "1px solid #2196F3" }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div
-                  className="w-12 h-12 rounded-full overflow-hidden"
-                  style={{ border: "2px solid #1E3CA7" }}
-                >
-                  <img
-                    src={profile.logo_url || "/org-logo.png"}
-                    alt="Organization Logo"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">
-                    {profile.organization_name || "Organization Name"}
-                  </h2>
-                  <p className="text-md text-[#1E3CA7]">
-                    {profile.location || "Location"}
-                  </p>
-                </div>
-              </div>
-              <button className="bg-[#1E3CA7] text-white px-8 py-2 rounded-full text-md font-semibold hover:opacity-70">
-                Edit Logo
-              </button>
-            </div>
-          </div>
-
-          {/* Organization Fields */}
-          <div
-            className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2"
-            style={{ border: "1px solid #2196F3" }}
-          >
+        {/* Top Row: Org Info & Logo */}
+        <div className="flex flex-row gap-12 mb-4">
+          {/* Left: Org Info */}
+          <div className="flex flex-col w-[50%]">
             {/* Organization Name */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-              <div>
-                <label className="text-base font-bold text-[#444444]">Organization Name</label>
-                {editingField === 'organization_name' ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <input
-                      type="text"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-md"
-                    />
-                    <button
-                      onClick={() => handleSave('organization_name')}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-md text-[#444444] mt-1">{profile.organization_name || "Organization Name"}</p>
-                )}
+            <div className="mb-6">
+              <div className="text-[20px] font-bold text-[#1E3CA7] mb-0">
+                Organization Name
               </div>
-              {editingField !== 'organization_name' && (
-                <button
-                  onClick={() => handleEdit('organization_name', profile.organization_name || "")}
-                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
-              )}
+                <div className="flex items-center">
+                  <div className="text-[18px] text-[#444444] font-normal mt-1 mb-0 flex-1">
+                    {profile.organization_name || ""}
+                  </div>
+                </div>
             </div>
-
             {/* Description */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-              <div>
-                <label className="text-base font-bold text-[#444444]">Description</label>
-                {editingField === 'description' ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <input
-                      type="text"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-md"
-                    />
-                    <button
-                      onClick={() => handleSave('description')}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-md text-[#444444] mt-1">{profile.description || "Description"}</p>
-                )}
+            <div className="mb-6">
+              <div className="text-[20px] font-bold text-[#1E3CA7] mb-0">
+                Description
               </div>
-              {editingField !== 'description' && (
-                <button
-                  onClick={() => handleEdit('description', profile.description || "")}
-                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
+              {editingField === "description" ? (
+                <div className="flex items-center space-x-2 mt-2">
+                  <textarea
+                    className="w-full h-[140px] rounded-[18px] border border-[#1E3CA7] px-4 py-2 text-[16px] text-[#444444] resize-none focus:outline-none"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                  />
+                  <button
+                    onClick={() => handleSave("description")}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="relative mt-2 flex items-center">
+                  <textarea
+                    className="w-full h-[140px] rounded-[18px] border border-[#2196F3] px-4 py-2 text-[16px] text-[#444444] resize-none focus:outline-none"
+                    value={profile.description || ""}
+                    readOnly
+                  />
+                  <button
+                    onClick={() => handleEdit("description", profile.description || "")}
+                    className="absolute top-2 right-4 text-[#1E3CA7] cursor-pointer"
+                  >
+                    <FaRegEdit size={20} />
+                  </button>
+                </div>
               )}
-            </div>
-
-            {/* Contact Email */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-              <div>
-                <label className="text-base font-bold text-[#444444]">Contact Email</label>
-                {editingField === 'contact_email' ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <input
-                      type="email"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-md"
-                    />
-                    <button
-                      onClick={() => handleSave('contact_email')}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-md text-[#444444] mt-1">{profile.contact_email || "Contact Email"}</p>
-                )}
-              </div>
-              {editingField !== 'contact_email' && (
-                <button
-                  onClick={() => handleEdit('contact_email', profile.contact_email || "")}
-                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-
-            {/* Contact Numbers */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-              <div>
-                <label className="text-base font-bold text-[#444444]">Contact Numbers</label>
-                <p className="text-md text-[#444444] mt-1">
-                  {(profile.contact_numbers && profile.contact_numbers.length > 0)
-                    ? profile.contact_numbers.join(", ")
-                    : "Contact Numbers"}
-                </p>
-              </div>
-              {/* You can add edit logic for contact_numbers if needed */}
-            </div>
-
-            {/* Location */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-              <div>
-                <label className="text-base font-bold text-[#444444]">Location</label>
-                {editingField === 'location' ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <input
-                      type="text"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-md"
-                    />
-                    <button
-                      onClick={() => handleSave('location')}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-md text-[#444444] mt-1">{profile.location || "Location"}</p>
-                )}
-              </div>
-              {editingField !== 'location' && (
-                <button
-                  onClick={() => handleEdit('location', profile.location || "")}
-                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-
-            {/* LinkedIn */}
-            <div className="flex justify-between items-center py-2">
-              <div>
-                <label className="text-base font-bold text-[#444444]">LinkedIn</label>
-                <p className="text-md text-[#444444] mt-1">{profile.linkedin || "LinkedIn"}</p>
-              </div>
-              {/* You can add edit logic for linkedin if needed */}
             </div>
           </div>
-
-          {message && (
-            <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-md">
-              {message}
+          {/* Right: Logo Section */}
+          <div className="flex flex-col items-center w-[50%] min-w-[400px] h-full justify-between">
+            <div>
+              <div className="w-[300px] h-[210px] bg-[#A6B6CC66] rounded-[24px] flex items-center justify-center border-none">
+                <img
+                  src={profile.logo_url || "/org-logo.png"}
+                  alt="Organization Logo"
+                  className="w-[90px] h-[90px] object-contain"
+                  style={{ filter: "grayscale(100%)" }}
+                />
+              </div>
             </div>
-          )}
+            <button
+              className="bg-[#D9D9D9] text-black font-bold px-8 py-2 rounded-[14px] shadow-none border border-[#A6B6CC] hover:opacity-70"
+              style={{ width: "180px" }}
+            >
+              Change Logo
+            </button>
+          </div>
         </div>
-      </div>
+        {/* Divider */}
+        <div style={{ border: "2px solid #D0E3FFC7" }} className="w-full my-4" />
+        {/* Contact Details */}
+        <div className="max-w-[70vw]">
+          <div className="text-[20px] font-bold text-[#1E3CA7] mb-2">
+            Contact Details
+          </div>
+          <div className="flex flex-row gap-8 items-center mb-2">
+            <div className="flex-1">
+              <div className="text-[16px] font-bold text-[#1E3CA7] mb-0">
+                Contact Email
+              </div>
+              {editingField === "contact_email" ? (
+                <div className="flex items-center space-x-2 mt-1">
+                  <input
+                    type="email"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    className="px-2 py-1 border border-[#1E3CA7] rounded text-md w-full"
+                  />
+                  <button
+                    onClick={() => handleSave("contact_email")}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <div className="text-[16px] text-[#444444] font-normal mt-1 flex-1">
+                    {profile.contact_email || ""}
+                  </div>
+                  <button
+                    onClick={() => handleEdit("contact_email", profile.contact_email || "")}
+                    className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="text-[16px] font-bold text-[#1E3CA7] mb-0">
+                Contact Number
+              </div>
+              {editingField === "contact_number" ? (
+                <div className="flex items-center space-x-2 mt-1">
+                  <input
+                    type="text"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    className="px-2 py-1 border border-[#1E3CA7] rounded text-md w-full"
+                  />
+                  <button
+                    onClick={() => handleSave("contact_number")}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <div className="text-[16px] text-[#444444] font-normal mt-1 flex-1">
+                    {(profile.contact_numbers && profile.contact_numbers.length > 0)
+                      ? profile.contact_numbers.join(", ")
+                      : ""}
+                  </div>
+                  <button
+                    onClick={() =>
+                      handleEdit(
+                        "contact_number",
+                        (profile.contact_numbers && profile.contact_numbers.length > 0)
+                          ? profile.contact_numbers.join(", ")
+                          : ""
+                      )
+                    }
+                    className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Divider */}
+        <div style={{ border: "2px solid #D0E3FFC7" }} className="w-full my-4" />
+        {/* Location */}
+        <div className="flex flex-row items-center mb-2 max-w-[70vw]">
+          <div className="flex-1">
+            <div className="text-[20px] font-bold text-[#1E3CA7] mb-0">
+              Location
+            </div>
+            {editingField === "location" ? (
+              <div className="flex items-center space-x-2 mt-1">
+                <input
+                  type="text"
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  className="px-2 py-1 border border-[#1E3CA7] rounded text-md w-full"
+                />
+                <button
+                  onClick={() => handleSave("location")}
+                  className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <div className="text-[16px] text-[#444444] font-normal mt-1 flex-1">
+                  {profile.location || ""}
+                </div>
+                <button
+                  onClick={() => handleEdit("location", profile.location || "")}
+                  className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Divider */}
+        <div style={{ border: "2px solid #D0E3FFC7" }} className="w-full my-8" />
+        {/* Action Buttons */}
+        <div className="flex flex-row gap-6 justify-center">
+          <button
+            className="bg-[#1E3CA7] text-white px-10 py-3 rounded-[14px] text-[20px] font-bold hover:opacity-70"
+            style={{ minWidth: "180px" }}
+          >
+            Save Changes
+          </button>
+          <button
+            className="bg-white text-[#1E3CA7] border border-[#1E3CA7] px-10 py-3 rounded-[14px] text-[20px] font-bold hover:opacity-70"
+            style={{ minWidth: "180px" }}
+          >
+            Cancel
+          </button>
+        </div>
+        {message && (
+          <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-md">
+            {message}
+          </div>
+        )}
     </div>
   );
 }

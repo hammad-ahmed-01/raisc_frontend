@@ -74,7 +74,7 @@ export default function EditProfilePage() {
         email: "",
         phone: "",
         bio: "",
-        location: "",
+        location: "Rawalpindi, Pakistan",
         organization_name: "Pakistan Institute Of Mental Health",
         description: "Pakistan Institute Of Mental Health",
         logo_url: "/org-logo.png",
