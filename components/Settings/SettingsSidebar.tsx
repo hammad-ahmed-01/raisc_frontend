@@ -6,11 +6,9 @@ import Link from "next/link";
 export default function SettingsSidebar() {
   const pathname = usePathname();
 
-  const { checkAuth } = require("@/lib/auth");
+  const user = localStorage.getItem("user_data");
+  const userType = user ? JSON.parse(user).user_type : null;
 
-  const authResult = checkAuth();
-
-  const userType = authResult.user?.user_type;
 
   let settingsNavItems = [
     { href: "/settings/account", label: "My Account", id: "account" },
