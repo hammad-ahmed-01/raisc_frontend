@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import DoctorMyAccount from "@/components/DoctorSettings/Account/MyAccount";
 import PatientMyAccount from "@/components/PatientSettings/Account/MyAccount";
+import OrganizationMyAccount from "@/components/OrganizationSettings/Account/MyAccount";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 export interface Doctor {
@@ -34,6 +35,16 @@ export interface Patient {
   lastSession: string;
 }
 
+export interface Organization {
+  organization_name: string;
+  description: string;
+  logo_url?: string;
+  contact_email: string;
+  contact_numbers: string[];
+  location: string;
+  linkedin?: string;
+}
+
 export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [authVerified, setAuthVerified] = useState(false);
@@ -41,6 +52,7 @@ export default function AccountPage() {
   const [userTypeS, setUserTypeS] = useState<string>("");
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
 
   const isBackendConnected =
     process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
@@ -88,8 +100,10 @@ export default function AccountPage() {
             const data = await response.json();
             if (userType === "doctor") {
               setDoctor(data);
-            } else {
+            } else if (userType === "patient") {
               setPatient(data);
+            } else if (userType === "organization") {
+              setOrganization(data);
             }
           }
         } catch (error) {
@@ -97,9 +111,12 @@ export default function AccountPage() {
           if (userType === "doctor") {
             const data = getDummyDoctor();
             setDoctor(data);
-          } else {
+          } else if (userType === "patient") {
             const data = getDummyPatient();
             setPatient(data);
+          } else if (userType === "organization") {
+            const data = getDummyOrganization();
+            setOrganization(data);
           }
         }
       } else {
@@ -107,9 +124,12 @@ export default function AccountPage() {
         if (userType === "doctor") {
           const data = getDummyDoctor();
           setDoctor(data);
-        } else {
+        } else if (userType === "patient") {
           const data = getDummyPatient();
           setPatient(data);
+        } else if (userType === "organization") {
+          const data = getDummyOrganization();
+          setOrganization(data);
         }
       }
 
@@ -156,6 +176,16 @@ export default function AccountPage() {
     };
   };
 
+  const getDummyOrganization = (): Organization => ({
+    organization_name: "Pakistan Institute Of Mental Health",
+    description: "Pakistan Institute Of Mental Health..........",
+    logo_url: "/org-logo.png",
+    contact_email: "info@pimh.org",
+    contact_numbers: ["+92300-xxxxxxx", "+92300-xxxxxxx"],
+    location: "Rawalpindi, Pakistan",
+    linkedin: "linkedin.com",
+  });
+
   if (authError) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -172,7 +202,7 @@ export default function AccountPage() {
     );
   }
 
-  if (!doctor && !patient) {
+  if (!doctor && !patient && !organization) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-xl text-red-600">Error loading user data</div>
@@ -186,6 +216,10 @@ export default function AccountPage() {
 
   if (userTypeS === "patient" && patient) {
     return <PatientMyAccount patient={patient} />;
+  }
+
+  if (userTypeS === "organization" && organization) {
+    return <OrganizationMyAccount organization={organization} />;
   }
 
   return (
