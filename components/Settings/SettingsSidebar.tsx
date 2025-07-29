@@ -54,7 +54,7 @@ export default function SettingsSidebar() {
 
       {/* Delete Account Button */}
       <div className="mt-auto py-8">
-        <button className="w-full px-12 py-4 text-center bg-transparent text-[#A71515] font-semibold text-md hover:bg-red-50 transition-all duration-200">
+        <button className="w-full px-12 py-4 text-left bg-transparent text-[#A71515] font-semibold text-md hover:bg-red-50 transition-all duration-200">
           Delete My Account
         </button>
       </div>

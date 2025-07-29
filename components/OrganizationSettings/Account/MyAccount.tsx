@@ -1,9 +1,3 @@
-import { Doctor } from "@/app/settings/account/page";
-
-interface DoctorProps {
-  doctor: Doctor;
-}
-
 interface Organization {
   organization_name: string;
   description: string;
@@ -18,116 +12,99 @@ interface OrganizationProps {
   organization: Organization;
 }
 
-export default function MyAccount({
-  organization
-}: OrganizationProps) {
+export default function MyAccount({ organization }: OrganizationProps) {
   return (
-    <div className="h-full overflow-hidden p-5">
-      <div className="max-w-6xl mx-auto h-full flex flex-col">
-        <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-16">
+    <div className="h-full px-0 py-0 overflow-hidden">
+      <div className="max-w-5xl mx-auto h-full flex flex-col">
+        <h1 className="text-[28px] text-left font-bold text-[#1E3CA7] mb-0 mt-8">
           My Account
         </h1>
-
-        {/* Organization Detail Section */}
-        <div
-          className="bg-[#E9F5FE] rounded-3xl p-5 relative flex-1"
-          style={{ border: "1px solid #2196F3" }}
-        >
-          {/* Organization Header */}
-          <div
-            className="bg-white rounded-2xl p-5 mb-5 absolute top-0 -translate-y-1/2 w-[calc(100%-2.5rem)]"
-            style={{ border: "1px solid #2196F3" }}
-          >
-            <div className="flex items-center space-x-4">
-              <div
-                className="w-14 h-14 rounded-full overflow-hidden"
-                style={{ border: "2px solid #1E3CA7" }}
-              >
-                <img
-                  src={organization.logo_url || "/org-logo.png"}
-                  alt="Organization"
-                  className="w-full h-full object-cover"
-                />
+        {/* Main Row: Info & Logo */}
+        <div className="flex flex-row justify-between bg-transparent rounded-none shadow-none border-none p-0 h-full">
+          {/* Left Column: Info */}
+          <div className="flex flex-col justify-start pt-8 flex-1">
+            {/* Organization Name */}
+            <div className="flex flex-col mb-7">
+              <div className="text-[22px] font-bold text-[#1E3CA7] mb-0 leading-tight">
+                Organization Name
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-[#1E3CA7] mb-1">
-                  {organization.organization_name}
-                </h2>
-                <p className="text-base text-[#1E3CA7] font-normal">
-                  {organization.location}
-                </p>
+              <div className="text-[20px] text-[#444444] font-normal mt-1">
+                {organization.organization_name}
               </div>
             </div>
-          </div>
-
-          {/* Organization Info */}
-          <div className="flex flex-col gap-5 pt-16">
-            <div
-              className="bg-white rounded-xl p-4 space-y-4"
-              style={{ border: "1px solid #2196F3" }}
-            >
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Organization Name
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.organization_name}
-                </p>
+            {/* Other Info */}
+            <div className="mb-5">
+              <div className="text-[22px] font-bold text-[#1E3CA7] mb-0 leading-tight">
+                Contact Email
               </div>
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Description
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.description}
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Contact Email
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.contact_email}
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Contact Numbers
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.contact_numbers?.join(", ")}
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Location
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.location}
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  LinkedIn
-                </label>
-                <p className="text-base font-normal text-[#444444]">
-                  {organization.linkedin}
-                </p>
+              <div className="text-[20px] text-[#444444] font-normal mt-1">
+                {organization.contact_email}
               </div>
             </div>
-          </div>
-
-          {/* Update Profile Link */}
-          <div className="text-center mt-8">
-            <p className="text-md font-normal text-[#1E3CA7]">
-              Want to update your details?{" "}
+            <div className="mb-5">
+              <div className="text-[22px] font-bold text-[#1E3CA7] mb-0 leading-tight">
+                Contact Number
+              </div>
+              <div className="text-[20px] text-[#444444] font-normal mt-1">
+                {organization.contact_numbers?.map((num, idx) => (
+                  <div key={idx}>{num}</div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-5">
+              <div className="text-[22px] font-bold text-[#1E3CA7] mb-0 leading-tight">
+                Location
+              </div>
+              <div className="text-[20px] text-[#444444] font-normal mt-1">
+                {organization.location}
+              </div>
+            </div>
+            <div className="mb-5">
               <a
-                href="/settings/edit-profile"
-                className="underline font-semibold"
+                href={
+                  organization.linkedin?.startsWith("http")
+                    ? organization.linkedin
+                    : `https://${organization.linkedin}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[22px] font-bold text-[#1E3CA7] mb-0 block"
+                style={{ textDecoration: "none", fontWeight: 700 }}
               >
-                Go to Edit Profile
+                {organization.linkedin}
               </a>
-            </p>
+            </div>
+            <button
+              className="mt-auto mb-4 bg-[#1E3CA7] text-white text-[20px] font-bold rounded-[14px] px-8 py-3 shadow-none hover:opacity-70"
+              style={{ width: "180px" }} onClick={() => window.location.href = "/settings/edit-profile"}
+            >
+              Edit Info
+            </button>
+          </div>
+          {/* Right Column: Logo */}
+          <div className="flex flex-col items-center justify-start min-w-[400px] pt-8 pl-8">
+            <div className="w-[300px] h-[210px] bg-[#A6B6CC66] rounded-[24px] flex items-center justify-center mb-2 border-none">
+              <img
+                src={organization.logo_url || "/org-logo.png"}
+                alt="Organization Logo"
+                className="w-[140px] h-[140px] object-contain opacity-60"
+                style={{ filter: "grayscale(100%)" }}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="org-logo-upload"
+                className="bg-[#D9D9D9] border-none text-black font-bold px-8 py-3 rounded-[24px] cursor-pointer text-[20px] shadow-none hover:opacity-70"
+                style={{ width: "220px", textAlign: "center" }}
+              >
+                Choose File <span className="text-red-600">*</span>
+              </label>
+              <input id="org-logo-upload" type="file" className="hidden" />
+              <span className="text-[#444444] text-[20px] font-normal ml-2">
+                No File Chosen
+              </span>
+            </div>
           </div>
         </div>
       </div>
