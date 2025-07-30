@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Patient } from "@/src/types";
 import CreateSessionForm from "./CreateNewSession"; 
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 interface PatientCardProps {
   patient: Patient;
@@ -29,19 +31,22 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
 
         {/* Column 3: View Profile Button */}
         <div className="flex justify-start md:justify-end">
-          <button className="bg-[#1E3CA7] text-white rounded-full font-semibold px-4 py-2 hover:bg-heading transition whitespace-nowrap">
-            View Profile
-          </button>
+          <PrimaryButton
+            text="View Profile"
+            className="rounded-full font-semibold px-6 py-2 whitespace-nowrap"
+            disabled={false}
+          />
         </div>
 
         {/* Column 4: Create Session Button */}
         <div className="flex justify-start md:justify-start">
-          <button
-            className="bg-[#D0E3FFC7] text-heading2 font-semibold rounded-full px-4 py-2 hover:bg-blue-200 transition whitespace-nowrap"
+          <SecondaryButton
+            text="Create Session"
+            className="text-heading2 font-semibold rounded-full px-4 py-2 whitespace-nowrap"
             onClick={() => setShowForm(true)}
-          >
-            Create session
-          </button>
+            disabled={false}
+          />
+
         </div>
       </div>
 

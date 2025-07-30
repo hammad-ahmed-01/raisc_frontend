@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiCheck, FiX } from 'react-icons/fi';
+import PrimaryButton from '@/components/Buttons/PrimaryButton';
 
 interface PatientRequest {
   id: string;
@@ -43,9 +44,10 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
           <p className="text-[#444444] mb-8">
             {patientRequest.message}
           </p>
-          <button className="bg-[#1E3CA7] font-bold text-[#FFFFFF] border border-[#2196F3] px-6 py-2 rounded-full hover:opacity-80">
-            View Profile
-          </button>
+          <PrimaryButton
+            text="View Profile"
+            className="font-bold px-6 py-2 rounded-full"
+          />
         </div>
 
         {/* Right Side - Age, Date, Actions */}

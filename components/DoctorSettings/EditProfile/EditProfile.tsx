@@ -1,3 +1,5 @@
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+
 interface ProfileData {
   display_name: string;
   email: string;
@@ -69,9 +71,10 @@ export default function EditDoctorProfile({
                   </p>
                 </div>
               </div>
-              <button className="bg-[#1E3CA7] text-white px-8 py-2 rounded-full text-md font-semibold hover:opacity-70">
-                Edit Profile Picture
-              </button>
+                <PrimaryButton
+                  text="Edit Profile Picture"
+                  className="px-6 py-1.5 rounded-full text-md font-semibold"
+                  />
             </div>
           </div>
 

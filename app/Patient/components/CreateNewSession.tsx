@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadCloud, X } from "lucide-react";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 export default function CreateSessionForm() {
   const [sessionType, setSessionType] = useState("Follow-up");
@@ -131,13 +133,16 @@ export default function CreateSessionForm() {
         )}
       </div>
 
-      <div className="flex justify-end gap-4 mt-6">
-        <Button className="text-normal font-semibold border-[#2196F3]" variant="outline">
-          Cancel
-        </Button>
-        <Button className="bg-[#1E3CA7] text-white hover:bg-[#12225f] font-semibold border-[#2196F3]">
-          Create Session
-        </Button>
+      <div className="flex justify-end gap-2 mt-6">
+        <SecondaryButton
+          text="Cancel"
+          className="px-10 py-2 rounded-full flex items-center text-center font-semibold"
+          />
+
+        <PrimaryButton 
+          text="Create Session" 
+          className="px-4 py-2 rounded-full flex items-center text-center font-semibold" 
+          />
       </div>
     </div>
   );

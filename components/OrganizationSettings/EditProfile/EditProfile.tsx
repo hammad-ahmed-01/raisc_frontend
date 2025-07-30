@@ -1,4 +1,6 @@
 import { FaRegEdit } from "react-icons/fa";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 interface OrganizationProfileData {
   organization_name?: string;
@@ -152,12 +154,11 @@ export default function EditOrganizationProfile({
                   <div className="text-[16px] text-[#444444] font-normal mt-1 flex-1">
                     {profile.contact_email || ""}
                   </div>
-                  <button
+                  <PrimaryButton
+                    text="Edit"
                     onClick={() => handleEdit("contact_email", profile.contact_email || "")}
-                    className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
+                    className="ml-2 px-6 py-1.5 rounded-full text-md font-semibold"
+                  />
                 </div>
               )}
             </div>
@@ -193,7 +194,8 @@ export default function EditOrganizationProfile({
                       ? profile.contact_numbers.join(", ")
                       : ""}
                   </div>
-                  <button
+                  <PrimaryButton
+                    text="Edit"
                     onClick={() =>
                       handleEdit(
                         "contact_number",
@@ -202,10 +204,8 @@ export default function EditOrganizationProfile({
                           : ""
                       )
                     }
-                    className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
+                    className="ml-2 px-6 py-1.5 rounded-full text-md font-semibold"
+                  />
                 </div>
               )}
             </div>
@@ -245,32 +245,28 @@ export default function EditOrganizationProfile({
                 <div className="text-[16px] text-[#444444] font-normal mt-1 flex-1">
                   {profile.location || ""}
                 </div>
-                <button
+                <PrimaryButton
+                  text="Edit"
                   onClick={() => handleEdit("location", profile.location || "")}
-                  className="ml-2 bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
+                  className="ml-2 px-6 py-1.5 rounded-full text-md font-semibold"
+                />
               </div>
             )}
           </div>
         </div>
         {/* Divider */}
-        <div style={{ border: "2px solid #D0E3FFC7" }} className="w-full my-8" />
+        <div style={{ border: "2px solid #D0E3FFC7" }} className="w-full mb-8" />
         {/* Action Buttons */}
         <div className="flex flex-row gap-6 justify-center">
-          <button
-            className="bg-[#1E3CA7] text-white px-10 py-3 rounded-[14px] text-[20px] font-bold hover:opacity-70"
-            style={{ minWidth: "180px" }}
-          >
-            Save Changes
-          </button>
-          <button
-            className="bg-white text-[#1E3CA7] border border-[#1E3CA7] px-10 py-3 rounded-[14px] text-[20px] font-bold hover:opacity-70"
-            style={{ minWidth: "180px" }}
-          >
-            Cancel
-          </button>
+          <PrimaryButton
+            text="Save Changes"
+            className="min-w-[180px] px-10 py-3 rounded-[32px] text-[16px] font-bold"
+          />
+          <SecondaryButton
+            text="Cancel"
+            onClick={handleCancel}
+            className="min-w-[180px] px-10 py-3 rounded-[32px] text-[16px] font-bold"
+          />
         </div>
         {message && (
           <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-md">

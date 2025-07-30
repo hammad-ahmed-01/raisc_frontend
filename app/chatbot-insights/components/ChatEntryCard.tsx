@@ -33,7 +33,7 @@ const ChatEntryCard = ({ entry }: { entry: ChatEntry }) => {
             <Button
               variant="ghost"
               onClick={() => setIsImportant(!isImportant)}
-              className="bg-white border-2 border-[#2196F3] text-heading2 hover:text-heading px-3 py-1 font-semibold text-md rounded-3xl shadow-md"
+              className="secondaryButton text-heading2 hover:text-heading px-3 py-1 font-semibold text-md rounded-3xl"
             >
               {isImportant ? (
                 <>
@@ -64,7 +64,7 @@ const ChatEntryCard = ({ entry }: { entry: ChatEntry }) => {
             <div className="flex justify-end mt-6">
               <Button
                 onClick={() => setShowPopup(true)}
-                className="bg-heading2 hover:bg-heading text-md rounded-3xl font-semibold text-white shadow-md"
+                className="primaryButton bg-heading2 hover:bg-heading text-md rounded-3xl font-semibold"
               >
                 Open Chat Thread
               </Button>

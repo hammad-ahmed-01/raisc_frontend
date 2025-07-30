@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 type Admin = {
   name: string;
@@ -61,12 +63,11 @@ export default function AdminTeamPanel() {
       <div className="bg-[#E9F5FE] rounded-2xl p-8 w-full max-w-4xl border border-blue-300 mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-heading2">Manage Admin Members</h2>
-          <button
+          <PrimaryButton
+            text="+ Add New Admin"
             onClick={handleAddNewAdmin}
             className="bg-gradient-to-b from-heading2 to-[#131413] hover:bg-heading text-white font-semibold px-4 py-2 rounded-full text-sm"
-          >
-            + Add New Admin
-          </button>
+         />
         </div>
 
         {admins.map((admin, index) => (
@@ -141,18 +142,17 @@ export default function AdminTeamPanel() {
 
         {changed && (
           <div className="flex justify-center space-x-4 mt-4">
-            <button
+            <PrimaryButton
+              text="Save Admin"
               onClick={handleSave}
-              className="bg-gradient-to-b from-heading2 to-[#131413] hover:bg-heading text-white font-semibold px-6 py-2 rounded-full"
-            >
-              Save Changes
-            </button>
-            <button
+              className="font-semibold px-6 py-2 rounded-full"
+             />
+
+            <SecondaryButton
+              text="Cancel"
               onClick={handleCancel}
-              className="bg-white border-2 border-heading2 text-heading2 hover:bg-slate-100 font-semibold px-6 py-2 rounded-full"
-            >
-              Cancel
-            </button>
+              className="bg-white text-heading2 font-semibold px-6 py-2 rounded-full"
+            />
           </div>
         )}
       </div>

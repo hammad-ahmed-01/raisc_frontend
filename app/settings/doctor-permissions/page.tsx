@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 type Permission = {
   label: string;
@@ -91,7 +93,7 @@ export default function DoctorPermissionsPanel() {
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="h-full w-full">
       <h1 className="text-2xl font-bold text-left text-heading2 mb-1">Doctor Permissions</h1>
       <p className="text-lg font-medium text-left text-heading2 mb-6">
         Set the default permissions granted to psychologists associated with your organization.
@@ -121,18 +123,17 @@ export default function DoctorPermissionsPanel() {
 
       {changed && (
         <div className="flex justify-center space-x-4 mt-6">
-          <button
+          <PrimaryButton
+            text="Save Admin"
             onClick={handleSave}
-            className="bg-gradient-to-b from-heading2 to-[#131413] hover:bg-heading text-white font-semibold px-6 py-2 rounded-full"
-          >
-            Save Changes
-          </button>
-          <button
+            className="font-semibold px-6 py-2 rounded-full"
+            />
+
+          <SecondaryButton
+            text="Cancel"
             onClick={handleCancel}
-            className="bg-white border border-heading2 text-heading2 hover:bg-slate-100 font-semibold px-6 py-2 rounded-full"
-          >
-            Cancel
-          </button>
+            className="bg-white text-heading2 font-semibold px-6 py-2 rounded-full"
+          />
         </div>
       )}
     </div>

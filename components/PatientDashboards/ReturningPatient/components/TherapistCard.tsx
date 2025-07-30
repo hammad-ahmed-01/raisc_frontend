@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Hourglass } from 'lucide-react';
+import SecondaryButton from '@/components/Buttons/SecondaryButton';
+import PrimaryButton from '@/components/Buttons/PrimaryButton';
 import Image from 'next/image';
 
 interface TherapistCardProps {
@@ -194,12 +196,11 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
                     <span className="text-gray-400 text-[10px] sm:text-xs ml-1 sm:ml-2">• {recommendedDoctor.location}</span>
                   </div>
                 </div>
-                <button 
+                <SecondaryButton
+                  text="Request"
                   onClick={() => sendRequest(recommendedDoctor)}
-                  className="bg-[#FFF8EC] hover:bg-yellow-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold"
-                >
-                  Request
-                </button>
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold"
+                />
               </div>
             </div>
           ))}
@@ -209,12 +210,11 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       <hr className="my-3 sm:my-5 text-[#D0E3FFC7]" />
 
       <div className="flex justify-center">
-        <button 
+        <PrimaryButton
+          text="View More"
           onClick={onViewMoreClick}
-          className="w-fit flex items-center justify-center bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-full shadow-sm hover:opacity-90 transition text-xs sm:text-sm"
-        >
-          View more
-        </button>
+          className="w-fit flex items-center justify-center px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm"
+        />
       </div>
     </div>
   );

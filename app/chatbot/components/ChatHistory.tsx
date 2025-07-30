@@ -35,7 +35,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
         {/* Back Button */}
         <button
           onClick={onBackToDashboard}
-          className="flex items-center gap-2 bg-white text-heading2 font-semibold px-4 py-2 rounded-full hover:bg-blue-100 transition mb-6"
+          className="flex items-center gap-2 text-heading2 font-semibold px-4 py-2 rounded-full secondaryButton mb-6"
           style={{ 
             boxShadow: '0px 4px 4px 0px #00000040',
             border: '1px solid #1E3CA7'
@@ -99,7 +99,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
       <div className="pt-6">
         <button
           onClick={onNewChat}
-          className="flex items-center justify-center gap-2 bg-white text-heading font-semibold w-full py-2 rounded-full hover:bg-blue-100 transition"
+          className="flex items-center justify-center gap-2 secondaryButton text-heading font-semibold w-full py-2 rounded-full"
           style={{ 
             boxShadow: '0px 4px 4px 0px #00000040',
             border: '1px solid #1E3CA7'
