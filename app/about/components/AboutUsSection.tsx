@@ -1,3 +1,7 @@
+"use client"
+
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+
 export default function AboutUsSection() {
   return (
     <section className="bg-[url('/bg/AboutPagebg.png')] bg-no-repeat min-h-screen bg-cover py-32 text-center">
@@ -29,9 +33,12 @@ export default function AboutUsSection() {
             </div>
           </div>
         </div>
-        <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] mt-32 text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90">
-          Join Our Mission
-        </button>
+        <PrimaryButton
+          text="Join Our Mission"
+          onClick={() => window.location.href = "/register"}
+          className="mt-16 text-white px-10 py-4 rounded-full"
+          disabled={false}
+          />
       </div>
     </section>
   );

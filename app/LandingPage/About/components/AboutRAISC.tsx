@@ -2,6 +2,7 @@ import React from 'react';
 import FeatureCard from './FeatureCard';
 import Button from './Button';
 import Link from 'next/link';
+import SecondaryButton from '@/components/Buttons/SecondaryButton';
 
 const AboutRAISC: React.FC = () => {
   return (

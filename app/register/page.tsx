@@ -2,6 +2,7 @@
 import { useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../LandingPage/constants/navbar";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 export default function Register() {
   const router = useRouter();
@@ -143,15 +144,11 @@ export default function Register() {
 
             {/* Sign Up Button */}
             <div className="flex justify-center mt-6">
-              <button
+              <PrimaryButton
+                text="Sign Up"
                 onClick={handleRegister}
-                disabled={isLoading}
-                className={`bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 ${
-                  isLoading ? "opacity-70 cursor-not-allowed" : ""
-                }`}
-              >
-                {isLoading ? "Signing Up..." : "Sign Up"}
-              </button>
+                className={`px-10 text-lg py-3 rounded-full`}
+                disabled={isLoading}  />
             </div>
 
             {/* Already have account */}

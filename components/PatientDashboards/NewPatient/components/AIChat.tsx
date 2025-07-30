@@ -2,6 +2,7 @@
 
 import ChatBotImage from "@/public/bg/chatbotbg.png";
 import { useEffect, useState } from 'react';
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 interface ChatBotData {
   greeting: string;
@@ -75,9 +76,10 @@ export default function AIChat() {
           <p className="text-xs sm:text-sm lg:text-base mb-2 sm:mb-4 lg:mb-6 text-center text-heading2 px-1 sm:px-2">
             {chatBot.description}
           </p>
-          <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white text-xs sm:text-sm lg:text-base px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 shadow-sm rounded-full hover:opacity-90">
-            Try Chat Now
-          </button>
+          <PrimaryButton
+            text="Try Chat Now"
+            className="text-xs sm:text-sm lg:text-base px-3 sm:px-4 lg:px-6 py-1.5 sm:py-4 rounded-full"
+          />
         </div>
       </div>
     </div>

@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { FaFacebook, FaTwitter, FaGithub, FaTelegram, FaInstagram, FaDribbble } from 'react-icons/fa';
 import { usePathname } from 'next/navigation';
 
+import PrimaryButton from '@/components/Buttons/PrimaryButton';
+import SecondaryButton from '@/components/Buttons/SecondaryButton';
+
 const LatestFooter: React.FC = () => {
   const pathname = usePathname();
   
@@ -129,14 +132,13 @@ const LatestFooter: React.FC = () => {
           </div>
           <div className="flex mt-2 md:mt-3 lg:mt-0 gap-1 sm:gap-2 lg:gap-3">
             <a href="/login">
-              <button className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 shadow-sm rounded-full hover:opacity-90 text-xs sm:text-sm lg:text-base">
-                Get Started
-              </button>
+              <PrimaryButton
+                text="Get Started"
+                className="px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm lg:text-base" />
             </a>
             <a href="/#about">
-              <button className="bg-white text-[#1E3CA7] border border-[#1E3CA7] customShadow font-bold py-1.5 sm:py-2 px-3 sm:px-4 lg:px-6 rounded-full hover:bg-gray-50 transition-colors text-xs sm:text-sm lg:text-base">
-                Learn More
-              </button>
+            <SecondaryButton
+              text="Learn More" className='!font-bold py-1.5 sm:py-2 px-3 sm:px-4 lg:px-6 rounded-full text-xs sm:text-sm lg:text-base mr-8' /> 
             </a>
           </div>
         </div>
