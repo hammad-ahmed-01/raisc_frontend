@@ -2,7 +2,14 @@
 
 import React from "react";
 
-const Card = ({ image, heading, description, backgroundColor = "#ffffff" }) => {
+interface CardProps {
+  image: string;
+  heading: string;
+  description: string;
+  backgroundColor?: string;
+}
+
+const Card: React.FC<CardProps> = ({ image, heading, description, backgroundColor = "#ffffff" }) => {
   return (
     <div
       className="mt-8 rounded-2xl border transition-all duration-300 hover:shadow-lg transform hover:-translate-y-2"
