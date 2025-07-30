@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 import Image from "next/image";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 interface PatientProfile {
     level: number;
@@ -607,30 +609,28 @@ export default function DoctorsPage() {
                                 
                                 {/* Buttons */}
                                 <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full">
-                                    <button 
+                                    <PrimaryButton 
+                                        text="View Profile" 
                                         onClick={() => {
                                             localStorage.setItem('selectedDoctor', JSON.stringify(doctor));
                                             router.push('/AssociatedPsychologist');
                                         }} 
-                                        className="bg-[#D7E2FE] hover:bg-purple-300 text-[#1E3CA7] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold font-weight-700 text-xs sm:text-sm"
-                                    >
-                                        <span>💜</span> View Profile
-                                    </button>
+                                        className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
+                                        />
                                     
                                     {doctor.requestStatus === 'pending' ? (
-                                        <button 
+                                        <SecondaryButton 
+                                            text="Cancel Request" 
                                             onClick={() => removeRequest(doctor.id)} 
-                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold font-weight-700"
-                                        >
-                                            Remove Request
-                                        </button>
+                                            className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold font-weight-700"
+                                            />
                                     ) : (
-                                        <button 
-                                            onClick={() => sendRequest(doctor.id)} 
-                                            className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold font-weight-700 text-xs sm:text-sm"
-                                        >
-                                            🤝 Send Request
-                                        </button>
+                                        <SecondaryButton 
+                                            text="Send Request"
+                                            onClick={() => sendRequest(doctor.id)}
+                                            className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
+                                        />
+
                                     )}
                                 </div>
                             </div>

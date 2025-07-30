@@ -4,6 +4,7 @@ import TopRightIcons from "./Navigation";
 import TodaysSessions from "./components/Calendar/TodaysSessions";
 import CalendarView from "./components/Calendar/CalendarView";
 import { useRouter } from "next/navigation";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 
 interface User {
@@ -196,17 +197,11 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
               Psychologists
             </h2>
             <div className="mr-8">
-              <button
+              <PrimaryButton
+                text="Add Psychologist"
                 onClick={() => router.push("/Organization")}
-                className="bg-[#1E3CA7] text-white font-semibold px-6 py-2 rounded-full shadow hover:opacity-70"
-                style={{
-                  border: "1px solid #2196F3",
-                  fontWeight: 600,
-                  boxShadow: "0px 4px 12px 0px #D0E3FFC7",
-                }}
-              >
-                Add Psychologist
-              </button>
+                className="font-semibold px-6 py-2 rounded-full"
+              />
             </div>
           </div>
           <div className="flex flex-col items-center">
@@ -268,16 +263,10 @@ const OrganizationDashboard: React.FC<{ user: User }> = ({ user }) => {
                           <span>🌟</span> {doc.rating} Rating
                         </div>
                       </div>
-                      <button
-                        className="bg-[#1E3CA7] text-white font-semibold px-6 py-2 rounded-full shadow hover:opacity-70"
-                        style={{
-                          border: "1px solid #2196F3",
-                          fontWeight: 600,
-                          boxShadow: "0px 4px 12px 0px #D0E3FFC7",
-                        }}
-                      >
-                        View Profile
-                      </button>
+                      <PrimaryButton
+                        text="View Profile"
+                        className="font-semibold px-6 py-2 rounded-full"
+                        />
                     </div>
                   </div>
                 ))}

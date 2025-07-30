@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 export default function ChangeEmailPage() {
   const [authVerified, setAuthVerified] = useState(false);
@@ -126,23 +128,21 @@ export default function ChangeEmailPage() {
 
           {/* Buttons Row */}
           <div className="flex justify-end gap-4 mt-6">
-            <button
+            <SecondaryButton
+              text="Cancel"
               onClick={() => {
                 setCurrentEmail("");
                 setNewEmail("");
                 setConfirmEmail("");
               }}
-              className="px-5 py-2 rounded-full bg-white border border-[#2196F3] text-heading2 hover:bg-blue-100 font-semibold"
-            >
-              Cancel
-            </button>
-            <button
+              className="px-12 py-2 rounded-full text-heading2 font-semibold"
+            />
+            <PrimaryButton
+              text="Save Changes"
               onClick={handleSaveChanges}
+              className="px-5 py-2 rounded-full bg-heading2 font-semibold"
               disabled={saving}
-              className="px-5 py-2 rounded-full bg-heading2 text-white hover:bg-blue-900 font-semibold"
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
+            />
           </div>
         </div>
       </div>

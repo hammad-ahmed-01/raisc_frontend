@@ -1,4 +1,5 @@
 import React from 'react';
+import PrimaryButton from '@/components/Buttons/PrimaryButton';
 
 export const ChatBot: React.FC = () => (
   <div className="bg-[#F0F7FF] shadow-md p-6 rounded-2xl items-end text-center w-fit max-w-xs">
@@ -15,9 +16,11 @@ export const ChatBot: React.FC = () => (
       I’m here anytime.
     </p>
     <div className="flex justify-center">
-      <button className="w-fit flex items-center justify-center bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 rounded-full shadow-sm hover:opacity-90 transition">
-        Start Chat
-      </button>
+      <PrimaryButton
+        text="Start Chat"
+        onClick={() => {window.location.href = '/chatbot';}}
+        className="w-fit flex items-center justify-center px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm"
+        />
     </div>
   </div>
 );

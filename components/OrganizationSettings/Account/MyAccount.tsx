@@ -1,3 +1,5 @@
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+
 interface Organization {
   organization_name: string;
   description: string;
@@ -74,12 +76,11 @@ export default function MyAccount({ organization }: OrganizationProps) {
                 {organization.linkedin}
               </a>
             </div>
-            <button
-              className="mt-auto mb-4 bg-[#1E3CA7] text-white text-[20px] font-bold rounded-[14px] px-8 py-3 shadow-none hover:opacity-70"
-              style={{ width: "180px" }} onClick={() => window.location.href = "/settings/edit-profile"}
-            >
-              Edit Info
-            </button>
+            <PrimaryButton 
+              text="Edit Info"
+              onClick={() => window.location.href = "/settings/edit-profile"}
+              className="mt-auto mb-4 text-[20px] font-bold rounded-[32px] max-w-[180px] px-4 py-3"
+              />
           </div>
           {/* Right Column: Logo */}
           <div className="flex flex-col items-center justify-start min-w-[400px] pt-8 pl-8">
