@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 // Define interface for association data
 interface AssociationData {
@@ -12,7 +13,7 @@ interface AssociationData {
   hours?: string;
   website?: string;
   logoUrl?: string;
-}
+} 
 
 export default function Association() {
   const router = useRouter();
@@ -113,12 +114,11 @@ export default function Association() {
         
         {/* Action Button */}
         <div className="mt-4 sm:mt-6 w-full flex justify-center">
-          <button 
+          <SecondaryButton
+            text="Choose Another Therapist"
             onClick={() => router.push('/Doctors')}
-            className="bg-[#D7E2FE] hover:bg-blue-200 text-[#0039A6] font-semibold px-3 sm:px-5 py-2 sm:py-3 rounded-full w-full max-w-xs text-center text-xs sm:text-sm"
-          >
-            Choose Another Therapist
-          </button>
+            className="font-semibold px-3 sm:px-5 py-2 sm:py-3 rounded-full w-full max-w-xs text-center text-xs sm:text-sm"
+          />  
         </div>
       </div>
     </div>
