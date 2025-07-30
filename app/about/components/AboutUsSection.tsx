@@ -35,7 +35,7 @@ export default function AboutUsSection() {
         </div>
         <PrimaryButton
           text="Join Our Mission"
-          onClick={() => window.location.href = "/register"}
+          onClick={() => window.location.href = "/production"}
           className="mt-16 text-white px-10 py-4 rounded-full"
           disabled={false}
           />
