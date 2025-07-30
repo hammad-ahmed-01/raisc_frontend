@@ -31,10 +31,10 @@ const LatestFooter: React.FC = () => {
             <div className="text-center lg:text-left w-full max-w-[280px] sm:max-w-full">
               <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4">Quick Links</h4>
               <ul className="space-y-1 sm:space-y-2">
-                <li><Link href="/" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Home</Link></li>
-                <li><Link href="/about" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">About</Link></li>
-                <li><Link href="/testimonials" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Testimonials</Link></li>
-                <li><Link href="/contact" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Contact</Link></li>
+                <li><Link href="/#" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Home</Link></li>
+                <li><Link href="/#about" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">About</Link></li>
+                <li><Link href="/#testimonials" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Testimonials</Link></li>
+                <li><Link href="/#contact" className="hover:underline font-normal text-xs sm:text-sm lg:text-base">Contact</Link></li>
               </ul>
             </div>
 
@@ -92,23 +92,14 @@ const LatestFooter: React.FC = () => {
             <div className={`flex flex-col sm:flex-row items-center mt-2 sm:mt-3 md:mt-0 gap-2 lg:gap-0 ${!hasSidebar ? 'lg:mr-8' : ''}`}>
               <span className="text-[10px] sm:text-xs lg:text-sm font-normal mr-0 lg:mr-2">Follow us:</span>
               <div className="flex space-x-2 lg:space-x-3 font-normal items-center">
-                <Link href="#" aria-label="Facebook" className="font-normal hover:text-gray-300">
+                <Link href="https://www.facebook.com/profile.php?id=61578671948762" aria-label="Facebook" className="font-normal hover:text-gray-300" target='_blank'>
                   <FaFacebook size={14} className="sm:w-4 sm:h-4" />
                 </Link>
-                <Link href="#" aria-label="Twitter" className="font-normal hover:text-gray-300">
+                <Link href="https://x.com/RASIC576993" aria-label="Twitter" className="font-normal hover:text-gray-300" target='_blank'>
                   <FaTwitter size={14} className="sm:w-4 sm:h-4" />
                 </Link>
-                <Link href="#" aria-label="GitHub" className="font-normal hover:text-gray-300">
-                  <FaGithub size={14} className="sm:w-4 sm:h-4" />
-                </Link>
-                <Link href="#" aria-label="Telegram" className="font-normal hover:text-gray-300">
-                  <FaTelegram size={14} className="sm:w-4 sm:h-4" />
-                </Link>
-                <Link href="#" aria-label="Instagram" className="font-normal hover:text-gray-300">
+                <Link href="https://www.instagram.com/_raisc_" aria-label="Instagram" className="font-normal hover:text-gray-300" target='_blank'>
                   <FaInstagram size={14} className="sm:w-4 sm:h-4" />
-                </Link>
-                <Link href="#" aria-label="Dribbble" className="font-normal hover:text-gray-300">
-                  <FaDribbble size={14} className="sm:w-4 sm:h-4" />
                 </Link>
               </div>
             </div>
