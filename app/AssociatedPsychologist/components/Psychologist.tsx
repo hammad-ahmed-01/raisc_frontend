@@ -2,6 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 // Define types for the psychologist data
 interface PsychologistData {
@@ -200,12 +201,11 @@ export default function Psychologist() {
         {/* Request action buttons */}
         <div className="w-full sm:w-auto flex justify-center">
           {requestStatus === 'none' && (
-            <button
+            <SecondaryButton
+              text="Send Request"
               onClick={sendRequest}
-              className="bg-[#FFF8EC] hover:bg-yellow-200 text-[#444444] px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center justify-center gap-1 sm:gap-2 font-bold whitespace-nowrap text-xs sm:text-sm"
-            >
-              🤝 Send Request
-            </button>
+              className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold whitespace-nowrap text-xs sm:text-sm"
+            />
           )}
           
           {requestStatus === 'pending' && (
@@ -214,12 +214,11 @@ export default function Psychologist() {
                 <span className="text-amber-700">⌛</span> 
                 <span className="whitespace-nowrap">Status: Pending Request</span>
               </div>
-              <button
+              <SecondaryButton
+                text="Remove Request"
                 onClick={removeRequest}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap"
-              >
-                Cancel Request
-              </button>
+                className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold whitespace-nowrap text-xs sm:text-sm"
+              />
             </div>
           )}
         </div>

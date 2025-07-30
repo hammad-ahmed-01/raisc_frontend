@@ -6,9 +6,11 @@ import logoDark from "@/public/raisc-logo.png";
 import logoWhite from "@/public/logo_white.svg"; 
 import { useRouter } from "next/navigation";
 
+import PrimaryButton from "@/components/Buttons/PrimaryButton";
+
 const sections = ["home", "about", "services", "testimonials", "contact"];
 
-export default function Navbar() {
+export default function   Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -140,18 +142,14 @@ export default function Navbar() {
                 Logout
               </a>
             ) : (
-              <a
-                href="/login"
-                className={`px-6 py-2 shadow-sm rounded-full font-semibold transition
-                  ${
-                    isScrolled
-                      ? "bg-white text-[#1E3CA7] border-none hover:bg-blue-50"
-                      : "bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white hover:opacity-90"
-                  }
-                `}
-              >
-                Login
-              </a>
+              <PrimaryButton
+                text="Login"
+                onClick={() => router.push("/login")}
+                className={`px-6 py-2 rounded-full font-semibold ${
+                  isScrolled
+                    ? "!bg-none !bg-white !text-[#1E3CA7] !border-none hover:!bg-blue-50 active:!bg-blue-100"
+                    : ""
+                }`}  />
             )}
           </div>
         </div>
