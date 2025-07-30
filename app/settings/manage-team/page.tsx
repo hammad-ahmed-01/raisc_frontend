@@ -1,7 +1,7 @@
 // components/AdminTeamPanel.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Admin = {
   name: string;
@@ -10,36 +10,40 @@ type Admin = {
   status: string;
 };
 
-export default function AdminTeamPanel() {
-  const [admins, setAdmins] = useState<Admin[]>([
-    {
-      name: "Hira Naseer",
-      email: "hira@pimh.org",
-      role: "Admin / Editor",
-      status: "Active",
-    },
-  ]);
+const initialAdmins: Admin[] = [
+  {
+    name: "Hira Naseer",
+    email: "hira@pimh.org",
+    role: "Admin / Editor",
+    status: "Active",
+  },
+];
 
+export default function AdminTeamPanel() {
+  const [admins, setAdmins] = useState<Admin[]>(initialAdmins);
   const [newAdmin, setNewAdmin] = useState<Admin>({
     name: "",
     email: "",
     role: "",
     status: "Active",
   });
-
   const [showNewAdminForm, setShowNewAdminForm] = useState(false);
+  const [changed, setChanged] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewAdmin({ ...newAdmin, [e.target.name]: e.target.value });
+    setChanged(true);
   };
 
   const handleAddNewAdmin = () => {
     setShowNewAdminForm(true);
+    setChanged(true);
   };
 
   const handleCancel = () => {
     setNewAdmin({ name: "", email: "", role: "", status: "Active" });
     setShowNewAdminForm(false);
+    setChanged(false);
   };
 
   const handleSave = () => {
@@ -47,10 +51,11 @@ export default function AdminTeamPanel() {
     setAdmins([...admins, newAdmin]);
     setNewAdmin({ name: "", email: "", role: "", status: "Active" });
     setShowNewAdminForm(false);
+    setChanged(false);
   };
 
   return (
-    <div>
+    <div className="p-8">
       <h1 className="text-2xl text-left font-bold text-heading2 mb-6">Manage Team</h1>
 
       <div className="bg-[#E9F5FE] rounded-2xl p-8 w-full max-w-4xl border border-blue-300 mx-auto">
@@ -134,7 +139,7 @@ export default function AdminTeamPanel() {
           </div>
         )}
 
-        {showNewAdminForm && (
+        {changed && (
           <div className="flex justify-center space-x-4 mt-4">
             <button
               onClick={handleSave}
