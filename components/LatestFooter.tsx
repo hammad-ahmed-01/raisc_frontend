@@ -131,7 +131,7 @@ const LatestFooter: React.FC = () => {
             <h3 className="text-[#1E3CA7] font-bold text-sm sm:text-lg lg:text-xl xl:text-2xl">RAISC — Your mental wellness companion</h3>
           </div>
           <div className="flex mt-2 md:mt-3 lg:mt-0 gap-1 sm:gap-2 lg:gap-3">
-            <a href="/login">
+            <a href="/production">
               <PrimaryButton
                 text="Get Started"
                 className="px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm lg:text-base" />

@@ -18,7 +18,7 @@ export default function SiteInProduction() {
       {/* Foreground content */}
       <div className="relative z-10 max-w-2xl">
         <h1 className="text-2xl md:text-4xl font-bold text-heading2 mb-6">
-          Thank You For Joining RAISC!
+          Thank You For Believing in RAISC!
         </h1>
 
         <p className="text-normal text-lg">
