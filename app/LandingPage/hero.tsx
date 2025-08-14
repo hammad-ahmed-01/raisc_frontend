@@ -7,7 +7,7 @@ export default function HeroSection() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.push('/production');
+    router.push('/register');
   }
   return (
     <section 
