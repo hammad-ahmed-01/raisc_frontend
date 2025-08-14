@@ -144,7 +144,7 @@ export default function   Navbar() {
             ) : (
               <PrimaryButton
                 text="Login"
-                onClick={() => router.push("/production")}
+                onClick={() => router.push("/login")}
                 className={`px-6 py-2 rounded-full font-semibold ${
                   isScrolled
                     ? "!bg-none !bg-white !text-[#1E3CA7] !border-none hover:!bg-blue-50 active:!bg-blue-100"
@@ -201,7 +201,7 @@ export default function   Navbar() {
                     </a>
                   ) : (
                     <a
-                      href="/production"
+                      href="/login"
                       className="w-11/12 max-w-xs text-center px-6 py-3 rounded-full font-semibold bg-white text-[#1E3CA7] shadow hover:bg-blue-50 transition text-base"
                     >
                       Login

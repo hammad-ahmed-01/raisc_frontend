@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, // ✅ This line skips ESLint in production build
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    turbo: false, // disable Turbopack to force Webpack
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
