@@ -33,7 +33,7 @@ const AboutRAISC: React.FC = () => {
 
             <p className="font-medium mb-4">Ready to start your journey?</p>
             <div className="flex flex-wrap gap-4">
-                <Link href="/production" passHref>
+                <Link href="/register" passHref>
                   <Button text="Get Started Today" variant="primary" />
                 </Link>
                 <Link href="/about" passHref>
