@@ -176,7 +176,7 @@ export default function Register() {
             </div>
             <div className="flex justify-center mt-6">
               <PrimaryButton
-                text="Sign Up"
+                text={isLoading ? "Signing in..." : "Sign Up"}
                 onClick={handleRegister}
                 className="px-10 text-lg py-3 rounded-full"
                 disabled={isLoading}
