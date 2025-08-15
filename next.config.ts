@@ -4,7 +4,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    turbo: false, // disable Turbopack to force Webpack
+    turbo: {}, // empty object instead of boolean
   },
 };
 
