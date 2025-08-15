@@ -163,9 +163,11 @@
                     <input type="checkbox" className="mr-2 accent-blue-600" />
                     Remember me
                   </label>
+                  {/*
                   <a href="#" className="text-heading2 hover:underline">
                     Forgot Password?
                   </a>
+                  */}
                 </div>
 
                 <div className="flex justify-center">

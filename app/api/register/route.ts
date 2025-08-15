@@ -74,27 +74,73 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prepare email messages
+    // Admin notification email
     const adminMailOptions = {
-      from: process.env.ZOHO_EMAIL,
-      to: process.env.CONTACT_RECIPIENT_EMAIL,
-      subject: `New User Registration - ${full_name}`,
-      html: `
-        <h2>New User Registered</h2>
-        <p><strong>Name:</strong> ${full_name}</p>
-        <p><strong>Email:</strong> ${sanitizedEmail}</p>
-      `,
+    from: process.env.ZOHO_EMAIL,
+    to: process.env.CONTACT_RECIPIENT_EMAIL,
+    subject: `New User Registration - ${full_name}`,
+    html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #1E3CA7; text-align: center;">New User Registered</h2>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Name:</strong> ${full_name}</p>
+            <p><strong>Email:</strong> ${sanitizedEmail}</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #888; font-size: 14px;">
+            This is an automated notification from the RAISC registration system.
+            </p>
+        </div>
+        </div>
+    `,
     };
 
+    // Auto-response email for the user
     const autoResponseOptions = {
-      from: process.env.ZOHO_EMAIL,
-      to: sanitizedEmail,
-      subject: "Welcome to RAISC - Registration Successful",
-      html: `
-        <h2>Welcome, ${full_name}!</h2>
-        <p>Thank you for registering with RAISC. Your account has been successfully created.</p>
-        <p>We appreciate your interest and will keep you updated.</p>
-      `,
+    from: process.env.ZOHO_EMAIL,
+    to: sanitizedEmail,
+    subject: 'Welcome to RAISC - Registration Successful',
+    html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #1E3CA7; text-align: center;">Welcome to RAISC</h2>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <img src="https://your-domain.com/logo.png" alt="RAISC Logo" style="max-width: 150px;" />
+        </div>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p>Dear ${full_name.split(' ')[0]},</p>
+            <p>Thank you for registering with RAISC. Your account has been successfully created.</p>
+            <p>We are excited to have you on board and will keep you updated about new features and services.</p>
+        </div>
+
+        <div style="background-color: #e9f5fe; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <h4 style="color: #1E3CA7; margin-top: 0;">Your Registration Details:</h4>
+            <p><strong>Name:</strong> ${full_name}</p>
+            <p><strong>Email:</strong> ${sanitizedEmail}</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="color: #666;">
+            If you have any urgent concerns, please don't hesitate to call us directly.
+            </p>
+            <p style="color: #1E3CA7; font-weight: bold;">
+            Phone: +92 302 2222363<br>
+            Email: info@raisc.org
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #888; font-size: 14px;">
+            Best regards,<br>
+            The RAISC Team<br>
+            "Healing takes time, asking for help is a courageous step"
+            </p>
+        </div>
+        </div>
+    `,
     };
 
     // Send both emails in parallel
