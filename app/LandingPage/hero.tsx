@@ -9,6 +9,7 @@ export default function HeroSection() {
   const handleGetStarted = () => {
     router.push('/register');
   }
+  
   return (
     <section 
       id="home" 

@@ -130,7 +130,7 @@
 
                 <div className="mb-6 text-left">
                   <label className="block text-gray-700 text-base mb-1">
-                    Username
+                    Username / Email
                   </label>
                   <input
                     type="text"
@@ -139,7 +139,7 @@
                       setUsername(e.target.value)
                     }
                     className="w-full border-0 border-b-2 border-blue-300 bg-transparent focus:outline-none focus:border-blue-500 text-gray-700 py-2"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username / email"
                   />
                 </div>
 
