@@ -5,22 +5,22 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const testimonials = [
 	{
-		name: 'Sarah J.',
-		condition: 'Anxiety Management',
+		name: 'Rehana Rasheed',
+		condition: 'Certified Clinical Psychologist',
 		image: '/testimonials/woman.png', // Make sure this image exists in your public directory
-		text: 'RAISC has been life-changing for me. The therapist I was matched with understood my anxiety issues perfectly, and I\'ve made more progress in three months than I did in years of trying to manage on my own.',
+		text: 'RAISC is an incredible platform and truly one of its kind in the Mental Health space. How AI has been integrated into the entire workflow makes the therapy process as a whole much more efficient and accessible, from both the receiving and giving ends.',
 	},
 	{
-		name: 'Omar K.',
-		condition: 'Stress & Burnout',
+		name: 'Fatima Irfan',
+		condition: 'Consultant Psychiatrist',
 		image: '/testimonials/woman.png',
-		text: 'Thanks to RAISC, I learned how to manage my stress and set boundaries. Their platform is incredibly user-friendly, and the support is amazing.',
+		text: 'It is a great initiative and has the potential to change how therapy works. Not only does it make therapy accessible and easy for users, but it also helps therapists in their day-to-day work. One of the best uses of modern technology for public welfare.',
 	},
 	{
-		name: 'Aisha M.',
-		condition: 'Depression Support',
+		name: 'Meshal Wali',
+		condition: 'Counseling Psychologist',
 		image: '/testimonials/woman.png',
-		text: 'Finding the right therapist was effortless. The sessions were flexible, and I felt seen and heard for the first time in a long while.',
+		text: 'RAISC is an amazing initiative for accessing therapy online. In the society where this is frowned upon, RAISC is clearing the path to make therapy available for everyone',
 	},
 ];
 
@@ -106,7 +106,7 @@ export default function TestimonialSection() {
 					))}
 				</div>
 				<div className="py-2 text-heading2">
-					<p>[Contact to add your own experience]</p>
+					<p>[Contact to add your testimonial]</p>
 				</div>
 			</div>
 		</section>
