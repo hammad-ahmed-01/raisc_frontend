@@ -36,7 +36,7 @@ export default function TestimonialSection() {
 	return (
 		<section
 			id="testimonials"
-			className="relative px-4 py-20 bg-blue-50 min-h-screen text-center overflow-hidden"
+			className="relative px-4 py-20 bg-blue-50 h-screen text-center overflow-hidden"
 			style={{ borderBottom: '5px solid #D0E3FFC7' }}
 		>
 			<div className="mb-2">
