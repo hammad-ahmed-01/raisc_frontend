@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import logoDark from "@/public/raisc-logo.png";
-import logoWhite from "@/public/logo_white.svg"; 
+import logoWhite from "@/public/logo_white.svg";
 import { useRouter } from "next/navigation";
 
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 const sections = ["home", "about", "services", "testimonials", "contact"];
 
-export default function   Navbar() {
+export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,7 +21,9 @@ export default function   Navbar() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
 
-      const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+      const isLandingPage =
+        window.location.pathname === "/" ||
+        window.location.pathname === "/LandingPage";
       if (isLandingPage) {
         let closestSection = "home";
         let minOffset = Number.POSITIVE_INFINITY;
@@ -45,7 +47,9 @@ export default function   Navbar() {
   }, []);
 
   useEffect(() => {
-    const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+    const isLandingPage =
+      window.location.pathname === "/" ||
+      window.location.pathname === "/LandingPage";
     if (!isLandingPage) {
       const path = window.location.pathname.replace("/", "");
       if (sections.includes(path)) {
@@ -57,7 +61,6 @@ export default function   Navbar() {
   }, []);
 
   useEffect(() => {
-    // Check for session_key in localStorage
     if (typeof window !== "undefined") {
       const key = localStorage.getItem("session_key");
       setIsLoggedIn(!!key && key !== "null" && key !== "");
@@ -66,7 +69,9 @@ export default function   Navbar() {
 
   const scrollToSection = (id: string) => {
     setMenuOpen(false);
-    const isLandingPage = window.location.pathname === "/" || window.location.pathname === "/LandingPage";
+    const isLandingPage =
+      window.location.pathname === "/" ||
+      window.location.pathname === "/LandingPage";
     if (isLandingPage) {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -78,7 +83,9 @@ export default function   Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-[#1E3CA7] shadow-md" : "bg-transparent"
+        isScrolled
+          ? "bg-[#1E3CA7]/70 backdrop-blur-md shadow-md"
+          : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
@@ -104,9 +111,21 @@ export default function   Navbar() {
           aria-label="Open menu"
           onClick={() => setMenuOpen((v) => !v)}
         >
-          <span className={`block w-6 h-0.5 bg-current mb-1 transition-all ${menuOpen ? "rotate-45 translate-y-2" : ""}`}></span>
-          <span className={`block w-6 h-0.5 bg-current mb-1 transition-all ${menuOpen ? "opacity-0" : ""}`}></span>
-          <span className={`block w-6 h-0.5 bg-current transition-all ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
+          <span
+            className={`block w-6 h-0.5 bg-current mb-1 transition-all ${
+              menuOpen ? "rotate-45 translate-y-2" : ""
+            }`}
+          ></span>
+          <span
+            className={`block w-6 h-0.5 bg-current mb-1 transition-all ${
+              menuOpen ? "opacity-0" : ""
+            }`}
+          ></span>
+          <span
+            className={`block w-6 h-0.5 bg-current transition-all ${
+              menuOpen ? "-rotate-45 -translate-y-2" : ""
+            }`}
+          ></span>
         </button>
 
         {/* Desktop Nav */}
@@ -124,7 +143,7 @@ export default function   Navbar() {
                       }`
                     : `${
                         isScrolled ? "text-white" : "text-heading"
-                      } opacity-80 hover:opacity-100`
+                      } opacity-70 hover:opacity-100`
                 }`}
                 onClick={() => scrollToSection(section)}
               >
@@ -149,7 +168,8 @@ export default function   Navbar() {
                   isScrolled
                     ? "!bg-none !bg-white !text-[#1E3CA7] !border-none hover:!bg-blue-50 active:!bg-blue-100"
                     : ""
-                }`}  />
+                }`}
+              />
             )}
           </div>
         </div>
@@ -216,4 +236,3 @@ export default function   Navbar() {
     </nav>
   );
 }
-
