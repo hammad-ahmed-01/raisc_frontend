@@ -7,7 +7,7 @@ export default function AboutPage() {
   return (
     <section 
       id="about" 
-      className="relative px-4 py-20 bg-blue-50 min-h-screen overflow-hidden"
+      className="relative px-4 py-20 bg-blue-50 h-screen overflow-hidden"
       style={{ 
         borderBottom: '5px solid #D0E3FFC7'
       }}

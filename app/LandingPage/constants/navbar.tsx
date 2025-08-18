@@ -91,6 +91,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo and Title */}
         <div
+          onClick={() => router.push("/")}
           className={`flex items-center space-x-2 text-xl font-bold cursor-pointer ${
             isScrolled ? "text-white" : "text-heading"
           }`}
@@ -179,7 +180,13 @@ export default function Navbar() {
           <div className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-40">
             <div className="absolute top-0 left-0 w-full bg-[#1E3CA7] shadow-md rounded-b-3xl pb-8">
               <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                <div className="flex items-center space-x-2 text-xl font-bold text-white">
+                <div
+                  onClick={() => {
+                    setMenuOpen(false);
+                    router.push("/");
+                  }}
+                  className="flex items-center space-x-2 text-xl font-bold text-white cursor-pointer"
+                >
                   <Image
                     src={logoWhite}
                     alt="RAISC Logo"
