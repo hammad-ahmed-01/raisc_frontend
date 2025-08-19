@@ -5,7 +5,6 @@ import Image from "next/image";
 import logoDark from "@/public/raisc-logo.png";
 import logoWhite from "@/public/logo_white.svg";
 import { useRouter } from "next/navigation";
-
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 const sections = ["home", "about", "services", "testimonials", "contact"];
@@ -84,7 +83,7 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#1E3CA7]/70 backdrop-blur-md shadow-md"
+          ? "bg-gradient-to-b from-[#1E3CA7] to-transparent backdrop-blur-md shadow-md"
           : "bg-transparent"
       }`}
     >
