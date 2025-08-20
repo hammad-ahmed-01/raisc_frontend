@@ -9,11 +9,12 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
   const router = useRouter();
 
-  // Optional: Explicit demo flag (defaults to OFF)
-  const enableDemo =
-    (process.env.NEXT_PUBLIC_ENABLE_DEMO || "false").toLowerCase() === "true";
+  // Toggle backend vs demo mode using NEXT_PUBLIC_BACKEND_CONNECTED
+  const isBackendConnected =
+    process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -28,8 +29,8 @@ export default function Login() {
     setErrorMessage("");
     setIsLoading(true);
 
-    // ===== Optional demo mode (only if explicitly enabled) =====
-    if (enableDemo) {
+    // ===== Demo Mode when backend is NOT connected =====
+    if (!isBackendConnected) {
       const dummyUser = {
         id: 2,
         username: "demo_user",
@@ -41,14 +42,37 @@ export default function Login() {
           associated_psychologist_name: "Dr. John Doe",
           sent_requests: [],
         },
+        // doctor_profile: {
+        //   professional_information: {
+        //     specialization: "Psychiatry",
+        //     experience: "5 years",
+        //     qualifications: "MD, PhD",
+        //   },
+        //   chatgroup_nickname: "DocDemo",
+        //   rates: "$100/hr",
+        // },
+        // organization_profile: {
+        //   name: "Pakistan Institute of Mental Health",
+        //   total_psychologists: 10,
+        //   total_patients: 30,
+        //   sessions_today: 4,
+        //   new_join_requests: 2,
+        //   todays_sessions: [
+        //     { doctor: "Dr. Ali Hamza", therapy_type: "Cognitive Therapy", time: "9:00 AM" },
+        //     { doctor: "Dr. Alisha", therapy_type: "Cognitive Therapy", time: "11:00 AM" },
+        //     { doctor: "Dr. Sara Ali", therapy_type: "Cognitive Therapy", time: "10:00 AM" },
+        //     { doctor: "Dr. Zahra", therapy_type: "Cognitive Therapy", time: "3:00 PM" },
+        //   ],
+        // },
       };
+
       localStorage.setItem("session_key", "dummy-session-key");
       localStorage.setItem("user_data", JSON.stringify(dummyUser));
       router.push("/production");
       setIsLoading(false);
       return;
     }
-    // ===========================================================
+    // ===================================================
 
     try {
       const res = await fetch("/api/login", {
@@ -61,12 +85,14 @@ export default function Login() {
 
       if (!res.ok) {
         setErrorMessage(
-          data?.message || data?.detail || data?.error || "Invalid username or password."
+          data?.message ||
+            data?.detail ||
+            data?.error ||
+            "Invalid username or password."
         );
         return;
       }
 
-      // Strict checks — only proceed if both exist
       if (typeof data?.token !== "string" || !data?.user) {
         setErrorMessage("Unexpected login response. Please try again.");
         return;
@@ -88,10 +114,10 @@ export default function Login() {
       <Navbar />
       <div className="flex flex-col min-h-screen bg-[url('/bg/patientbg.png')] bg-cover bg-center px-4 py-24">
         <div className="text-center mb-10 mt-4">
-          <h1 className="text-[48px] leading-[100%] tracking-[0%] font-[700] font-quicksand text-[#1E3CA7] drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
+          <h1 className="text-[48px] font-[700] font-quicksand text-[#1E3CA7] drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
             Welcome to RAISC
           </h1>
-          <p className="text-[40px] leading-[100%] tracking-[0%] font-[400] font-quicksand text-[#1E3CA7] text-center mt-2">
+          <p className="text-[40px] font-[400] font-quicksand text-[#1E3CA7] text-center mt-2">
             Healing begins with one step.
           </p>
         </div>
