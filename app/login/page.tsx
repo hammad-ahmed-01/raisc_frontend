@@ -9,11 +9,8 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const router = useRouter();
 
-  // Optional: Explicit demo flag (defaults to OFF)
-  const enableDemo =
-    (process.env.NEXT_PUBLIC_ENABLE_DEMO || "false").toLowerCase() === "true";
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -27,28 +24,6 @@ export default function Login() {
   const handleLogin = async () => {
     setErrorMessage("");
     setIsLoading(true);
-
-    // ===== Optional demo mode (only if explicitly enabled) =====
-    if (enableDemo) {
-      const dummyUser = {
-        id: 2,
-        username: "demo_user",
-        email: "demo@example.com",
-        user_type: "patient",
-        patient_profile: {
-          level: 1,
-          associated_psychologist: "dr_john_doe",
-          associated_psychologist_name: "Dr. John Doe",
-          sent_requests: [],
-        },
-      };
-      localStorage.setItem("session_key", "dummy-session-key");
-      localStorage.setItem("user_data", JSON.stringify(dummyUser));
-      router.push("/production");
-      setIsLoading(false);
-      return;
-    }
-    // ===========================================================
 
     try {
       const res = await fetch("/api/login", {
@@ -66,7 +41,6 @@ export default function Login() {
         return;
       }
 
-      // Strict checks — only proceed if both exist
       if (typeof data?.token !== "string" || !data?.user) {
         setErrorMessage("Unexpected login response. Please try again.");
         return;
@@ -88,10 +62,10 @@ export default function Login() {
       <Navbar />
       <div className="flex flex-col min-h-screen bg-[url('/bg/patientbg.png')] bg-cover bg-center px-4 py-24">
         <div className="text-center mb-10 mt-4">
-          <h1 className="text-[48px] leading-[100%] tracking-[0%] font-[700] font-quicksand text-[#1E3CA7] drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
+          <h1 className="text-[48px] font-[700] font-quicksand text-[#1E3CA7] drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
             Welcome to RAISC
           </h1>
-          <p className="text-[40px] leading-[100%] tracking-[0%] font-[400] font-quicksand text-[#1E3CA7] text-center mt-2">
+          <p className="text-[40px] font-[400] font-quicksand text-[#1E3CA7] text-center mt-2">
             Healing begins with one step.
           </p>
         </div>
