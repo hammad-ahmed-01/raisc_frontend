@@ -20,7 +20,7 @@ export default function Login() {
     if (typeof window !== "undefined") {
       const key = localStorage.getItem("session_key");
       if (key && key !== "null" && key !== "") {
-        router.push("/production");
+        router.push("/dashboard"); // <-- go to dashboards hub
       }
     }
   }, [router]);
@@ -37,38 +37,16 @@ export default function Login() {
         email: "demo@example.com",
         user_type: "patient",
         patient_profile: {
-          level: 1,
-          associated_psychologist: "dr_john_doe",
-          associated_psychologist_name: "Dr. John Doe",
+          level: 0, // force level 0 in demo too
+          associated_psychologist: null,
+          associated_psychologist_name: null,
           sent_requests: [],
         },
-        // doctor_profile: {
-        //   professional_information: {
-        //     specialization: "Psychiatry",
-        //     experience: "5 years",
-        //     qualifications: "MD, PhD",
-        //   },
-        //   chatgroup_nickname: "DocDemo",
-        //   rates: "$100/hr",
-        // },
-        // organization_profile: {
-        //   name: "Pakistan Institute of Mental Health",
-        //   total_psychologists: 10,
-        //   total_patients: 30,
-        //   sessions_today: 4,
-        //   new_join_requests: 2,
-        //   todays_sessions: [
-        //     { doctor: "Dr. Ali Hamza", therapy_type: "Cognitive Therapy", time: "9:00 AM" },
-        //     { doctor: "Dr. Alisha", therapy_type: "Cognitive Therapy", time: "11:00 AM" },
-        //     { doctor: "Dr. Sara Ali", therapy_type: "Cognitive Therapy", time: "10:00 AM" },
-        //     { doctor: "Dr. Zahra", therapy_type: "Cognitive Therapy", time: "3:00 PM" },
-        //   ],
-        // },
       };
 
       localStorage.setItem("session_key", "dummy-session-key");
       localStorage.setItem("user_data", JSON.stringify(dummyUser));
-      router.push("/production");
+      router.push("/dashboard"); // <-- dashboards hub
       setIsLoading(false);
       return;
     }
@@ -100,7 +78,7 @@ export default function Login() {
 
       localStorage.setItem("session_key", data.token);
       localStorage.setItem("user_data", JSON.stringify(data.user));
-      router.push("/production");
+      router.push("/dashboard"); // <-- always route to dashboard
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage("Something went wrong. Please try again later.");

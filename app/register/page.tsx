@@ -53,9 +53,7 @@ export default function Register() {
       return false;
     }
     if (!/[^A-Za-z0-9]/.test(password)) {
-      setErrorMessage(
-        "Password must contain at least one special character."
-      );
+      setErrorMessage("Password must contain at least one special character.");
       return false;
     }
     if (password !== confirmPassword) {
@@ -67,17 +65,13 @@ export default function Register() {
 
   const handleRegister = async () => {
     setErrorMessage("");
-
     if (!validateInputs()) return;
-
     setIsLoading(true);
 
     try {
       const response = await fetch("/api/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: username.trim(),
           email: email.trim().toLowerCase(),
@@ -86,9 +80,10 @@ export default function Register() {
       });
 
       if (response.ok) {
+        // go to login after success
         router.push("/login");
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         setErrorMessage(errorData.message || "Registration failed.");
       }
     } catch (error) {
