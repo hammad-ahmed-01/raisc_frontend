@@ -1,3 +1,4 @@
+// app/api/register/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -54,10 +55,21 @@ function escapeHtml(str: string) {
 /** ========= Route ========= **/
 export async function POST(request: Request) {
   try {
-    const { username, email, password } = await request.json();
+    const body = await request.json();
+    const {
+      username,
+      email,
+      password,
+      user_type, // "patient" | "doctor"
+      // doctor-only fields (optional if user_type=patient)
+      doctor_profile = {},
+    } = body || {};
 
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !user_type) {
       return NextResponse.json({ message: "All fields are required." }, { status: 400 });
+    }
+    if (!["patient", "doctor"].includes(user_type)) {
+      return NextResponse.json({ message: "Invalid user type." }, { status: 400 });
     }
 
     const full_name = String(username).trim();
@@ -68,11 +80,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Backend base URL is not configured." }, { status: 500 });
     }
 
-    // 1) Simple register
+    // Prepare request to Django new-register
+    const payload: any = {
+      full_name,
+      email: sanitizedEmail,
+      password,
+      user_type,
+    };
+    if (user_type === "doctor") {
+      // Forward a normalized doctor_profile to backend
+      payload.doctor_profile = {
+        display_name: doctor_profile.display_name ?? full_name,
+        specialization: doctor_profile.specialization ?? "",
+        location: doctor_profile.location ?? "",
+        experience: doctor_profile.experience ?? "",
+        education: doctor_profile.education ?? "",
+        expertise: Array.isArray(doctor_profile.expertise)
+          ? doctor_profile.expertise
+          : String(doctor_profile.expertise || "")
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean),
+        profile_image: doctor_profile.profile_image ?? "",
+        rating: Number(doctor_profile.rating ?? 0),
+        rates: String(doctor_profile.rates ?? "0"),
+      };
+    }
+
+    // 1) Simple register (now with user_type and optional doctor_profile)
     const registerRes = await fetch(`${base}/users/new-register/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ full_name, email: sanitizedEmail, password }),
+      body: JSON.stringify(payload),
     });
     const registerData = await registerRes.json().catch(() => ({}));
     if (!registerRes.ok) {
@@ -80,7 +119,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: msg }, { status: registerRes.status });
     }
 
-    // 2) Login to get token
+    // 2) Login to get token (email-based login supported by your backend)
     const loginRes = await fetch(`${base}/users/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,21 +131,23 @@ export async function POST(request: Request) {
     }
     const token = loginData.token as string;
 
-    // 3) Enforce patient type + level=0 (create/update)
-    // PATCH /users/user/
-    const patchRes = await fetch(`${base}/users/user/`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
-      body: JSON.stringify({
-        user_type: "patient",
-        patient_profile: { level: 0 },
-      }),
-    });
-    // don't fail the request if patch errored; best-effort:
-    await patchRes.json().catch(() => ({}));
+    // 3) Post-register patch:
+    // - For patients: set user_type=patient + create/ensure patient_profile(level=0)
+    // - For doctors: new-register already created doctor profile; no patch needed
+    if (user_type === "patient") {
+      const patchRes = await fetch(`${base}/users/user/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({
+          user_type: "patient",
+          patient_profile: { level: 0 },
+        }),
+      });
+      await patchRes.json().catch(() => ({})); // best-effort; do not fail overall
+    }
 
     /** ========= Emails (Zoho) ========= **/
     const ACCOUNT_ID = process.env.ZOHO_ACCOUNT_ID || "";
@@ -125,6 +166,7 @@ export async function POST(request: Request) {
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
               <p><strong>Name:</strong> ${escapeHtml(full_name)}</p>
               <p><strong>Email:</strong> ${escapeHtml(sanitizedEmail)}</p>
+              <p><strong>User Type:</strong> ${escapeHtml(user_type)}</p>
             </div>
           </div>
         `;
