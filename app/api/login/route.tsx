@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // OK on Vercel
+export const runtime = "edge";
 
 export async function POST(request: Request) {
   try {
@@ -22,16 +22,18 @@ export async function POST(request: Request) {
     }
 
     // 1) Login (Django accepts username OR email in `username`)
-    const res = await fetch(`${base}/users/login/`, {
+    const res = await fetch(`${base.replace(/\/+$/, "")}/users/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({
+        username: String(username).trim().toLowerCase(),
+        password,
+      }),
     });
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg =
-        data?.message || data?.detail || data?.error || "Invalid credentials.";
+      const msg = data?.message || data?.detail || data?.error || "Invalid credentials.";
       return NextResponse.json({ message: String(msg) }, { status: res.status });
     }
 
@@ -43,29 +45,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2) Enforce patient level 0 on every login (best-effort)
-    await fetch(`${base}/users/user/`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
-      body: JSON.stringify({
-        user_type: "patient",
-        patient_profile: { level: 0 },
-      }),
-    }).catch(() => {});
-
-    // 3) Fetch fresh user after patch (so UI gets the right level/type)
-    const meRes = await fetch(`${base}/users/user/`, {
+    // 2) DO NOT mutate role here. Just fetch the canonical user.
+    const meRes = await fetch(`${base.replace(/\/+$/, "")}/users/user/`, {
       method: "GET",
       headers: { Authorization: `Token ${token}` },
+      cache: "no-store",
     });
-    const me = await meRes.json().catch(() => ({}));
-    // Fallback to original user if GET fails
-    const user = meRes.ok ? me : data?.user;
 
-    if (!user) {
+    const user = (await meRes.json().catch(() => null)) || data?.user;
+    if (!meRes.ok || !user) {
       return NextResponse.json(
         { message: "Could not retrieve user profile." },
         { status: 502 }
@@ -75,9 +63,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ token, user }, { status: 200 });
   } catch (err) {
     console.error("Login API error:", err);
-    return NextResponse.json(
-      { message: "Internal server error." },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal server error." }, { status: 500 });
   }
 }

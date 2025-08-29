@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
@@ -34,7 +35,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  user_type: string;
+  user_type: "patient" | "doctor" | "organization";
   patient_profile?: PatientProfile | null;
   doctor_profile?: DoctorProfile;
   organization_profile?: OrganizationProfile;
@@ -46,7 +47,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const performAuthCheck = async () => {
+    (async () => {
       const authResult = await checkAuth();
 
       if (!authResult.isAuthenticated) {
@@ -55,10 +56,8 @@ export default function Dashboard() {
         return;
       }
 
-      // ✅ Normalize: always ensure patient has a level (default 0)
+      // only normalize patient payloads; do NOT inject patient_profile for doctors/orgs
       const u = authResult.user as User;
-      let normalized: User = { ...u };
-
       if (u?.user_type === "patient") {
         const pp = u.patient_profile ?? null;
         const safeProfile: PatientProfile = {
@@ -66,13 +65,12 @@ export default function Dashboard() {
           associated_psychologist: pp?.associated_psychologist ?? null,
           associated_psychologist_name: pp?.associated_psychologist_name ?? null,
         };
-        normalized = { ...u, patient_profile: safeProfile };
+        setUser({ ...u, patient_profile: safeProfile });
+      } else {
+        const { patient_profile, ...rest } = u as any;
+        setUser(rest as User);
       }
-
-      setUser(normalized);
-    };
-
-    performAuthCheck();
+    })();
   }, [router]);
 
   if (authError) {
@@ -91,18 +89,7 @@ export default function Dashboard() {
     return <p className="text-center text-gray-600 mt-10">Loading...</p>;
   }
 
-  // ===== Patient dashboards by level (now safe) =====
-  if (user.user_type === "patient" && (user.patient_profile?.level ?? 0) === 0) {
-    return <NewPatientDashboard user={user} />;
-  }
-  if (user.user_type === "patient" && user.patient_profile?.level === 1) {
-    return <ReturningPatientDashboard user={user} />;
-  }
-  if (user.user_type === "patient" && user.patient_profile?.level === 2) {
-    return <PatientDashboard user={user} />;
-  }
-
-  // ===== Others =====
+  // Non-patient dashboards first
   if (user.user_type === "doctor") {
     return <DoctorDashboard user={user} />;
   }
@@ -110,7 +97,13 @@ export default function Dashboard() {
     return <OrganizationDashboard user={user} />;
   }
 
-  // Fallback (kept minimal; no unsafe .level access)
+  // Patient dashboards by level
+  const level = user.patient_profile?.level ?? 0;
+  if (level === 0) return <NewPatientDashboard user={user} />;
+  if (level === 1) return <ReturningPatientDashboard user={user} />;
+  if (level === 2) return <PatientDashboard user={user} />;
+
+  // Fallback
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-gray-800 text-center">

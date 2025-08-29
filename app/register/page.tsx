@@ -1,3 +1,4 @@
+// app/register/page.tsx
 "use client";
 import { useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -28,67 +29,32 @@ export default function Register() {
   const [rates, setRates] = useState<string>(""); // numeric string
 
   const validateInputs = () => {
-    if (!username.trim()) {
-      setErrorMessage("Full name is required.");
-      return false;
-    }
-    if (username.trim().length < 3) {
-      setErrorMessage("Full name must be at least 3 characters long.");
-      return false;
-    }
+    if (!username.trim()) return setErr("Full name is required.");
+    if (username.trim().length < 3) return setErr("Full name must be at least 3 characters long.");
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      setErrorMessage("Email is required.");
-      return false;
-    }
-    if (!emailRegex.test(email.trim())) {
-      setErrorMessage("Invalid email format.");
-      return false;
-    }
-    if (!password) {
-      setErrorMessage("Password is required.");
-      return false;
-    }
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
-      return false;
-    }
-    if (!/[A-Z]/.test(password)) {
-      setErrorMessage("Password must contain at least one uppercase letter.");
-      return false;
-    }
-    if (!/[a-z]/.test(password)) {
-      setErrorMessage("Password must contain at least one lowercase letter.");
-      return false;
-    }
-    if (!/[0-9]/.test(password)) {
-      setErrorMessage("Password must contain at least one number.");
-      return false;
-    }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setErrorMessage("Password must contain at least one special character.");
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return false;
-    }
+    if (!email.trim()) return setErr("Email is required.");
+    if (!emailRegex.test(email.trim())) return setErr("Invalid email format.");
+
+    if (!password) return setErr("Password is required.");
+    if (password.length < 8) return setErr("Password must be at least 8 characters long.");
+    if (!/[A-Z]/.test(password)) return setErr("Password must contain at least one uppercase letter.");
+    if (!/[a-z]/.test(password)) return setErr("Password must contain at least one lowercase letter.");
+    if (!/[0-9]/.test(password)) return setErr("Password must contain at least one number.");
+    if (!/[^A-Za-z0-9]/.test(password)) return setErr("Password must contain at least one special character.");
+    if (password !== confirmPassword) return setErr("Passwords do not match.");
 
     if (userType === "doctor") {
-      if (!specialization.trim()) {
-        setErrorMessage("Specialization is required for doctors.");
-        return false;
-      }
-      if (!location.trim()) {
-        setErrorMessage("Location is required for doctors.");
-        return false;
-      }
-      if (!rates || isNaN(Number(rates))) {
-        setErrorMessage("Please enter a valid numeric rate.");
-        return false;
-      }
+      if (!specialization.trim()) return setErr("Specialization is required for doctors.");
+      if (!location.trim()) return setErr("Location is required for doctors.");
+      if (!rates || isNaN(Number(rates))) return setErr("Please enter a valid numeric rate.");
     }
     return true;
+  };
+
+  const setErr = (msg: string) => {
+    setErrorMessage(msg);
+    return false;
   };
 
   const handleRegister = async () => {
@@ -98,7 +64,7 @@ export default function Register() {
 
     try {
       const body: any = {
-        username: username.trim(),
+        username: username.trim(), // backend treats this as full_name
         email: email.trim().toLowerCase(),
         password,
         user_type: userType,
@@ -111,7 +77,7 @@ export default function Register() {
           location: location.trim(),
           experience: experience.trim(),
           education: education.trim(),
-          expertise: expertise, // send as comma-separated; backend will split
+          expertise: expertise, // comma-separated; backend normalizes
           profile_image: profileImage.trim(),
           rates: rates.trim(),
         };
@@ -123,12 +89,34 @@ export default function Register() {
         body: JSON.stringify(body),
       });
 
-      if (response.ok) {
-        router.push("/login");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setErrorMessage(errorData.message || "Registration failed.");
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrorMessage(json?.message || "Registration failed.");
+        return;
       }
+
+      // Save session (token + user) returned by API
+      const token = json?.token as string | undefined;
+      const apiUser = (json?.user as any) || null;
+
+      if (token) {
+        localStorage.setItem("session_key", token);
+      }
+
+      // --- 🔧 TWEAK: Guarantee the stored user role matches the selection when doctor ---
+      // This avoids any transient "patient" leftovers and makes /dashboard render DoctorDashboard immediately.
+      if (apiUser) {
+        if (userType === "doctor") {
+          const fixedUser = { ...apiUser, user_type: "doctor" as const };
+          localStorage.setItem("user_data", JSON.stringify(fixedUser));
+        } else {
+          localStorage.setItem("user_data", JSON.stringify(apiUser));
+        }
+      }
+
+      // Go to the dashboard; your Dashboard page gates by user.user_type and shows the right UI.
+      router.replace("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
       setErrorMessage("Something went wrong. Please try again.");
@@ -170,7 +158,7 @@ export default function Register() {
               />
             </div>
 
-            {/* User Type (circle choices) */}
+            {/* User Type */}
             <div className="mb-6 text-left">
               <label className="block text-gray-700 text-base mb-2">I am a</label>
               <div className="flex gap-6">
@@ -235,7 +223,7 @@ export default function Register() {
               />
             </div>
 
-            {/* Doctor-only extra fields (reuses same input aesthetics) */}
+            {/* Doctor-only extra fields */}
             {userType === "doctor" && (
               <>
                 <div className="mb-6 text-left">
@@ -334,7 +322,7 @@ export default function Register() {
 
             <div className="flex justify-center mt-6">
               <PrimaryButton
-                text={isLoading ? "Signing in..." : "Sign Up"}
+                text={isLoading ? "Signing up..." : "Sign Up"}
                 onClick={handleRegister}
                 className="px-10 text-lg py-3 rounded-full"
                 disabled={isLoading}

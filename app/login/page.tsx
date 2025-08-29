@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "../LandingPage/constants/navbar";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
+type Role = "patient" | "doctor" | "organization";
+
 export default function Login() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -13,15 +15,64 @@ export default function Login() {
   const router = useRouter();
 
   // Toggle backend vs demo mode using NEXT_PUBLIC_BACKEND_CONNECTED
-  const isBackendConnected =
-    process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+  const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
+  // --- Helpers ---
+  const normalizeUserForStorage = (u: any) => {
+    if (!u || typeof u !== "object") return u;
+    const role: Role = u.user_type as Role;
+
+    // Important: never carry a patient_profile for a non-patient user
+    if (role === "doctor" || role === "organization") {
+      const { patient_profile, ...rest } = u;
+      return { ...rest, user_type: role };
+    }
+
+    // Patient: ensure a safe level field (frontend expects it)
+    if (role === "patient") {
+      const pp = u.patient_profile ?? null;
+      const safeProfile = {
+        level: typeof pp?.level === "number" ? pp.level : 0,
+        associated_psychologist: pp?.associated_psychologist ?? null,
+        associated_psychologist_name: pp?.associated_psychologist_name ?? null,
+        sent_requests: pp?.sent_requests ?? [],
+      };
+      return { ...u, user_type: role, patient_profile: safeProfile };
+    }
+
+    return u;
+  };
+
+  const goToDashboardFor = (role: Role) => {
+    // We route to the same /dashboard hub; the page component picks
+    // the correct dashboard (Doctor/Patient/Organization).
+    // Keeping it centralized avoids duplicating logic here.
+    router.push("/dashboard");
+  };
+
+  // If already logged in, go to dashboard immediately (respect stored role)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const key = localStorage.getItem("session_key");
-      if (key && key !== "null" && key !== "") {
-        router.push("/dashboard"); // <-- go to dashboards hub
+    if (typeof window === "undefined") return;
+    const key = localStorage.getItem("session_key");
+    if (!key || key === "null" || key === "") return;
+
+    try {
+      const raw = localStorage.getItem("user_data");
+      const parsed = raw ? JSON.parse(raw) : null;
+      const role: Role | undefined = parsed?.user_type;
+      if (role === "doctor" || role === "patient" || role === "organization") {
+        // Normalize once more in case old/stale user_data exists
+        const normalized = normalizeUserForStorage(parsed);
+        localStorage.setItem("user_data", JSON.stringify(normalized));
+        goToDashboardFor(normalized.user_type);
+      } else {
+        // Fallback: still go to dashboards hub; it will fetch/validate
+        router.push("/dashboard");
       }
+    } catch {
+      // If parsing fails, force re-login
+      localStorage.removeItem("session_key");
+      localStorage.removeItem("user_data");
     }
   }, [router]);
 
@@ -31,22 +82,24 @@ export default function Login() {
 
     // ===== Demo Mode when backend is NOT connected =====
     if (!isBackendConnected) {
+      // Default demo user: PATIENT (you can change to a doctor by flipping the role here)
       const dummyUser = {
         id: 2,
         username: "demo_user",
         email: "demo@example.com",
         user_type: "patient",
         patient_profile: {
-          level: 0, // force level 0 in demo too
+          level: 0,
           associated_psychologist: null,
           associated_psychologist_name: null,
           sent_requests: [],
         },
       };
 
+      const normalized = normalizeUserForStorage(dummyUser);
       localStorage.setItem("session_key", "dummy-session-key");
-      localStorage.setItem("user_data", JSON.stringify(dummyUser));
-      router.push("/dashboard"); // <-- dashboards hub
+      localStorage.setItem("user_data", JSON.stringify(normalized));
+      goToDashboardFor(normalized.user_type);
       setIsLoading(false);
       return;
     }
@@ -56,17 +109,14 @@ export default function Login() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password }), // username can be email/username (backend handles it)
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         setErrorMessage(
-          data?.message ||
-            data?.detail ||
-            data?.error ||
-            "Invalid username or password."
+          data?.message || data?.detail || data?.error || "Invalid username or password."
         );
         return;
       }
@@ -76,9 +126,13 @@ export default function Login() {
         return;
       }
 
+      // Normalize and store
+      const normalized = normalizeUserForStorage(data.user);
       localStorage.setItem("session_key", data.token);
-      localStorage.setItem("user_data", JSON.stringify(data.user));
-      router.push("/dashboard"); // <-- always route to dashboard
+      localStorage.setItem("user_data", JSON.stringify(normalized));
+
+      // Route based on role; doctors will hit DoctorDashboard
+      goToDashboardFor(normalized.user_type);
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage("Something went wrong. Please try again later.");
@@ -110,30 +164,22 @@ export default function Login() {
               )}
 
               <div className="mb-6 text-left">
-                <label className="block text-gray-700 text-base mb-1">
-                  Email
-                </label>
+                <label className="block text-gray-700 text-base mb-1">Email</label>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setUsername(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                   className="w-full border-0 border-b-2 border-blue-300 bg-transparent focus:outline-none focus:border-blue-500 text-gray-700 py-2"
                   placeholder="Enter your email"
                 />
               </div>
 
               <div className="mb-6 text-left">
-                <label className="block text-gray-700 text-base mb-1">
-                  Password
-                </label>
+                <label className="block text-gray-700 text-base mb-1">Password</label>
                 <input
                   type="password"
                   value={password}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                   className="w-full border-0 border-b-2 border-blue-300 bg-transparent focus:outline-none focus:border-blue-500 text-gray-700 py-2"
                   placeholder="Enter your password"
                 />
@@ -156,11 +202,8 @@ export default function Login() {
               </div>
 
               <p className="mt-6 text-center text-sm text-gray-700">
-                {"Don't have an account yet?   "}
-                <a
-                  href="/register"
-                  className="text-heading2 font-medium hover:underline"
-                >
+                {"Don't have an account yet? "}
+                <a href="/register" className="text-heading2 font-medium hover:underline">
                   Sign Up
                 </a>
               </p>

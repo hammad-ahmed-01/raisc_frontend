@@ -1,4 +1,3 @@
-// app/api/register/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -52,23 +51,46 @@ function escapeHtml(str: string) {
     .replaceAll("'", "&#039;");
 }
 
+// Normalize doctor_profile input from the form/UI
+function normalizeDoctorProfile(full_name: string, raw: any = {}) {
+  const expertise =
+    Array.isArray(raw.expertise)
+      ? raw.expertise
+      : String(raw.expertise || "")
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+
+  return {
+    display_name: raw.display_name ?? full_name,
+    specialization: raw.specialization ?? "",
+    location: raw.location ?? "",
+    experience: raw.experience ?? "",
+    education: raw.education ?? "",
+    expertise,
+    profile_image: raw.profile_image ?? "",
+    rating: Number(raw.rating ?? 0),
+    rates: String(raw.rates ?? "0"),
+  };
+}
+
 /** ========= Route ========= **/
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      username,
+      username, // full name
       email,
       password,
       user_type, // "patient" | "doctor"
-      // doctor-only fields (optional if user_type=patient)
       doctor_profile = {},
     } = body || {};
 
     if (!username || !email || !password || !user_type) {
       return NextResponse.json({ message: "All fields are required." }, { status: 400 });
     }
-    if (!["patient", "doctor"].includes(user_type)) {
+    const intendedRole = String(user_type).toLowerCase();
+    if (!["patient", "doctor"].includes(intendedRole)) {
       return NextResponse.json({ message: "Invalid user type." }, { status: 400 });
     }
 
@@ -80,35 +102,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Backend base URL is not configured." }, { status: 500 });
     }
 
-    // Prepare request to Django new-register
+    let normalizedDoctorProfile: any | undefined = undefined;
+    if (intendedRole === "doctor") {
+      normalizedDoctorProfile = normalizeDoctorProfile(full_name, doctor_profile);
+      if (!normalizedDoctorProfile.specialization) {
+        return NextResponse.json({ message: "Doctor specialization is required." }, { status: 400 });
+      }
+      if (!normalizedDoctorProfile.location) {
+        return NextResponse.json({ message: "Doctor location is required." }, { status: 400 });
+      }
+    }
+
+    // 1) Register
     const payload: any = {
       full_name,
       email: sanitizedEmail,
       password,
-      user_type,
+      user_type: intendedRole,
     };
-    if (user_type === "doctor") {
-      // Forward a normalized doctor_profile to backend
-      payload.doctor_profile = {
-        display_name: doctor_profile.display_name ?? full_name,
-        specialization: doctor_profile.specialization ?? "",
-        location: doctor_profile.location ?? "",
-        experience: doctor_profile.experience ?? "",
-        education: doctor_profile.education ?? "",
-        expertise: Array.isArray(doctor_profile.expertise)
-          ? doctor_profile.expertise
-          : String(doctor_profile.expertise || "")
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean),
-        profile_image: doctor_profile.profile_image ?? "",
-        rating: Number(doctor_profile.rating ?? 0),
-        rates: String(doctor_profile.rates ?? "0"),
-      };
+    if (intendedRole === "doctor") {
+      payload.doctor_profile = normalizedDoctorProfile;
     }
 
-    // 1) Simple register (now with user_type and optional doctor_profile)
-    const registerRes = await fetch(`${base}/users/new-register/`, {
+    const registerRes = await fetch(`${base.replace(/\/+$/, "")}/users/new-register/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -119,23 +135,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: msg }, { status: registerRes.status });
     }
 
-    // 2) Login to get token (email-based login supported by your backend)
-    const loginRes = await fetch(`${base}/users/login/`, {
+    // 2) Login to get token
+    const loginRes = await fetch(`${base.replace(/\/+$/, "")}/users/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: sanitizedEmail, password }),
     });
     const loginData = await loginRes.json().catch(() => ({}));
     if (!loginRes.ok || !loginData?.token) {
-      return NextResponse.json({ message: "Registration done, but auto-login failed." }, { status: 201 });
+      return NextResponse.json(
+        { message: "Registration successful. Auto-login failed.", data: registerData },
+        { status: 201 }
+      );
     }
     const token = loginData.token as string;
 
-    // 3) Post-register patch:
-    // - For patients: set user_type=patient + create/ensure patient_profile(level=0)
-    // - For doctors: new-register already created doctor profile; no patch needed
-    if (user_type === "patient") {
-      const patchRes = await fetch(`${base}/users/user/`, {
+    // 3) Enforce the chosen role once (patients: level 0; doctors: keep doctor role)
+    const meUrl = `${base.replace(/\/+$/, "")}/users/user/`;
+    if (intendedRole === "patient") {
+      await fetch(meUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -145,9 +163,29 @@ export async function POST(request: Request) {
           user_type: "patient",
           patient_profile: { level: 0 },
         }),
-      });
-      await patchRes.json().catch(() => ({})); // best-effort; do not fail overall
+      }).catch(() => null);
+    } else if (intendedRole === "doctor") {
+      await fetch(meUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({ user_type: "doctor" }),
+      }).catch(() => null);
     }
+
+    // 4) Fetch fresh user
+    let freshUser: any = null;
+    try {
+      const userRes = await fetch(meUrl, {
+        headers: { "Content-Type": "application/json", Authorization: `Token ${token}` },
+        cache: "no-store",
+      });
+      if (userRes.ok) {
+        freshUser = await userRes.json();
+      }
+    } catch {}
 
     /** ========= Emails (Zoho) ========= **/
     const ACCOUNT_ID = process.env.ZOHO_ACCOUNT_ID || "";
@@ -166,7 +204,7 @@ export async function POST(request: Request) {
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
               <p><strong>Name:</strong> ${escapeHtml(full_name)}</p>
               <p><strong>Email:</strong> ${escapeHtml(sanitizedEmail)}</p>
-              <p><strong>User Type:</strong> ${escapeHtml(user_type)}</p>
+              <p><strong>User Type:</strong> ${escapeHtml(intendedRole)}</p>
             </div>
           </div>
         `;
@@ -221,6 +259,8 @@ export async function POST(request: Request) {
         message: emailSent
           ? "Registration successful. Confirmation email sent."
           : "Registration successful. Email could not be sent at this time.",
+        token,
+        user: freshUser || loginData?.user || null,
         data: registerData,
       },
       { status: 201 }
