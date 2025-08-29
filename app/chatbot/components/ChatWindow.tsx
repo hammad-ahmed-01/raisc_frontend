@@ -19,7 +19,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [loading, setLoading] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
-
   const fallbackResponses = [
     "I apologize for the inconvenience. Our servers are currently experiencing some issues. Please try again later, and in the meantime, consider taking some deep breaths or practicing mindfulness.",
     "Sorry, I'm having trouble connecting to our servers right now. While we work on resolving this, remember that it's okay to take a moment for yourself.",
@@ -34,13 +33,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     if (session_key && isBackendConnected) {
       fetchChatHistory(session_key);
     } else {
-      // Load dummy messages when backend is not connected
       setMessages([{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
     }
   }, [activeChatId, isBackendConnected]);
 
   useEffect(() => {
-    // Scroll to the bottom whenever messages change
     chatBoxRef.current?.scrollTo({
       top: chatBoxRef.current.scrollHeight,
       behavior: "smooth",
@@ -49,12 +46,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
 
   const fetchChatHistory = async (session_key: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${session_key}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch chat history");
-      }
+      // Call local proxy instead of hitting backend directly
+      const response = await fetch(`/api/history/${encodeURIComponent(session_key)}`);
+      if (!response.ok) throw new Error("Failed to fetch chat history");
+
       const data = await response.json();
-      setMessages(data.chat_history || [{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
+      setMessages(
+        data.chat_history || [{ role: "assistant", content: "Hi there! How can I assist you today?" }]
+      );
     } catch (error) {
       console.error("Error fetching chat history:", error);
       setMessages([{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
@@ -63,41 +62,49 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
 
   const handleSend = async (text: string) => {
     if (text.trim() === "") return;
-    
+
     const userMessage: ChatMessage = { role: "user", content: text };
     setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
     setIsTyping(true);
 
     if (!isBackendConnected) {
-      // Simulate typing delay for better UX
       setTimeout(() => {
         const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
         setMessages((prev) => [...prev, { role: "assistant", content: randomResponse }]);
         setLoading(false);
         setIsTyping(false);
-      }, 2000);
+      }, 1200);
       return;
     }
 
     const session_key = "11ab22cc33dd44";
-    
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/chat`, {
+      // Call local proxy; it forwards to NEXT_PUBLIC_FASTAPI_BASE_URL
+      const response = await fetch(`/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_key, message: text }),
       });
 
       if (!response.ok) {
-        throw new Error("Server error");
+        throw new Error(`Server error: ${response.status}`);
       }
 
-      const data = await response.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+      // Accept both JSON and plain-text
+      const ct = response.headers.get("Content-Type") || "";
+      if (ct.includes("application/json")) {
+        const data = await response.json();
+        setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+      } else {
+        const txt = await response.text();
+        setMessages((prev) => [...prev, { role: "assistant", content: txt || "…" }]);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
-      const errorResponse = "I apologize, but I'm experiencing technical difficulties right now. Please try again in a few moments. If the problem persists, consider reaching out to our support team.";
+      const errorResponse =
+        "I apologize, but I'm experiencing technical difficulties right now. Please try again in a few moments. If the problem persists, consider reaching out to our support team.";
       setMessages((prev) => [...prev, { role: "assistant", content: errorResponse }]);
     } finally {
       setLoading(false);
