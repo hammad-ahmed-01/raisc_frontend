@@ -5,6 +5,7 @@ import { Patient } from "@/src/types";
 import CreateSessionForm from "./CreateNewSession"; 
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
+import { useRouter } from "next/navigation";
 
 interface PatientCardProps {
   patient: Patient;
@@ -12,6 +13,7 @@ interface PatientCardProps {
 
 export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
   const [showForm, setShowForm] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -34,7 +36,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
           <PrimaryButton
             text="View Profile"
             className="rounded-full font-semibold px-6 py-2 whitespace-nowrap"
-            disabled={false}
+            onClick={() => router.push(`/chatbot-insights`)}
           />
         </div>
 

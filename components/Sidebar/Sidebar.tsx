@@ -62,9 +62,9 @@ const Sidebar = () => {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
       { id: 2, title: "Calendar", icon: <FaHistory size={20} />, path: "/calendar" },
-      { id: 3, title: "Patients", icon: <FaUserMd size={20} />, path: "/patients" },
+      { id: 3, title: "Patients", icon: <FaUserMd size={20} />, path: "/Patient" },
       { id: 4, title: "Messages", icon: <FaQuoteRight size={20} />, path: "/messages" },
-      { id: 5, title: "Reports", icon: <FaBook size={20} />, path: "/reports" },
+      { id: 5, title: "Requests", icon: <FaBook size={20} />, path: "/requests" },
       { id: 6, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
       { id: 7, title: "Settings", icon: <FaRobot size={20} />, path: "/settings" },
     ];

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import FiltersGroup from './FiltersGroup';
+import { useRouter } from "next/navigation";
 
 const options = {
   topic: ['Anxiety', 'Sleep', 'Family Conflict'],
@@ -12,6 +13,7 @@ const options = {
 };
 
 const FiltersSidebar = () => {
+  const router = useRouter();
   const [openDropdowns, setOpenDropdowns] = useState({
     topic: true,
     date: true,
@@ -42,7 +44,7 @@ const FiltersSidebar = () => {
 
   return (
     <aside className="w-80 min-w-[320px] min-h-full p-4 bg-white border border-[#2196F3] rounded-[28px] shadow-sm">
-      <Button className="mb-6 w-full justify-start text-lg font-bold text-[#1A237E] bg-[#D0E3FFC7] hover:bg-[#D0E3FFFF] rounded-full">
+      <Button onClick={() => router.push('/Patient')} className="mb-6 w-full justify-start text-lg font-bold text-[#1A237E] bg-[#D0E3FFC7] hover:bg-[#D0E3FFFF] rounded-full">
         <ChevronLeft className="mr-2 h-5 w-5" />
         Back to Patients List
       </Button>
