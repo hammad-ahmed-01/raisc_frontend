@@ -10,7 +10,7 @@ export const patients: Patient[] = [
   },
   {
     id: "2",
-    name: "Ayesha Khan",
+    name: "Ayesha Ahmed",
     age: 28,
     gender: "Female",
     condition: "Anxiety and Sleep issues",

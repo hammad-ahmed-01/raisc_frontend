@@ -29,7 +29,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
   useEffect(() => {
-    const session_key = "11ab22cc33dd44";
+    const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
     if (session_key && isBackendConnected) {
       fetchChatHistory(session_key);
     } else {
@@ -78,7 +78,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       return;
     }
 
-    const session_key = "11ab22cc33dd44";
+    const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
 
     try {
       // Call local proxy; it forwards to NEXT_PUBLIC_FASTAPI_BASE_URL

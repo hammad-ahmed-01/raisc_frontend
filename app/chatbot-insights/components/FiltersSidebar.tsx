@@ -6,13 +6,26 @@ import { ChevronLeft } from 'lucide-react';
 import FiltersGroup from './FiltersGroup';
 import { useRouter } from "next/navigation";
 
+interface FiltersSidebarProps {
+  filters: {
+    topic: string;
+    date: string;
+    message: string;
+  };
+  onFilterChange: (filters: {
+    topic: string;
+    date: string;
+    message: string;
+  }) => void;
+  availableTopics: string[];
+}
+
 const options = {
-  topic: ['Anxiety', 'Sleep', 'Family Conflict'],
   date: ['Last 7 Days', 'This Month', 'Custom'],
   message: ['Important', 'Summary Only', 'Detailed'],
 };
 
-const FiltersSidebar = () => {
+const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSidebarProps) => {
   const router = useRouter();
   const [openDropdowns, setOpenDropdowns] = useState({
     topic: true,
@@ -20,26 +33,22 @@ const FiltersSidebar = () => {
     message: true,
   });
 
-  const [selected, setSelected] = useState({
-    topic: 'Anxiety',
-    date: 'Last 7 Days',
-    message: 'Important',
-  });
-
   const toggleDropdown = (key: keyof typeof openDropdowns) => {
     setOpenDropdowns((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSelect = (group: keyof typeof selected, value: string) => {
-    setSelected((prev) => ({ ...prev, [group]: value }));
+  const handleSelect = (group: keyof typeof filters, value: string) => {
+    const newFilters = { ...filters, [group]: value };
+    onFilterChange(newFilters);
   };
 
   const clearFilters = () => {
-    setSelected({
+    const clearedFilters = {
       topic: '',
       date: '',
       message: '',
-    });
+    };
+    onFilterChange(clearedFilters);
   };
 
   return (
@@ -59,24 +68,30 @@ const FiltersSidebar = () => {
         >
           <table className="w-full border-[#2196F3] border-separate border-2 rounded-md overflow-hidden">
             <tbody>
-              {options.topic.map((val) => (
-                <tr
-                  key={val}
-                  className={`cursor-pointer text-sm font-medium text-[#1A237E] hover:bg-[#E3F2FD] ${
-                    selected.topic === val ? 'bg-[#D0E3FFC7]' : ''
-                  }`}
-                  onClick={() => handleSelect('topic', val)}
-                >
-                  <td className="px-4 py-2 flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full border border-[#1A237E] ${
-                        selected.topic === val ? 'bg-[#1A237E]' : 'bg-transparent'
-                      }`}
-                    ></span>
-                    {val}
-                  </td>
+              {availableTopics.length > 0 ? (
+                availableTopics.map((topic) => (
+                  <tr
+                    key={topic}
+                    className={`cursor-pointer text-sm font-medium text-[#1A237E] hover:bg-[#E3F2FD] ${
+                      filters.topic === topic ? 'bg-[#D0E3FFC7]' : ''
+                    }`}
+                    onClick={() => handleSelect('topic', topic)}
+                  >
+                    <td className="px-4 py-2 flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full border border-[#1A237E] ${
+                          filters.topic === topic ? 'bg-[#1A237E]' : 'bg-transparent'
+                        }`}
+                      ></span>
+                      {topic}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="px-4 py-2 text-sm text-gray-500">No topics available</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </FiltersGroup>
@@ -92,14 +107,14 @@ const FiltersSidebar = () => {
                 <tr
                   key={val}
                   className={`cursor-pointer text-sm font-medium text-[#1A237E] hover:bg-[#E3F2FD] ${
-                    selected.date === val ? 'bg-[#D0E3FFC7]' : ''
+                    filters.date === val ? 'bg-[#D0E3FFC7]' : ''
                   }`}
                   onClick={() => handleSelect('date', val)}
                 >
                   <td className="px-4 py-2 flex items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full border border-[#1A237E] ${
-                        selected.date === val ? 'bg-[#1A237E]' : 'bg-transparent'
+                        filters.date === val ? 'bg-[#1A237E]' : 'bg-transparent'
                       }`}
                     ></span>
                     {val}
@@ -121,14 +136,14 @@ const FiltersSidebar = () => {
                 <tr
                   key={val}
                   className={`cursor-pointer text-sm font-medium text-[#1A237E] hover:bg-[#E3F2FD] ${
-                    selected.message === val ? 'bg-[#D0E3FFC7]' : ''
+                    filters.message === val ? 'bg-[#D0E3FFC7]' : ''
                   }`}
                   onClick={() => handleSelect('message', val)}
                 >
                   <td className="px-4 py-2 flex items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full border border-[#1A237E] ${
-                        selected.message === val ? 'bg-[#1A237E]' : 'bg-transparent'
+                        filters.message === val ? 'bg-[#1A237E]' : 'bg-transparent'
                       }`}
                     ></span>
                     {val}

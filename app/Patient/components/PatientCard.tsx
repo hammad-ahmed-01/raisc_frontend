@@ -17,25 +17,25 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
 
   return (
     <>
-      <div className="bg-white shadow-md rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-4 items-center gap-2 border">
+      <div className="bg-white shadow-md rounded-xl p-3 mb-2 grid grid-cols-1 md:grid-cols-4 items-center gap-2 border">
         {/* Column 1: Name, Age, Gender */}
-        <div className="ml-6">
-          <h2 className="text-xl font-bold text-heading2">{patient.name}</h2>
-          <p className="text-xl font-semibold text-normal mt-1">
+        <div className="ml-4">
+          <h2 className="text-lg font-bold text-heading2">{patient.name}</h2>
+          <p className="text-sm font-semibold text-normal mt-1">
             Age: {patient.age} | Gender: {patient.gender}
           </p>
         </div>
 
         {/* Column 2: Condition */}
         <div>
-          <p className="text-xl text-normal ml-16">{patient.condition}</p>
+          <p className="text-sm text-normal ml-8">{patient.condition}</p>
         </div>
 
         {/* Column 3: View Profile Button */}
         <div className="flex justify-start md:justify-end">
           <PrimaryButton
             text="View Profile"
-            className="rounded-full font-semibold px-6 py-2 whitespace-nowrap"
+            className="rounded-full font-semibold px-4 py-1.5 whitespace-nowrap text-sm"
             onClick={() => router.push(`/chatbot-insights`)}
           />
         </div>
@@ -44,7 +44,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
         <div className="flex justify-start md:justify-start">
           <SecondaryButton
             text="Create Session"
-            className="text-heading2 font-semibold rounded-full px-4 py-2 whitespace-nowrap"
+            className="text-heading2 font-semibold rounded-full px-3 py-1.5 whitespace-nowrap text-sm"
             onClick={() => setShowForm(true)}
             disabled={false}
           />

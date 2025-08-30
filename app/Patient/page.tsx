@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 import { PatientList } from "./components/PatientList";
 import { patients } from "./components/Patients";
-import TopRightIcons from "./components/TopRightIcons";
 
 export default function PatientsPage() {
   const [authVerified, setAuthVerified] = useState(false);
@@ -37,7 +36,7 @@ export default function PatientsPage() {
 
   if (authError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-red-50">
+      <div className="flex items-center justify-center h-screen bg-red-50">
         <div className="text-center p-6 bg-white rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
             Unauthorized Access
@@ -51,7 +50,9 @@ export default function PatientsPage() {
 
   if (!authVerified) {
     return (
-      <p className="text-center text-gray-600 mt-10">Verifying session...</p>
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-center text-gray-600">Verifying session...</p>
+      </div>
     );
   }
 
@@ -60,13 +61,8 @@ export default function PatientsPage() {
       className="relative min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg/mypatientsbg.png')" }}
     >
-      {/* Fixed Top Right Icons */}
-      <div className="absolute top-6 right-6 z-20">
-        <TopRightIcons />
-      </div>
-
       {/* Main content area */}
-      <div className="pt-24 backdrop-blur-sm bg-blue-50/40 min-h-screen">
+      <div className="h-full backdrop-blur-sm bg-blue-50/40">
         <PatientList patients={patients} />
       </div>
     </main>
