@@ -27,7 +27,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [audioLevel, setAudioLevel] = useState(0);
   const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
-  
+  const sttInitializedRef = useRef(false);
   const [roomInstance] = useState(() => new Room({
     adaptiveStream: true,
     dynacast: true,
@@ -52,7 +52,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     
     // Initialize STT room connection
     initializeSTTRoom();
-
+    console.log("initializeSTTRoom()")
     return () => {
       roomInstance.disconnect();
     };
@@ -66,7 +66,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   }, [messages]);
 
   const initializeSTTRoom = async () => {
+    if (sttInitializedRef.current) {
+    console.log('STT already initialized, skipping...');
+    return;
+  }
+  
     try {
+      sttInitializedRef.current = true; // Immediate update
+      console.log('STT initializing...', sttInitializedRef.current); // Will show true
       // Check if LiveKit URL is configured
       if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
         console.log('LiveKit URL not configured, voice functionality disabled');
@@ -116,6 +123,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       console.error('Error connecting to STT room:', error);
       setMicrophonePermission('denied');
       setIsConnectedToSTT(false);
+      sttInitializedRef.current = false; // Reset on error
     }
   };
 
