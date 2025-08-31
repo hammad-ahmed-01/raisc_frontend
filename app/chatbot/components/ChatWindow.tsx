@@ -26,7 +26,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [isConnectedToSTT, setIsConnectedToSTT] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
-  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7");
+  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "97bb09258dcb1dffae5ac9c375809e473c65740b");
 
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
   const sttInitializedRef = useRef(false);

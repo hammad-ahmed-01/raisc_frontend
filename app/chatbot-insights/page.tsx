@@ -15,7 +15,7 @@ interface ChatbotProfile {
     session_key: string;
     session_start_msg: number;
     session_end_msg: number;
-    topics?: string;
+    topic?: string;
     important_check?: boolean;
 }
 
@@ -31,7 +31,7 @@ const ChatbotInsightsContent = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<ChatbotProfile[]>([]);
   const [patientName, setPatientName] = useState<string>("");
   const [patientId, setPatientId] = useState<string>("");
-  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7");
+  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "97bb09258dcb1dffae5ac9c375809e473c65740b");
 
   const [filters, setFilters] = useState({
     topic: '',
@@ -72,7 +72,7 @@ const ChatbotInsightsContent = () => {
     // Get patient info from URL params
     const name = searchParams.get("name") || "Patient";
     // const id = searchParams.get("id") || process.env.TEST_PATIENT_ID;
-    const id = process.env.TEST_PATIENT_ID || "20";
+    const id = process.env.TEST_PATIENT_ID || "24";
     setPatientName(name);
     setPatientId(id);
 
@@ -97,7 +97,7 @@ const ChatbotInsightsContent = () => {
         // Transform the data to include topics and important_check
         const transformedData = data.map((profile: ChatbotProfile) => ({
           ...profile,
-          topics: extractTopicsFromData(profile.collected_data),
+          topic: profile.topic || "General",
           important_check: profile.important_messages ? true : false
         }));
         setChatbotProfiles(transformedData);
@@ -145,7 +145,7 @@ const ChatbotInsightsContent = () => {
         session_key: testSessionKey,
         session_start_msg: 1,
         session_end_msg: 10,
-        topics: "Anxiety, Family Conflict",
+        topic: "Anxiety, Family Conflict",
         important_check: true
       },
       {
@@ -157,7 +157,7 @@ const ChatbotInsightsContent = () => {
         session_key: testSessionKey,
         session_start_msg: 11,
         session_end_msg: 20,
-        topics: "Sleep Issues, Stress Management",
+        topic: "Sleep Issues, Stress Management",
         important_check: false
       }
     ];
@@ -169,7 +169,7 @@ const ChatbotInsightsContent = () => {
     // Apply topic filter
     if (filters.topic) {
       filtered = filtered.filter(profile => 
-        profile.topics?.toLowerCase().includes(filters.topic.toLowerCase())
+        profile.topic?.toLowerCase().includes(filters.topic.toLowerCase())
       );
     }
 
@@ -236,7 +236,7 @@ const ChatbotInsightsContent = () => {
         <FiltersSidebar 
           filters={filters}
           onFilterChange={handleFilterChange}
-          availableTopics={Array.from(new Set(chatbotProfiles.map(p => p.topics).filter((topic): topic is string => Boolean(topic))))}
+          availableTopics={Array.from(new Set(chatbotProfiles.map(p => p.topic).filter((topic): topic is string => Boolean(topic))))}
         />
       </div>
       <main className="flex-1 p-6 overflow-y-auto ml-80">

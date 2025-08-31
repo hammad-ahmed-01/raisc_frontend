@@ -14,7 +14,7 @@ interface ChatbotProfile {
     session_key: string;
     session_start_msg: number;
     session_end_msg: number;
-    topics?: string;
+    topic?: string;
     important_check?: boolean;
 }
 
@@ -44,6 +44,9 @@ const ChatEntryCard = ({
 
   const fetchChatThread = async () => {
     setIsLoadingChat(true);
+    console.log(sessionKey);
+    console.log(entry.session_start_msg);
+    console.log(entry.session_end_msg);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${sessionKey}/${entry.session_start_msg}/${entry.session_end_msg}`);
       if (response.ok) {
@@ -138,7 +141,7 @@ const ChatEntryCard = ({
             <p className="font-bold text-heading2">
               Topics:{' '}
               <span className="font-normal text-black">
-                {formatTopics(entry.topics)}
+                {formatTopics(entry.topic)}
               </span>
             </p>
             <p className="font-bold text-heading2 mt-1">

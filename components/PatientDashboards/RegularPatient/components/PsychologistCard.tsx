@@ -20,11 +20,11 @@ interface PsychologistCardProps {
 
 export default function PsychologistCard({ user }: PsychologistCardProps) {
   const [psychologist, setPsychologist] = useState<PsychologistData>({
-    name: user?.patient_profile?.associated_psychologist_name || "Dr. Sara Khan",
+    name: user?.patient_profile?.associated_psychologist_name || "Dr. Yusuf Haroon",
     role: "Clinical Psychologist",
     isAvailable: true,
-    imageUrl: "",
-    upcomingSession: "Monday, 29 May – 3:00 PM"
+    imageUrl: "/doctor.jpg",
+    upcomingSession: "Monday, 1 September – 10:00 PM"
   });
   
   useEffect(() => {

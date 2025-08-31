@@ -77,7 +77,7 @@ export default function EditProfilePage() {
         location: "Rawalpindi, Pakistan",
         organization_name: "Pakistan Institute Of Mental Health",
         description: "Pakistan Institute Of Mental Health",
-        logo_url: "/org-logo.png",
+        logo_url: "/PIMH.jpeg",
         contact_email: "info@pimh.org",
         contact_numbers: ["+92300-xxxxxxx", "+92300-xxxxxxx"],
         linkedin: "linkedin.com",

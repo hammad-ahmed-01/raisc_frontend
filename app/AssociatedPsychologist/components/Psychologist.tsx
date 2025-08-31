@@ -45,14 +45,14 @@ const RatingStars = ({ rating = 4.6 }) => {
 
 export default function Psychologist() {
   const [psychologist, setPsychologist] = useState<PsychologistData>({
-    name: "Dr. Sara Khan",
+    name: "Dr. Yusuf Haroon",
     role: "Clinical Psychologist",
     affiliation: "Pakistan Institute of Mental Health (PIMH)",
-    image: "/psychologist.jpeg", // Updated default image path to match available assets
+    image: "/doctor.jpg", // Updated default image path to match available assets
     about: "Passionate about helping individuals manage anxiety and emotional challenges.",
     qualifications: ["MSc in Clinical Psychology", "Certified CBT Therapist"],
     languages: ["English", "Urdu"],
-    experience: "10+ years of experience in trauma, cognitive behavioural therapy, family therapy, anxiety.",
+    experience: "2+ years of experience in trauma, cognitive behavioural therapy, family therapy, anxiety.",
     rating: 4.6,
     reviews: 124
   });
@@ -202,29 +202,7 @@ export default function Psychologist() {
         </div>
         
         {/* Request action buttons */}
-        <div className="w-full sm:w-auto flex justify-center">
-          {requestStatus === 'none' && (
-            <SecondaryButton
-              text="Send Request"
-              onClick={sendRequest}
-              className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold whitespace-nowrap text-xs sm:text-sm"
-            />
-          )}
-          
-          {requestStatus === 'pending' && (
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-1 sm:gap-2 text-blue-700 mb-1 sm:mb-2 text-xs sm:text-sm">
-                <span className="text-amber-700">⌛</span> 
-                <span className="whitespace-nowrap">Status: Pending Request</span>
-              </div>
-              <SecondaryButton
-                text="Remove Request"
-                onClick={removeRequest}
-                className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold whitespace-nowrap text-xs sm:text-sm"
-              />
-            </div>
-          )}
-        </div>
+        
       </div>
 
       {/* Info Grid */}      

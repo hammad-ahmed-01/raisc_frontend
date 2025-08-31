@@ -25,7 +25,7 @@ export default function Association() {
     phone: "042-12345678",
     website: "www.pimh.org.pk",
     hours: "Mon-Sat, 9:00 AM – 5:00 PM",
-    logoUrl: "/hospital-logo.png"
+    logoUrl: "/PIMH.jpeg"
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Association() {
           phone: `042-${Math.floor(1000000 + Math.random() * 9000000)}`,
           website: `www.pimh.org.pk`,
           hours: "Mon-Sat, 9:00 AM – 5:00 PM",
-          logoUrl: "/hospital-icon.png"
+          logoUrl: "/PIMH.jpeg"
         });
       } catch (error) {
         console.error("Error parsing selected doctor data:", error);
@@ -67,7 +67,7 @@ export default function Association() {
         {/* Logo */}
         <div className="mb-1 sm:mb-2">
           <Image 
-            src="/hospital-icon.png" 
+            src="/PIMH.jpeg" 
             alt="Hospital Logo" 
             width={32} 
             height={32} 

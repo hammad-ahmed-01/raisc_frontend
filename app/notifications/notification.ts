@@ -43,7 +43,7 @@ export function getNotifications(userType: string): NotificationType[] {
     return [
       {
         title: "Upcoming Session Reminder",
-        description: "Session with Dr. Ali at 3:00PM today.",
+        description: "Session with Dr. Yusuf at 10:00PM today",
         time: timeAgo(10),
         isNew: true,
       },

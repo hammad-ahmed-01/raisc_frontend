@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   PencilLine
 } from "lucide-react"; 
+import Image from "next/image";
 
 interface ChatHistoryProps {
   onSelectChat: (chatId: string) => void;
@@ -13,7 +14,7 @@ interface ChatHistoryProps {
 }
 
 const chatHistory = {
-  today: [{ id: "1", title: "Help with anxiety..." }],
+  today: [{ id: "1", title: "Intro and Initial Discussion" }],
   last7Days: [
     { id: "2", title: "Recommend breathing..." },
     { id: "3", title: "Help in Therapy........" }
@@ -61,53 +62,18 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
             </div>
           ))}
         </div>
-
-        {/* Last 7 Days */}
-        <div className="mb-4">
-          <div className="text-sm font-semibold text-heading mb-1">
-            Previous 7 days
-          </div>
-          {chatHistory.last7Days.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => onSelectChat(chat.id)}
-              className="cursor-pointer pl-2 py-1 hover:bg-heading2 hover:text-white rounded text-sm transition"
-            >
-              {chat.title}
-            </div>
-          ))}
-        </div>
-
-        {/* Last 30 Days */}
-        <div>
-          <div className="text-sm font-semibold text-heading mb-1">
-            Previous 30 days
-          </div>
-          {chatHistory.last30Days.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => onSelectChat(chat.id)}
-              className="cursor-pointer pl-2 py-1 hover:text-white hover:bg-heading2 rounded text-sm transition"
-            >
-              {chat.title}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* New Chat Button */}
-      <div className="pt-6">
-        <button
+      <div className="pt-6 flex justify-center">
+        <Image
+          src="/chatbot.png"
+          alt="Chatbot"
+          width={200}
+          height={350}
+          className="w-38 h-70 cursor-pointer"
           onClick={onNewChat}
-          className="flex items-center justify-center gap-2 secondaryButton text-heading font-semibold w-full py-2 rounded-full"
-          style={{ 
-            boxShadow: '0px 4px 4px 0px #00000040',
-            border: '1px solid #1E3CA7'
-          }}
-        >
-          <PencilLine className="w-4 h-4" />
-          New Chat
-        </button>
+        />
       </div>
     </div>
   );
