@@ -31,6 +31,8 @@ const ChatbotInsightsContent = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<ChatbotProfile[]>([]);
   const [patientName, setPatientName] = useState<string>("");
   const [patientId, setPatientId] = useState<string>("");
+  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7");
+
   const [filters, setFilters] = useState({
     topic: '',
     date: '',
@@ -69,7 +71,8 @@ const ChatbotInsightsContent = () => {
   useEffect(() => {
     // Get patient info from URL params
     const name = searchParams.get("name") || "Patient";
-    const id = searchParams.get("id") || "20";
+    // const id = searchParams.get("id") || process.env.TEST_PATIENT_ID;
+    const id = process.env.TEST_PATIENT_ID || "20";
     setPatientName(name);
     setPatientId(id);
 
@@ -86,7 +89,7 @@ const ChatbotInsightsContent = () => {
   const fetchChatbotProfiles = async (patientId: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/chatbot-data/${patientId}/`, {
-        headers: { Authorization: `Token 1635407bd7c0b8a9495506b1792a56a7c1b0f0e7` },
+        headers: { Authorization: `Token ${testSessionKey}` },
       });
       
       if (response.ok) {
@@ -139,7 +142,7 @@ const ChatbotInsightsContent = () => {
         session_summary: "Patient expressed feeling isolated and mentioned family conflict.",
         important_messages: "Patient mentioned suicidal thoughts",
         date: new Date().toISOString(),
-        session_key: '6e50625cbd78c706dc5b5f6309b80d68d9f3bc73',
+        session_key: testSessionKey,
         session_start_msg: 1,
         session_end_msg: 10,
         topics: "Anxiety, Family Conflict",
@@ -151,7 +154,7 @@ const ChatbotInsightsContent = () => {
         session_summary: "Patient reported severe sleep disturbances and work-related stress.",
         important_messages: "",
         date: new Date(Date.now() - 86400000).toISOString(),
-        session_key: '6e50625cbd78c706dc5b5f6309b80d68d9f3bc73',
+        session_key: testSessionKey,
         session_start_msg: 11,
         session_end_msg: 20,
         topics: "Sleep Issues, Stress Management",
@@ -246,7 +249,7 @@ const ChatbotInsightsContent = () => {
         <ChatEntriesSection 
           entries={filteredProfiles} 
           patientId={patientId}
-          sessionKey="6e50625cbd78c706dc5b5f6309b80d68d9f3bc73"
+          sessionKey={testSessionKey}
         />
       </main>
     </div>

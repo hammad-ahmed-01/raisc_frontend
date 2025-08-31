@@ -165,7 +165,7 @@ export default function DoctorsPage() {
           });
         }
       } catch (e) {
-        console.error("sendRequest failed:", e);
+        console.log("sendRequest failed:", e);
       }
     } else {
       // demo: only update UI/local
@@ -218,7 +218,7 @@ export default function DoctorsPage() {
           });
         }
       } catch (e) {
-        console.error("removeRequest failed:", e);
+        console.log("removeRequest failed:", e);
       }
     } else {
       // demo

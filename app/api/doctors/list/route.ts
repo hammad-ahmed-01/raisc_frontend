@@ -80,7 +80,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(doctors, { status: 200 });
   } catch (err) {
-    console.error("GET /api/doctors/list error:", err);
+    console.log("GET /api/doctors/list error:", err);
     return NextResponse.json({ detail: "Internal server error" }, { status: 500 });
   }
 }

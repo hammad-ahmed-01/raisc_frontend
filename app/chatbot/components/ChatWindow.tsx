@@ -26,6 +26,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [isConnectedToSTT, setIsConnectedToSTT] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7");
+
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
   const sttInitializedRef = useRef(false);
   const [roomInstance] = useState(() => new Room({
@@ -43,7 +45,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
   useEffect(() => {
-    const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
+    const session_key = testSessionKey;
     if (session_key && isBackendConnected) {
       fetchChatHistory(session_key);
     } else {
@@ -86,7 +88,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       setMicrophonePermission(permission.state);
       
       // Create a unique room name for transcription
-      const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
+      const session_key = testSessionKey;
       const transcriptionRoom = `transcription_${session_key}_${Date.now()}`;
       
       // Get token for transcription room
@@ -198,7 +200,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     setLoading(true);
     
     try {
-      const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
+      const session_key = testSessionKey;
       const response = await fetch(`/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -259,7 +261,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       return;
     }
 
-    const session_key = "1635407bd7c0b8a9495506b1792a56a7c1b0f0e7";
+    const session_key = testSessionKey;
 
     try {
       // Call local proxy; it forwards to NEXT_PUBLIC_FASTAPI_BASE_URL

@@ -64,7 +64,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
         const data = await response.json();
         setStats(data.stats);
       } else {
-        console.error('Failed to fetch doctor stats');
+        console.log('Failed to fetch doctor stats');
         // Use default stats if backend fails
         setStats({
           total_patients: 0,
