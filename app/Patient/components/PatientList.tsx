@@ -40,7 +40,7 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
 
   return (
     <div>
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 ml-20 max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-heading mb-2 flex items-center gap-2">
             <Users className="text-heading h-8 w-8" />
             My Patients

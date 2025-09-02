@@ -64,13 +64,13 @@ const PendingRequestsPage: React.FC = () => {
     <div className="min-h-screen flex">
       <Sidebar />
       <div 
-        className="flex-1 ml-20 bg-cover bg-center bg-no-repeat pb-16 px-8 overflow-y-auto"
+        className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-8 overflow-y-auto"
         style={{ backgroundImage: "url('/doctordashboard/bg2.png')" }}
       >
         <TopRightIcons />
 
         {/* Header */}
-        <div className="pt-32 sm:pt-16">
+        <div className="pt-32 ml-20 sm:pt-16">
           <div className="flex items-center">
             <div className="text-4xl text-[#1E3CA7] font-bold">
               <span className="mr-2">👤</span> Pending Requests
@@ -82,7 +82,7 @@ const PendingRequestsPage: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="mt-6 flex flex-wrap gap-4">
+        <div className="mt-6 ml-20 flex flex-wrap gap-4">
           <div className="flex-grow max-w-md relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <FiSearch className="text-gray-400" />
@@ -120,7 +120,7 @@ const PendingRequestsPage: React.FC = () => {
         </div>
 
         {/* Requests List - Centered with limited width */}
-        <div className="my-8 flex flex-col items-center">
+        <div className="my-8 ml-20 flex flex-col items-center">
           <div className="max-w-4xl w-full">
             <div className="flex flex-col gap-6">
               {filteredRequests.map((request) => (
