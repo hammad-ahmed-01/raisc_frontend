@@ -43,16 +43,18 @@ const DoctorDashboard: React.FC<{ user: User}> = ({ user }) => {
   return (
     <div className="min-h-screen flex">
       <div 
-        className="flex-1 ml-20 bg-cover bg-center bg-no-repeat pb-16 px-8"
+        className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-8"
         style={{ backgroundImage: "url('/doctordashboard/bg.png')" }}
       >
         <TopRightIcons />
 
         {/* Header */}
-        <Header name={currentUser?.username || "Dr. Ali Hamza"} />
+        <div className="ml-20">
+          <Header name={currentUser?.username || "Dr. Ali Hamza"} />
+        </div>
 
         {/* Main Content - positioned to align with background */}
-        <div className="mt-48">
+        <div className="mt-48 ml-20">
           {/* Doctor Profile Card - Full Width */}
           <div className="mb-6">
             <DoctorProfileCard 

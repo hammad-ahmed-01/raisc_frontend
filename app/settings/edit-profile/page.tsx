@@ -1,11 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import EditPatientProfile from "@/components/PatientSettings/EditProfile/EditProfile";
 import EditDoctorProfile from "@/components/DoctorSettings/EditProfile/EditProfile";
 import EditOrganizationProfile from "@/components/OrganizationSettings/EditProfile/EditProfile";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 interface ProfileData {
+  // NEW: username supported for Doctor UI row
+  username?: string;
+
   display_name: string;
   email: string;
   phone: string;
@@ -15,12 +19,14 @@ interface ProfileData {
   bio: string;
   organization?: string;
   location: string;
+
   // Patient specific fields
   age?: string;
   condition?: string;
   emergency_contact?: string;
   user_type?: string;
   therapyFocus?: string;
+
   // Organization specific fields
   organization_name?: string;
   description?: string;
@@ -31,7 +37,10 @@ interface ProfileData {
 }
 
 export default function EditProfilePage() {
+  const router = useRouter();
+
   const [profile, setProfile] = useState<ProfileData>({
+    username: "",
     display_name: "",
     email: "",
     phone: "",
@@ -43,7 +52,7 @@ export default function EditProfilePage() {
     location: "",
   });
 
-  const [userType, setUserType] = useState<string>('doctor');
+  const [userType, setUserType] = useState<string>("doctor");
   const [loading, setLoading] = useState(true);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
@@ -52,11 +61,13 @@ export default function EditProfilePage() {
   const [authError, setAuthError] = useState("");
 
   const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+  const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+  const CHANGE_EMAIL_ROUTE = "/settings/change-email";
 
-  // Move setDummyProfile outside useEffect to avoid dependency issues
   const setDummyProfile = (type: string) => {
-    if (type === 'patient') {
+    if (type === "patient") {
       setProfile({
+        username: "john_doe",
         display_name: "John Doe",
         email: "patient@example.com",
         phone: "+92 300 9876543",
@@ -68,8 +79,9 @@ export default function EditProfilePage() {
         bio: "Patient seeking mental health support.",
         user_type: "patient",
       });
-    } else if (type === 'organization') {
+    } else if (type === "organization") {
       setProfile({
+        username: "org_admin",
         display_name: "",
         email: "",
         phone: "",
@@ -84,6 +96,7 @@ export default function EditProfilePage() {
       });
     } else {
       setProfile({
+        username: "Ali_Hamza123",
         display_name: "Dr. Ali Hamza",
         email: "AliHamza123@gmail.com",
         phone: "",
@@ -101,48 +114,41 @@ export default function EditProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Check if window object exists (client-side only)
-        if (typeof window === 'undefined') {
+        if (typeof window === "undefined") {
           setLoading(false);
           return;
         }
 
-        // Get user type from localStorage with error handling
-        let currentUserType = 'doctor';
+        // role + current username from localStorage
+        let currentUserType = "doctor";
+        let currentUsername = "";
         try {
           const userData = localStorage.getItem("user_data");
           if (userData) {
             const parsed = JSON.parse(userData);
-            currentUserType = parsed.user_type || 'doctor';
+            currentUserType = parsed.user_type || "doctor";
+            currentUsername = parsed.username || "";
             setUserType(currentUserType);
           }
         } catch (error) {
           console.error("Error parsing user data from localStorage:", error);
         }
 
-        if (isBackendConnected) {
+        if (isBackendConnected && BASE) {
           try {
             const sessionKey = localStorage.getItem("session_key");
-            
-            if (!sessionKey) {
-              throw new Error("No session key found");
-            }
+            if (!sessionKey) throw new Error("No session key found");
 
             const response = await fetch(
-              `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/${currentUserType}/profile/`,
-              {
-                headers: {
-                  Authorization: `Token ${sessionKey}`,
-                },
-              }
+              `${BASE}/users/${currentUserType}/profile/`,
+              { headers: { Authorization: `Token ${sessionKey}` } }
             );
 
-            if (response.ok) {
-              const data = await response.json();
-              setProfile(data);
-            } else {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            // Merge canonical username into profile so Username row uses real value
+            setProfile((prev) => ({ ...prev, ...data, username: currentUsername }));
           } catch (error) {
             console.error("Error fetching profile:", error);
             setDummyProfile(currentUserType);
@@ -152,14 +158,14 @@ export default function EditProfilePage() {
         }
       } catch (error) {
         console.error("General error in fetchProfile:", error);
-        setDummyProfile('doctor');
+        setDummyProfile("doctor");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [isBackendConnected]); // Removed userType from dependencies to prevent infinite loop
+  }, [isBackendConnected, BASE]);
 
   useEffect(() => {
     const performAuthCheck = async () => {
@@ -178,49 +184,70 @@ export default function EditProfilePage() {
         setAuthError("Authentication check failed");
       }
     };
-    
-    // Only run auth check on client side
-    if (typeof window !== 'undefined') {
+
+    if (typeof window !== "undefined") {
       performAuthCheck();
     }
   }, []);
 
   const handleEdit = (field: string, currentValue: string) => {
+    // Email is edited on its own page
+    if (field === "email") {
+      router.push(CHANGE_EMAIL_ROUTE);
+      return;
+    }
     setEditingField(field);
-    setTempValue(currentValue);
+    setTempValue(currentValue ?? "");
   };
 
   const handleSave = async (field: string) => {
     try {
+      // Email not saved here
+      if (field === "email") {
+        router.push(CHANGE_EMAIL_ROUTE);
+        return;
+      }
+
+      // Optimistic update
       const updatedProfile = { ...profile, [field]: tempValue };
       setProfile(updatedProfile);
       setEditingField(null);
-      
-      if (isBackendConnected) {
+
+      if (isBackendConnected && BASE) {
         const sessionKey = localStorage.getItem("session_key");
-        
-        if (!sessionKey) {
-          throw new Error("No session key found");
+        if (!sessionKey) throw new Error("No session key found");
+
+        const response = await fetch(`${BASE}/users/profile/`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${sessionKey}`,
+          },
+          body: JSON.stringify({ [field]: tempValue }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        // Optionally, refresh from server if your view returns updated profile
+        // const serverProfile = await response.json();
+        // setProfile((prev) => ({ ...prev, ...serverProfile }));
+
+        // Notify dashboards/tabs
+        window.dispatchEvent(new Event("profile:updated"));
+        new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
+
+        // If username changed, also refresh local user_data.username for consistency
+        if (field === "username") {
+          try {
+            const raw = localStorage.getItem("user_data");
+            const parsed = raw ? JSON.parse(raw) : {};
+            parsed.username = tempValue;
+            localStorage.setItem("user_data", JSON.stringify(parsed));
+          } catch {}
         }
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/profile/`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Token ${sessionKey}`,
-            },
-            body: JSON.stringify({ [field]: tempValue }),
-          }
-        );
-
-        if (response.ok) {
-          setMessage("Profile updated successfully!");
-          setTimeout(() => setMessage(""), 3000);
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        setMessage("Profile updated successfully!");
+        setTimeout(() => setMessage(""), 3000);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -234,7 +261,6 @@ export default function EditProfilePage() {
     setTempValue("");
   };
 
-  // Show error state
   if (authError) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -243,7 +269,6 @@ export default function EditProfilePage() {
     );
   }
 
-  // Show loading state
   if (!authVerified || loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -252,10 +277,9 @@ export default function EditProfilePage() {
     );
   }
 
-  // Render Patient Edit Profile
-  if (userType === 'patient') {
+  if (userType === "patient") {
     return (
-      <EditPatientProfile 
+      <EditPatientProfile
         profile={profile}
         editingField={editingField}
         tempValue={tempValue}
@@ -268,8 +292,7 @@ export default function EditProfilePage() {
     );
   }
 
-  // Render Organization Edit Profile
-  if (userType === 'organization') {
+  if (userType === "organization") {
     return (
       <EditOrganizationProfile
         profile={profile}
@@ -284,9 +307,8 @@ export default function EditProfilePage() {
     );
   }
 
-  // Render Doctor Edit Profile (default)
   return (
-    <EditDoctorProfile 
+    <EditDoctorProfile
       profile={profile}
       editingField={editingField}
       tempValue={tempValue}

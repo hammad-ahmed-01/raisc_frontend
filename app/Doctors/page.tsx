@@ -1,10 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 import Image from "next/image";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
+
+/* ------------------------------- types ------------------------------- */
 
 interface PatientProfile {
   level: number;
@@ -12,26 +15,31 @@ interface PatientProfile {
   associated_psychologist_name: string | null;
   sent_requests?: string[];
 }
+
 interface DoctorProfile {
   professional_information: {
     specialization: string;
-    experience: string;
-    qualifications: string;
+    experience: string | number;
+    qualifications: string | string[];
+    location?: string;
+    expertise?: string[];
+    profile_image?: string;
+    rating?: number;
+    education?: string;
   };
   chatgroup_nickname: string;
-  rates: string;
-  location?: string;
-  expertise?: string[];
-  rating?: number;
+  rates: string | number;
 }
+
 export interface User {
   id: number;
   username: string;
   email: string;
-  user_type: string;
+  user_type: "patient" | "doctor" | "organization";
   patient_profile?: PatientProfile | null;
-  doctor_profile?: DoctorProfile;
+  doctor_profile?: DoctorProfile | null;
 }
+
 interface Doctor {
   id: number;
   username: string;
@@ -46,9 +54,12 @@ interface Doctor {
   requestStatus?: "none" | "pending";
 }
 
+/* ------------------------------- config ------------------------------ */
+
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
-// ---- utils ----
+/* -------------------------------- utils ------------------------------ */
+
 const safeStr = (v: any) => (v == null ? "" : String(v));
 const yearsFromExperience = (exp: unknown): number => {
   if (typeof exp === "number" && Number.isFinite(exp)) return exp;
@@ -56,7 +67,21 @@ const yearsFromExperience = (exp: unknown): number => {
   return m ? parseInt(m[0], 10) : 0;
 };
 
+const readUserFromLocalStorage = (): User | null => {
+  try {
+    const raw = localStorage.getItem("user_data");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+/* ------------------------------ component ---------------------------- */
+
 export default function DoctorsPage() {
+  const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchCity, setSearchCity] = useState("");
@@ -64,9 +89,11 @@ export default function DoctorsPage() {
   const [filterType, setFilterType] = useState<"experience" | "rating" | "specialty">("experience");
   const [authError, setAuthError] = useState("");
   const [authVerified, setAuthVerified] = useState(false);
-  const router = useRouter();
 
-  // ensure patient_profile exists
+  // keep a ref to avoid stale closures in listeners
+  const mountedRef = useRef(false);
+
+  // ensure patient_profile exists (defensive for UI)
   const normalizeUser = (u: User): User => {
     if (u?.user_type !== "patient") return u;
     const pp = u.patient_profile ?? null;
@@ -79,61 +106,117 @@ export default function DoctorsPage() {
     return { ...u, patient_profile: safe };
   };
 
+  // Initial optimistic user to prevent header flicker
   useEffect(() => {
-    const run = async () => {
-      const res = await checkAuth();
-      if (!res.isAuthenticated) {
-        setAuthError(res.error || "Authentication failed");
-        setTimeout(redirectToLogin, 1200);
-        return;
-      }
-      if (res.user?.user_type === "doctor") {
-        setAuthError("Doctors cannot access the Doctors page");
-        setTimeout(() => router.push("/dashboard"), 1200);
-        return;
-      }
+    const cached = readUserFromLocalStorage();
+    if (cached) setUser(normalizeUser(cached));
+  }, []);
 
-      const normalizedUser = normalizeUser(res.user as User);
-      setUser(normalizedUser);
-      setAuthVerified(true);
+  // Core loader (auth + doctors list)
+  const loadEverything = async () => {
+    const res = await checkAuth();
 
-      const token = (localStorage.getItem("session_key") || "").trim();
-      if (!token) {
-        setAuthError("Missing session token");
-        setTimeout(redirectToLogin, 1000);
-        return;
-      }
+    if (!res.isAuthenticated) {
+      setAuthError(res.error || "Authentication failed");
+      setTimeout(redirectToLogin, 1200);
+      return;
+    }
 
-      // Always hit our local API; it handles backend/demo logic
-      const resp = await fetch("/api/doctors/list", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
-        },
-      });
+    if (res.user?.user_type === "doctor") {
+      setAuthError("Doctors cannot access the Doctors page");
+      setTimeout(() => router.push("/dashboard"), 1200);
+      return;
+    }
 
-      if (resp.status === 401) {
-        setAuthError("Unauthorized access");
-        setTimeout(redirectToLogin, 1200);
-        return;
-      }
+    const normalizedUser = normalizeUser(res.user as User);
+    setUser(normalizedUser);
+    setAuthVerified(true);
 
-      const list = (await resp.json().catch(() => [])) as any[];
-      const arr: Doctor[] = Array.isArray(list) ? list : [];
+    const token = (localStorage.getItem("session_key") || "").trim();
+    if (!token) {
+      setAuthError("Missing session token");
+      setTimeout(redirectToLogin, 1000);
+      return;
+    }
 
-      // apply request statuses using user's sent_requests
-      const sentIds = normalizedUser.patient_profile?.sent_requests ?? [];
-      const withStatuses: Doctor[] = arr.map((d) => ({
-        ...d,
-        requestStatus: sentIds.includes(String(d.id)) ? "pending" : "none",
-      }));
+    // Always hit local API; it knows how to proxy/mock depending on NEXT_PUBLIC_BACKEND_CONNECTED
+    const resp = await fetch("/api/doctors/list", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${token}`,
+      },
+      cache: "no-store",
+    });
 
-      setDoctors(withStatuses);
+    if (resp.status === 401) {
+      setAuthError("Unauthorized access");
+      setTimeout(redirectToLogin, 1200);
+      return;
+    }
+
+    const list = (await resp.json().catch(() => [])) as any[];
+    const arr: Doctor[] = Array.isArray(list) ? list : [];
+
+    // apply request statuses using user's sent_requests
+    const sentIds = normalizedUser.patient_profile?.sent_requests ?? [];
+    const withStatuses: Doctor[] = arr.map((d) => ({
+      ...d,
+      requestStatus: sentIds.includes(String(d.id)) ? "pending" : "none",
+    }));
+
+    setDoctors(withStatuses);
+  };
+
+  // mount
+  useEffect(() => {
+    mountedRef.current = true;
+    loadEverything();
+    return () => {
+      mountedRef.current = false;
     };
-    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  // actions
+  /* --------------------- live sync after profile changes -------------------- */
+  useEffect(() => {
+    // 1) Same-tab event fired after successful settings save
+    const onProfileUpdated = () => {
+      if (!mountedRef.current) return;
+      loadEverything();
+    };
+    window.addEventListener("profile:updated", onProfileUpdated);
+
+    // 2) Cross-tab/channel sync
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("profile-sync");
+      bc.onmessage = (ev) => {
+        if (ev?.data?.type === "profile-updated") {
+          onProfileUpdated();
+        }
+      };
+    } catch {
+      // ignore unsupported
+    }
+
+    // 3) storage change from other tabs
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "user_data") {
+        onProfileUpdated();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("profile:updated", onProfileUpdated);
+      window.removeEventListener("storage", onStorage);
+      if (bc) bc.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* -------------------------------- actions -------------------------------- */
+
   const sendRequest = async (doctorId: number) => {
     if (!user) return;
 
@@ -158,10 +241,22 @@ export default function DoctorsPage() {
             if (!prev) return null;
             const sent = new Set(prev.patient_profile?.sent_requests ?? []);
             sent.add(String(doctorId));
-            return {
+            const updated = {
               ...prev,
-              patient_profile: { ...(prev.patient_profile as PatientProfile), sent_requests: [...sent] },
+              patient_profile: {
+                ...(prev.patient_profile as PatientProfile),
+                sent_requests: [...sent],
+              },
             };
+            // keep localStorage in sync for other tabs
+            try {
+              const raw = localStorage.getItem("user_data");
+              const parsed = raw ? JSON.parse(raw) : {};
+              parsed.patient_profile = updated.patient_profile;
+              localStorage.setItem("user_data", JSON.stringify(parsed));
+              new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
+            } catch {}
+            return updated;
           });
         }
       } catch (e) {
@@ -182,6 +277,7 @@ export default function DoctorsPage() {
           patient_profile: { ...(parsed.patient_profile || {}), sent_requests: [...sent] },
         };
         localStorage.setItem("user_data", JSON.stringify(updatedUser));
+        new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
         setUser(updatedUser);
       }
     }
@@ -211,10 +307,21 @@ export default function DoctorsPage() {
             if (!prev) return null;
             const sent = new Set(prev.patient_profile?.sent_requests ?? []);
             sent.delete(String(doctorId));
-            return {
+            const updated = {
               ...prev,
-              patient_profile: { ...(prev.patient_profile as PatientProfile), sent_requests: [...sent] },
+              patient_profile: {
+                ...(prev.patient_profile as PatientProfile),
+                sent_requests: [...sent],
+              },
             };
+            try {
+              const raw = localStorage.getItem("user_data");
+              const parsed = raw ? JSON.parse(raw) : {};
+              parsed.patient_profile = updated.patient_profile;
+              localStorage.setItem("user_data", JSON.stringify(parsed));
+              new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
+            } catch {}
+            return updated;
           });
         }
       } catch (e) {
@@ -235,47 +342,54 @@ export default function DoctorsPage() {
           patient_profile: { ...(parsed.patient_profile || {}), sent_requests: updated },
         };
         localStorage.setItem("user_data", JSON.stringify(updatedUser));
+        new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
         setUser(updatedUser);
       }
     }
   };
 
-  // filters & sorting (defensive)
-  const filteredDoctors = doctors.filter((d) => {
-    const cityOk =
-      !searchCity || safeStr(d.location).toLowerCase().includes(searchCity.toLowerCase());
-    const term = searchSpecialty.toLowerCase();
-    const specOk =
-      !term ||
-      safeStr(d.specialization).toLowerCase().includes(term) ||
-      (d.expertise ?? []).some((x) => safeStr(x).toLowerCase().includes(term));
-    return cityOk && specOk;
-  });
+  /* ---------------------------- filter & sort ---------------------------- */
 
-  const sortedDoctors = [...filteredDoctors].sort((a, b) => {
+  const filteredDoctors = useMemo(() => {
+    return doctors.filter((d) => {
+      const cityOk =
+        !searchCity || safeStr(d.location).toLowerCase().includes(searchCity.toLowerCase());
+      const term = searchSpecialty.toLowerCase();
+      const specOk =
+        !term ||
+        safeStr(d.specialization).toLowerCase().includes(term) ||
+        (d.expertise ?? []).some((x) => safeStr(x).toLowerCase().includes(term));
+      return cityOk && specOk;
+    });
+  }, [doctors, searchCity, searchSpecialty]);
+
+  const sortedDoctors = useMemo(() => {
+    const arr = [...filteredDoctors];
     if (filterType === "experience") {
-      return yearsFromExperience(b.experience) - yearsFromExperience(a.experience);
-    }
-    if (filterType === "rating") {
-      return (Number(b.rating) || 0) - (Number(a.rating) || 0);
-    }
-    if (filterType === "specialty") {
+      arr.sort((a, b) => yearsFromExperience(b.experience) - yearsFromExperience(a.experience));
+    } else if (filterType === "rating") {
+      arr.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    } else if (filterType === "specialty") {
       const term = searchSpecialty.toLowerCase();
       if (term) {
-        const aSpec = safeStr(a.specialization).toLowerCase().includes(term);
-        const bSpec = safeStr(b.specialization).toLowerCase().includes(term);
-        if (aSpec && !bSpec) return -1;
-        if (!aSpec && bSpec) return 1;
-        const aCount = (a.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
-        const bCount = (b.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
-        return bCount - aCount;
+        arr.sort((a, b) => {
+          const aSpec = safeStr(a.specialization).toLowerCase().includes(term);
+          const bSpec = safeStr(b.specialization).toLowerCase().includes(term);
+          if (aSpec && !bSpec) return -1;
+          if (!aSpec && bSpec) return 1;
+          const aCount = (a.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
+          const bCount = (b.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
+          return bCount - aCount;
+        });
+      } else {
+        arr.sort((a, b) => safeStr(a.specialization).localeCompare(safeStr(b.specialization)));
       }
-      return safeStr(a.specialization).localeCompare(safeStr(b.specialization));
     }
-    return 0;
-  });
+    return arr;
+  }, [filteredDoctors, filterType, searchSpecialty]);
 
-  // render
+  /* ------------------------------- render -------------------------------- */
+
   if (authError) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-red-50">
@@ -297,7 +411,11 @@ export default function DoctorsPage() {
   return (
     <div
       className="min-h-screen py-4 sm:py-8"
-      style={{ backgroundImage: "url('/bg/patientbg.png')", backgroundSize: "cover", backgroundPosition: "center" }}
+      style={{
+        backgroundImage: "url('/bg/patientbg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
       <div className="max-w-6xl mx-auto px-2 sm:px-4">
         <div className="text-center mb-4 sm:mb-6">
@@ -312,19 +430,26 @@ export default function DoctorsPage() {
         {/* filters */}
         <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "experience" ? "bg-white border-blue-300 font-medium" : "bg-white border-gray-200 shadow-sm"}`}
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+              filterType === "experience" ? "bg-white border-blue-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+            }`}
             onClick={() => setFilterType("experience")}
           >
-            <span className={`${filterType === "experience" ? "text-green-600" : "text-blue-600"}`}>🧭</span> Sort by Experience
+            <span className={`${filterType === "experience" ? "text-green-600" : "text-blue-600"}`}>🧭</span>{" "}
+            Sort by Experience
           </button>
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "rating" ? "bg-white border-yellow-300 font-medium" : "bg-white border-gray-200 shadow-sm"}`}
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+              filterType === "rating" ? "bg-white border-yellow-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+            }`}
             onClick={() => setFilterType("rating")}
           >
             <span className="text-yellow-400">⭐</span> Highest Rated
           </button>
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${filterType === "specialty" ? "bg-white border-purple-300 font-medium" : "bg-white border-gray-200 shadow-sm"}`}
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+              filterType === "specialty" ? "bg-white border-purple-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+            }`}
             onClick={() => setFilterType("specialty")}
           >
             <span className="text-blue-500">💎</span> Specialties
@@ -358,14 +483,27 @@ export default function DoctorsPage() {
         {/* doctors */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
           {sortedDoctors.map((doctor) => (
-            <div key={doctor.id} className="bg-white bg-opacity-95 rounded-xl p-3 sm:p-6 shadow border-0 min-h-[280px] sm:h-[300px] flex flex-col">
+            <div
+              key={doctor.id}
+              className="bg-white bg-opacity-95 rounded-xl p-3 sm:p-6 shadow border-0 min-h-[280px] sm:h-[300px] flex flex-col"
+            >
               <div className="flex items-start gap-2 sm:gap-4">
                 <div className="rounded-full overflow-hidden w-12 sm:w-20 h-12 sm:h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
-                  <Image src={doctor.profile_image} alt={doctor.name} width={80} height={80} className="object-cover w-full h-full" />
+                  <Image
+                    src={doctor.profile_image}
+                    alt={doctor.name}
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm sm:text-xl font-bold text-blue-800 font-weight-700">{doctor.name}</h3>
-                  <p className="text-blue-600 font-weight-400 text-xs sm:text-base">{doctor.specialization}</p>
+                  <h3 className="text-sm sm:text-xl font-bold text-blue-800 font-weight-700">
+                    {doctor.name}
+                  </h3>
+                  <p className="text-blue-600 font-weight-400 text-xs sm:text-base">
+                    {doctor.specialization}
+                  </p>
                   <div className="flex items-center mt-1">
                     <span className="text-yellow-400 text-xs sm:text-base">★</span>
                     <span className="ml-1 font-medium text-gray-700 font-weight-400 text-xs sm:text-base">
@@ -390,14 +528,17 @@ export default function DoctorsPage() {
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <span className="text-pink-400">💖</span>
-                  <span className="truncate">Expertise: {(doctor.expertise ?? []).join(", ") || "—"}</span>
+                  <span className="truncate">
+                    Expertise: {(doctor.expertise ?? []).join(", ") || "—"}
+                  </span>
                 </div>
               </div>
 
               <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center">
                 {doctor.requestStatus === "pending" && (
                   <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
-                    <span className="font-weight-700 text-[#1E3CA7]">⌛</span> Status: Pending Request
+                    <span className="font-weight-700 text-[#1E3CA7]">⌛</span> Status: Pending
+                    Request
                   </div>
                 )}
 

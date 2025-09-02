@@ -250,18 +250,43 @@ export default function EditPatientProfile({
             >
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-bold text-[#444444]">Therapy Focus</h3>
-                <button className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70">
-                  Edit
-                </button>
+                {editingField !== 'therapyFocus' && (
+                  <button
+                    onClick={() => handleEdit('therapyFocus', profile.therapyFocus || '')}
+                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              <p className="text-md text-[#444444]">{profile.therapyFocus || "No therapy focus specified"}</p>
-            </div>
 
-            {message && (
-              <div className="mt-3 p-2 bg-green-100 text-green-800 rounded-lg text-center text-md">
-                {message}
-              </div>
-            )}
+              {editingField === 'therapyFocus' ? (
+                <div className="flex items-center space-x-2 mt-1">
+                  <input
+                    type="text"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    className="px-2 py-1 border border-gray-300 rounded text-md w-full"
+                  />
+                  <button
+                    onClick={() => handleSave('therapyFocus')}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <p className="text-md text-[#444444]">
+                  {profile.therapyFocus || "No therapy focus specified"}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

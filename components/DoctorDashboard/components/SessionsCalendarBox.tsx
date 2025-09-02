@@ -13,7 +13,7 @@ import { getDay } from 'date-fns/getDay';
 import {enUS} from 'date-fns/locale/en-US';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './custom-calendar.css'; // You’ll create this file below
+import './custom-calendar.css'; 
 
 const locales = {
   'en-US': enUS,
@@ -96,16 +96,16 @@ export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessio
         <div className="col-span-2 px-4 py-2 text-xl font-bold text-[#1E3CA7] bg-[#D0E9FF] border-r border-[#2196F3] flex items-center justify-center">
           {format(date, 'MMMM yyyy')}
         </div>
-        <button onClick={() => setView('month')} className={`px-4 py-2 font-bold border-r border-[#2196F3] transition ${view === 'month' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView('month')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'month' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
           Month
         </button>
-        <button onClick={() => setView('week')} className={`px-4 py-2 font-bold border-r border-[#2196F3] transition ${view === 'week' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView('week')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'week' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
           Week
         </button>
-        <button onClick={() => setView('day')} className={`px-4 py-2 font-bold border-r border-[#2196F3] transition ${view === 'day' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView('day')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'day' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
           Day
         </button>
-        <button onClick={() => setView('agenda')} className={`px-4 py-2 font-bold transition ${view === 'agenda' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView('agenda')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'agenda' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
           Agenda
         </button>
       </div>
