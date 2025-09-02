@@ -6,6 +6,17 @@ import { checkAuth, redirectToLogin } from "@/lib/auth";
 import Image from "next/image";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
+import {
+  MapPin,
+  MessageSquareText,
+  GraduationCap,
+  Heart,
+  Star,
+  Compass,
+  Sparkles,
+  Search,
+  BadgeDollarSign,
+} from "lucide-react";
 
 /* ------------------------------- types ------------------------------- */
 
@@ -36,6 +47,7 @@ export interface User {
   username: string;
   email: string;
   user_type: "patient" | "doctor" | "organization";
+  display_name?: string; // prefer this for greetings
   patient_profile?: PatientProfile | null;
   doctor_profile?: DoctorProfile | null;
 }
@@ -51,12 +63,14 @@ interface Doctor {
   rating: number;
   expertise: string[];
   education: string;
+  rates?: string; // NEW: display rates if provided
   requestStatus?: "none" | "pending";
 }
 
 /* ------------------------------- config ------------------------------ */
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
 
 /* -------------------------------- utils ------------------------------ */
 
@@ -76,6 +90,9 @@ const readUserFromLocalStorage = (): User | null => {
     return null;
   }
 };
+
+const displayNameOf = (u: User | null) =>
+  (u?.display_name && String(u.display_name).trim()) || u?.username || "";
 
 /* ------------------------------ component ---------------------------- */
 
@@ -103,7 +120,14 @@ export default function DoctorsPage() {
       associated_psychologist_name: pp?.associated_psychologist_name ?? null,
       sent_requests: pp?.sent_requests ?? [],
     };
-    return { ...u, patient_profile: safe };
+    // pull display_name from localStorage if present (set by /users/profile/ page)
+    const raw = localStorage.getItem("user_data");
+    let dn = undefined;
+    try {
+      const parsed = raw ? JSON.parse(raw) : {};
+      dn = parsed?.display_name;
+    } catch {}
+    return { ...u, patient_profile: safe, display_name: dn ?? u.display_name };
   };
 
   // Initial optimistic user to prevent header flicker
@@ -139,7 +163,7 @@ export default function DoctorsPage() {
       return;
     }
 
-    // Always hit local API; it knows how to proxy/mock depending on NEXT_PUBLIC_BACKEND_CONNECTED
+    // Always hit local API route
     const resp = await fetch("/api/doctors/list", {
       headers: {
         "Content-Type": "application/json",
@@ -220,19 +244,16 @@ export default function DoctorsPage() {
   const sendRequest = async (doctorId: number) => {
     if (!user) return;
 
-    if (isBackendConnected) {
+    if (isBackendConnected && BASE) {
       try {
         const sessionKey = (localStorage.getItem("session_key") || "").trim();
-        const resp = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/send-request/${doctorId}/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Token ${sessionKey}`,
-            },
-          }
-        );
+        const resp = await fetch(`${BASE}/users/doctor/request/${doctorId}/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${sessionKey}`,
+          },
+        });
         if (resp.ok) {
           setDoctors((prev) =>
             prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "pending" } : d))
@@ -248,7 +269,7 @@ export default function DoctorsPage() {
                 sent_requests: [...sent],
               },
             };
-            // keep localStorage in sync for other tabs
+            // sync localStorage for other tabs
             try {
               const raw = localStorage.getItem("user_data");
               const parsed = raw ? JSON.parse(raw) : {};
@@ -258,6 +279,8 @@ export default function DoctorsPage() {
             } catch {}
             return updated;
           });
+        } else {
+          console.warn("sendRequest non-200:", await resp.text());
         }
       } catch (e) {
         console.log("sendRequest failed:", e);
@@ -287,46 +310,9 @@ export default function DoctorsPage() {
     if (!user) return;
 
     if (isBackendConnected) {
-      try {
-        const sessionKey = (localStorage.getItem("session_key") || "").trim();
-        const resp = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/remove-request/${doctorId}/`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Token ${sessionKey}`,
-            },
-          }
-        );
-        if (resp.ok) {
-          setDoctors((prev) =>
-            prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "none" } : d))
-          );
-          setUser((prev) => {
-            if (!prev) return null;
-            const sent = new Set(prev.patient_profile?.sent_requests ?? []);
-            sent.delete(String(doctorId));
-            const updated = {
-              ...prev,
-              patient_profile: {
-                ...(prev.patient_profile as PatientProfile),
-                sent_requests: [...sent],
-              },
-            };
-            try {
-              const raw = localStorage.getItem("user_data");
-              const parsed = raw ? JSON.parse(raw) : {};
-              parsed.patient_profile = updated.patient_profile;
-              localStorage.setItem("user_data", JSON.stringify(parsed));
-              new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
-            } catch {}
-            return updated;
-          });
-        }
-      } catch (e) {
-        console.log("removeRequest failed:", e);
-      }
+      // NOTE: backend method for cancel not yet available (kept as info)
+      console.info("Cancel request is not supported by backend yet.");
+      return;
     } else {
       // demo
       setDoctors((prev) =>
@@ -420,39 +406,39 @@ export default function DoctorsPage() {
       <div className="max-w-6xl mx-auto px-2 sm:px-4">
         <div className="text-center mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-3xl font-bold text-blue-800 mb-1 font-weight-700">
-            Welcome, {user.username}
+            Welcome, {displayNameOf(user)}
           </h1>
           <p className="text-sm sm:text-lg text-blue-600">
-            Choose your support companion <span role="img" aria-label="heart">💖</span>
+            Choose your support companion
           </p>
         </div>
 
         {/* filters */}
         <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
               filterType === "experience" ? "bg-white border-blue-300 font-medium" : "bg-white border-gray-200 shadow-sm"
             }`}
             onClick={() => setFilterType("experience")}
           >
-            <span className={`${filterType === "experience" ? "text-green-600" : "text-blue-600"}`}>🧭</span>{" "}
+            <Compass className={filterType === "experience" ? "w-4 h-4 text-green-600" : "w-4 h-4 text-blue-600"} />
             Sort by Experience
           </button>
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
               filterType === "rating" ? "bg-white border-yellow-300 font-medium" : "bg-white border-gray-200 shadow-sm"
             }`}
             onClick={() => setFilterType("rating")}
           >
-            <span className="text-yellow-400">⭐</span> Highest Rated
+            <Star className="w-4 h-4 text-yellow-500" /> Highest Rated
           </button>
           <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1 sm:gap-2 border text-xs sm:text-sm ${
+            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
               filterType === "specialty" ? "bg-white border-purple-300 font-medium" : "bg-white border-gray-200 shadow-sm"
             }`}
             onClick={() => setFilterType("specialty")}
           >
-            <span className="text-blue-500">💎</span> Specialties
+            <Sparkles className="w-4 h-4 text-blue-500" /> Specialties
           </button>
         </div>
 
@@ -462,21 +448,21 @@ export default function DoctorsPage() {
             <input
               type="text"
               placeholder="Search by city e.g, Lahore"
-              className="pl-8 sm:pl-10 pr-3 sm:pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
+              className="pl-9 sm:pl-10 pr-3 sm:pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
               value={searchCity}
               onChange={(e) => setSearchCity(e.target.value)}
             />
-            <span className="text-[#444444] absolute left-2 sm:left-3 top-2 text-xs sm:text-sm">🔍</span>
+            <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
           </div>
           <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Search by specialties e.g, CBT"
-              className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
+              className="pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
               value={searchSpecialty}
               onChange={(e) => setSearchSpecialty(e.target.value)}
             />
-            <span className="absolute left-2 sm:left-3 top-2 text-xs sm:text-sm">🔍</span>
+            <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
           </div>
         </div>
 
@@ -505,7 +491,7 @@ export default function DoctorsPage() {
                     {doctor.specialization}
                   </p>
                   <div className="flex items-center mt-1">
-                    <span className="text-yellow-400 text-xs sm:text-base">★</span>
+                    <Star className="w-4 h-4 text-yellow-500" />
                     <span className="ml-1 font-medium text-gray-700 font-weight-400 text-xs sm:text-base">
                       {Number(doctor.rating || 0).toFixed(1)} Rating
                     </span>
@@ -514,31 +500,36 @@ export default function DoctorsPage() {
               </div>
 
               <div className="mt-2 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-2 sm:gap-x-3 text-gray-700 text-xs sm:text-sm font-weight-400">
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <span className="text-red-500">📍</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <MapPin className="w-4 h-4 text-red-500" />
                   <span>Location: {doctor.location || "—"}</span>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <span className="text-gray-600">💬</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <MessageSquareText className="w-4 h-4 text-gray-600" />
                   <span>Experience: {safeStr(doctor.experience) || "—"}</span>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <span className="text-blue-600">🎓</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
                   <span className="truncate">{doctor.education || "—"}</span>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <span className="text-pink-400">💖</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Heart className="w-4 h-4 text-pink-500" />
                   <span className="truncate">
                     Expertise: {(doctor.expertise ?? []).join(", ") || "—"}
                   </span>
                 </div>
+                {doctor.rates && (
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <BadgeDollarSign className="w-4 h-4 text-green-600" />
+                    <span>Rates: {doctor.rates}</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center">
                 {doctor.requestStatus === "pending" && (
-                  <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
-                    <span className="font-weight-700 text-[#1E3CA7]">⌛</span> Status: Pending
-                    Request
+                  <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1.5 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
+                    <Sparkles className="w-4 h-4 text-[#1E3CA7]" /> Status: Pending Request
                   </div>
                 )}
 

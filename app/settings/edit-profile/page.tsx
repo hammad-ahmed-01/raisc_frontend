@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import EditPatientProfile from "@/components/PatientSettings/EditProfile/EditProfile";
@@ -7,27 +8,29 @@ import EditOrganizationProfile from "@/components/OrganizationSettings/EditProfi
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 interface ProfileData {
-  // NEW: username supported for Doctor UI row
   username?: string;
-
   display_name: string;
   email: string;
   phone: string;
+
   specialization?: string;
-  experience?: string;
-  qualifications?: string;
+  experience?: string | number;
+  qualifications?: string | string[];
   bio: string;
   organization?: string;
   location: string;
+  education?: string;
+  profile_image?: string;
+  rates?: string | number;
 
-  // Patient specific fields
+  // Patient fields
   age?: string;
   condition?: string;
   emergency_contact?: string;
   user_type?: string;
   therapyFocus?: string;
 
-  // Organization specific fields
+  // Organization fields
   organization_name?: string;
   description?: string;
   logo_url?: string;
@@ -50,6 +53,9 @@ export default function EditProfilePage() {
     bio: "",
     organization: "",
     location: "",
+    education: "",
+    profile_image: "",
+    rates: "",
   });
 
   const [userType, setUserType] = useState<string>("doctor");
@@ -106,6 +112,9 @@ export default function EditProfilePage() {
         bio: "Experienced mental health professional dedicated to helping patients achieve their goals.",
         organization: "Pakistan Institute of Mental Health (PIMH)",
         location: "Rawalpindi, Pakistan",
+        education: "MSc Clinical Psych",
+        profile_image: "/doc.png",
+        rates: "480.00",
         user_type: "doctor",
       });
     }
@@ -119,45 +128,43 @@ export default function EditProfilePage() {
           return;
         }
 
-        // role + current username from localStorage
+        // user type from localStorage for initial render
         let currentUserType = "doctor";
-        let currentUsername = "";
         try {
-          const userData = localStorage.getItem("user_data");
-          if (userData) {
-            const parsed = JSON.parse(userData);
+          const ud = localStorage.getItem("user_data");
+          if (ud) {
+            const parsed = JSON.parse(ud);
             currentUserType = parsed.user_type || "doctor";
-            currentUsername = parsed.username || "";
             setUserType(currentUserType);
           }
-        } catch (error) {
-          console.error("Error parsing user data from localStorage:", error);
-        }
+        } catch {}
 
         if (isBackendConnected && BASE) {
+          const sessionKey = localStorage.getItem("session_key");
+          if (!sessionKey) throw new Error("No session key found");
+
+          // unified endpoint
+          const resp = await fetch(`${BASE}/users/profile/`, {
+            headers: { Authorization: `Token ${sessionKey}` },
+          });
+          if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+          const data = await resp.json();
+
+          // cache display_name into user_data so headers can use it
           try {
-            const sessionKey = localStorage.getItem("session_key");
-            if (!sessionKey) throw new Error("No session key found");
+            const raw = localStorage.getItem("user_data");
+            const userData = raw ? JSON.parse(raw) : {};
+            userData.username = data.username ?? userData.username;
+            userData.display_name = data.display_name ?? userData.display_name;
+            localStorage.setItem("user_data", JSON.stringify(userData));
+          } catch {}
 
-            const response = await fetch(
-              `${BASE}/users/${currentUserType}/profile/`,
-              { headers: { Authorization: `Token ${sessionKey}` } }
-            );
-
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-
-            // Merge canonical username into profile so Username row uses real value
-            setProfile((prev) => ({ ...prev, ...data, username: currentUsername }));
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-            setDummyProfile(currentUserType);
-          }
+          setProfile((prev) => ({ ...prev, ...data }));
         } else {
           setDummyProfile(currentUserType);
         }
-      } catch (error) {
-        console.error("General error in fetchProfile:", error);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
         setDummyProfile("doctor");
       } finally {
         setLoading(false);
@@ -173,9 +180,7 @@ export default function EditProfilePage() {
         const authResult = await checkAuth();
         if (!authResult.isAuthenticated) {
           setAuthError(authResult.error || "Authentication required");
-          setTimeout(() => {
-            redirectToLogin();
-          }, 2000);
+          setTimeout(() => redirectToLogin(), 2000);
           return;
         }
         setAuthVerified(true);
@@ -185,13 +190,10 @@ export default function EditProfilePage() {
       }
     };
 
-    if (typeof window !== "undefined") {
-      performAuthCheck();
-    }
+    if (typeof window !== "undefined") performAuthCheck();
   }, []);
 
   const handleEdit = (field: string, currentValue: string) => {
-    // Email is edited on its own page
     if (field === "email") {
       router.push(CHANGE_EMAIL_ROUTE);
       return;
@@ -202,55 +204,49 @@ export default function EditProfilePage() {
 
   const handleSave = async (field: string) => {
     try {
-      // Email not saved here
       if (field === "email") {
         router.push(CHANGE_EMAIL_ROUTE);
         return;
       }
 
-      // Optimistic update
-      const updatedProfile = { ...profile, [field]: tempValue };
-      setProfile(updatedProfile);
+      // Optimistic UI
+      const updated = { ...profile, [field]: tempValue };
+      setProfile(updated);
       setEditingField(null);
 
       if (isBackendConnected && BASE) {
         const sessionKey = localStorage.getItem("session_key");
         if (!sessionKey) throw new Error("No session key found");
 
-        const response = await fetch(`${BASE}/users/profile/`, {
+        const resp = await fetch(`${BASE}/users/profile/`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${sessionKey}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Token ${sessionKey}` },
           body: JSON.stringify({ [field]: tempValue }),
         });
+        if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        // Use server’s canonical response
+        const serverProfile = await resp.json();
+        setProfile((prev) => ({ ...prev, ...serverProfile }));
 
-        // Optionally, refresh from server if your view returns updated profile
-        // const serverProfile = await response.json();
-        // setProfile((prev) => ({ ...prev, ...serverProfile }));
+        // Keep header consistent: prefer display_name, fallback username
+        try {
+          const raw = localStorage.getItem("user_data");
+          const userData = raw ? JSON.parse(raw) : {};
+          if (field === "username") userData.username = serverProfile.username;
+          if (serverProfile.display_name) userData.display_name = serverProfile.display_name;
+          localStorage.setItem("user_data", JSON.stringify(userData));
+        } catch {}
 
-        // Notify dashboards/tabs
+        // Let other tabs/pages refresh
         window.dispatchEvent(new Event("profile:updated"));
         new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
-
-        // If username changed, also refresh local user_data.username for consistency
-        if (field === "username") {
-          try {
-            const raw = localStorage.getItem("user_data");
-            const parsed = raw ? JSON.parse(raw) : {};
-            parsed.username = tempValue;
-            localStorage.setItem("user_data", JSON.stringify(parsed));
-          } catch {}
-        }
 
         setMessage("Profile updated successfully!");
         setTimeout(() => setMessage(""), 3000);
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
+    } catch (err) {
+      console.error("Error updating profile:", err);
       setMessage("Error updating profile. Please try again.");
       setTimeout(() => setMessage(""), 3000);
     }
