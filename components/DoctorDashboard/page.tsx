@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { Header } from './components/Header';
-import { DoctorProfileCard } from './components/DoctorProfileCard';
-import { QuoteSection } from './components/QuoteSection';
-import { SessionCalendar } from './components/SessionCalendar';
+import React, { useEffect, useState } from "react";
+import { Header } from "./components/Header";
+import { DoctorProfileCard } from "./components/DoctorProfileCard";
+import { QuoteSection } from "./components/QuoteSection";
+import { SessionCalendar } from "./components/SessionCalendar";
 import TopRightIcons from "@/components/TopRightIcons";
 
 interface User {
@@ -18,68 +18,81 @@ interface User {
   };
 }
 
-const DoctorDashboard: React.FC<{ user: User}> = ({ user }) => {
+const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
+
   useEffect(() => {
-    // If user is passed as prop, use it
+    // Prefer prop if provided
     if (user) {
       setCurrentUser(user);
       return;
     }
-    
-    // Otherwise fetch from localStorage
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setCurrentUser(parsedUser);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
+    // Otherwise load from localStorage (client side)
+    try {
+      const raw = localStorage.getItem("user_data");
+      if (raw) setCurrentUser(JSON.parse(raw));
+    } catch (e) {
+      console.error("Error parsing user data from localStorage:", e);
     }
   }, [user]);
 
+  const name = currentUser?.username || "Dr. Ali Hamza";
+  const specialization =
+    currentUser?.doctor_profile?.professional_information?.specialization ||
+    "Cognitive Therapy";
+  const experience =
+    currentUser?.doctor_profile?.professional_information?.experience ||
+    "5 years";
+  const rates = currentUser?.doctor_profile?.rates || "$100/hr/session";
+
   return (
-    <div className="min-h-screen flex">
-      <div 
-        className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-8"
+    <div className="relative min-h-screen">
+      {/* Fixed full-viewport background layer */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-top bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('/doctordashboard/bg.png')" }}
-      >
-        <TopRightIcons />
+        aria-hidden
+      />
+
+      {/* Page content (scrolls normally) */}
+      <div className="min-h-screen px-6 sm:px-8 pb-16">
+        {/* Top-right items participate in normal flow (scrolls) */}
+        <div className="pt-4 sm:pt-6">
+          <TopRightIcons />
+        </div>
 
         {/* Header */}
-        <div className="ml-20">
-          <Header name={currentUser?.username || "Dr. Ali Hamza"} />
+        <div className="mt-2 sm:mt-3 sm:ml-20">
+          <Header name={name} />
         </div>
 
-        {/* Main Content - positioned to align with background */}
-        <div className="mt-48 ml-20">
-          {/* Doctor Profile Card - Full Width */}
-          <div className="mb-6">
-            <DoctorProfileCard 
+        {/* Main content */}
+        <main className="mt-24 sm:mt-24 sm:ml-20 space-y-6 sm:space-y-8">
+          {/* Doctor Profile Card */}
+          <section>
+            <DoctorProfileCard
               doctor={{
-                name: currentUser?.username || "Dr. Ali Hamza",
-                specialization: currentUser?.doctor_profile?.professional_information?.specialization || "Cognitive Therapy",
+                name,
+                specialization,
                 rating: 4.7,
-                experience: currentUser?.doctor_profile?.professional_information?.experience || "5 years",
-                rates: currentUser?.doctor_profile?.rates || "$100/hr/session",
+                experience,
+                rates,
                 organization: "Pakistan Institute of Mental Health(PIMH)",
-                location: "Rawalpindi, Pakistan"
+                location: "Rawalpindi, Pakistan",
               }}
             />
-          </div>
+          </section>
 
-          {/* Quote Section - Not full width */}
-          <div className="mb-6 max-w-4xl mx-auto">
+          {/* Quote Section */}
+          <section className="max-w-4xl mx-auto w-full">
             <QuoteSection />
-          </div>
+          </section>
 
           {/* Session Calendar Section */}
-          <div className="mb-6">
+          <section>
             <SessionCalendar />
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
     </div>
   );
