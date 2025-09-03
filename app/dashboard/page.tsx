@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,26 +12,31 @@ import OrganizationDashboard from "@/components/OrganizationDashboard/page";
 
 /* ----------------------------- types ----------------------------- */
 
+type UserType = "patient" | "doctor" | "organization";
+
 interface PatientProfile {
   level: number;
   associated_psychologist: string | null;
   associated_psychologist_name: string | null;
-  // we read display_name from profile_data when present
-  profile_data?: Record<string, any> | null;
+  profile_data?: Record<string, unknown> | null;
 }
 
+interface DoctorPI {
+  specialization?: string;
+  experience?: string | number;
+  display_name?: string;
+  location?: string;
+  education?: string;
+  expertise?: string[] | string;
+  description?: string;
+  profile_image?: string;
+  rating?: number | string;
+  [k: string]: unknown;
+}
 interface DoctorProfile {
-  professional_information?: {
-    specialization?: string;
-    experience?: string;
-    qualifications?: string;
-    /** we prefer this as the "name" shown across dashboards */
-    display_name?: string;
-    location?: string;
-    [k: string]: any;
-  } | null;
+  professional_information?: DoctorPI | null;
   chatgroup_nickname?: string;
-  rates?: string;
+  rates?: string | number | null;
 }
 
 interface OrganizationProfile {
@@ -42,11 +48,11 @@ interface OrganizationProfile {
   todays_sessions: { doctor: string; therapy_type: string; time: string }[];
 }
 
-export interface User {
+export interface UserShape {
   id: number;
   username: string;
   email: string;
-  user_type: "patient" | "doctor" | "organization";
+  user_type: UserType;
   patient_profile?: PatientProfile | null;
   doctor_profile?: DoctorProfile | null;
   organization_profile?: OrganizationProfile | null;
@@ -55,43 +61,41 @@ export interface User {
 /* --------------------------- component --------------------------- */
 
 export default function Dashboard() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserShape | null>(null);
   const [authError, setAuthError] = useState<string>("");
   const router = useRouter();
 
-  // keep a stable ref to avoid racing updates
-  const refreshingRef = useRef<boolean>(false);
+  // avoid overlapping refreshes
+  const refreshingRef = useRef(false);
 
-  // central refresh that always hits backend canonical /users/user/
+  const normalizeUser = (u: UserShape): UserShape => {
+    if (u.user_type === "patient") {
+      const pp = u.patient_profile ?? ({} as Partial<PatientProfile>);
+      const safe: PatientProfile = {
+        level: typeof pp.level === "number" ? pp.level : 0,
+        associated_psychologist: (pp.associated_psychologist ?? null) as string | null,
+        associated_psychologist_name: (pp.associated_psychologist_name ?? null) as string | null,
+        profile_data: (pp.profile_data ?? null) as Record<string, unknown> | null,
+      };
+      return { ...u, patient_profile: safe };
+    }
+    const { patient_profile, ...rest } = u as any; // strip to avoid accidental reads
+    return rest as UserShape;
+  };
+
+  // canonical refresh from backend
   const refreshUser = async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
     try {
-      const me = await fetchMe(); // pulls fresh user + refreshes localStorage
+      const me = (await fetchMe()) as unknown as UserShape | null;
       if (me) setUser(normalizeUser(me));
     } finally {
       refreshingRef.current = false;
     }
   };
 
-  // normalize so we always have safe patient_profile shape and no stale junk
-  const normalizeUser = (u: User): User => {
-    if (u.user_type === "patient") {
-      const pp = u.patient_profile ?? ({} as PatientProfile);
-      const safe: PatientProfile = {
-        level: typeof pp?.level === "number" ? pp.level : 0,
-        associated_psychologist: pp?.associated_psychologist ?? null,
-        associated_psychologist_name: pp?.associated_psychologist_name ?? null,
-        profile_data: pp?.profile_data ?? null,
-      };
-      return { ...u, patient_profile: safe };
-    }
-    // strip patient_profile for non-patients to avoid accidental UI reads
-    const { patient_profile, ...rest } = u as any;
-    return rest as User;
-  };
-
-  // derive a friendly display name that reflects profile edits
+  // derived display name for header/children
   const displayName = useMemo(() => {
     if (!user) return "";
     if (user.user_type === "doctor") {
@@ -101,7 +105,7 @@ export default function Dashboard() {
       );
     }
     if (user.user_type === "patient") {
-      const pd = user.patient_profile?.profile_data || {};
+      const pd = (user.patient_profile?.profile_data ?? {}) as Record<string, unknown>;
       return (pd?.display_name as string) || user.username;
     }
     if (user.user_type === "organization") {
@@ -119,44 +123,46 @@ export default function Dashboard() {
         setTimeout(() => redirectToLogin(), 1000);
         return;
       }
-      // fetch canonical user (ensures we have latest after server updates)
       await refreshUser();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   /* ---------------------- live sync mechanisms ---------------------- */
-
   useEffect(() => {
     // 1) refetch when tab becomes visible again
     const onVisible = () => {
-      if (document.visibilityState === "visible") refreshUser();
+      if (document.visibilityState === "visible") void refreshUser();
     };
     document.addEventListener("visibilitychange", onVisible);
 
     // 2) refetch if session/user_data changes in localStorage (e.g., other tabs)
     const onStorage = (e: StorageEvent) => {
       if (e.key === "user_data" || e.key === "session_key") {
-        refreshUser();
+        void refreshUser();
       }
     };
     window.addEventListener("storage", onStorage);
 
     // 3) listen for a custom window event fired by settings page after saves
-    const customHandler = () => refreshUser();
+    const customHandler = () => void refreshUser();
     window.addEventListener("profile:updated", customHandler as EventListener);
 
-    // 4) cross-tab BroadcastChannel (optional, low overhead)
-    const bc = new BroadcastChannel("profile-sync");
-    bc.onmessage = (msg) => {
-      if (msg?.data?.type === "profile-updated") refreshUser();
-    };
+    // 4) cross-tab BroadcastChannel, guarded for unsupported browsers
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      bc = new BroadcastChannel("profile-sync");
+      bc.onmessage = (msg: MessageEvent) => {
+        const data = (msg?.data ?? {}) as { type?: string };
+        if (data.type === "profile-updated") void refreshUser();
+      };
+    }
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("profile:updated", customHandler as EventListener);
-      bc.close();
+      if (bc) bc.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -179,20 +185,20 @@ export default function Dashboard() {
     return <p className="text-center text-gray-600 mt-10">Loading...</p>;
   }
 
-  // Non-patient dashboards first
+  // pass a safe object to children (some of them might expect slightly different shapes)
+  const childUser = { ...user, username: displayName } as unknown as any;
+
   if (user.user_type === "doctor") {
-    // pass along a derived displayName so the child can use it if it prefers
-    return <DoctorDashboard user={{ ...user, username: displayName }} />;
+    return <DoctorDashboard user={childUser} />;
   }
   if (user.user_type === "organization") {
-    return <OrganizationDashboard user={{ ...user, username: displayName }} />;
+    return <OrganizationDashboard user={childUser} />;
   }
 
-  // Patient dashboards by level
   const level = user.patient_profile?.level ?? 0;
-  if (level === 0) return <NewPatientDashboard user={{ ...user, username: displayName }} />;
-  if (level === 1) return <ReturningPatientDashboard user={{ ...user, username: displayName }} />;
-  if (level === 2) return <PatientDashboard user={{ ...user, username: displayName }} />;
+  if (level === 0) return <NewPatientDashboard user={childUser} />;
+  if (level === 1) return <ReturningPatientDashboard user={childUser} />;
+  if (level === 2) return <PatientDashboard user={childUser} />;
 
   // Fallback view
   return (

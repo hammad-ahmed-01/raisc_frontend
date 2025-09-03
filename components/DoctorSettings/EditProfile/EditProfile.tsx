@@ -11,12 +11,15 @@ interface ProfileData {
 
   specialization?: string;
   experience?: string | number;
-  qualifications?: string | string[];
-  bio: string;
+
+  // UPDATED: use expertise + description, remove qualifications/bio
+  expertise?: string[] | string;
+  description?: string;
+
   organization?: string;
   location: string;
 
-  // NEW
+  // NEW/kept
   education?: string;
   profile_image?: string;
   rates?: string | number;
@@ -43,26 +46,29 @@ export default function EditDoctorProfile({
   handleCancel,
   setTempValue,
 }: EditDoctorProfileProps) {
-  // Normalize quals for display: accept array OR string (split by newlines/commas)
-  const qualificationsList = useMemo(() => {
-    const q = profile.qualifications;
-    if (!q) return [];
-    if (Array.isArray(q)) {
-      return q.map((s) => String(s).trim()).filter(Boolean);
+  // Normalize expertise for display: accept array OR string (split by commas/pipes/newlines)
+  const expertiseList = useMemo(() => {
+    const e = profile.expertise;
+    if (!e) return [];
+    if (Array.isArray(e)) {
+      return e.map((s) => String(s).trim()).filter(Boolean);
     }
-    const lines = String(q)
+    return String(e)
       .split(/\r?\n/)
-      .flatMap((line) => line.split(","))
+      .flatMap((line) => line.split(/[,\|]/g))
       .map((s) => s.trim())
       .filter(Boolean);
-    return lines;
-  }, [profile.qualifications]);
+  }, [profile.expertise]);
 
-  const handleEditQualifications = () => {
-    const currentText = Array.isArray(profile.qualifications)
-      ? profile.qualifications.join("\n")
-      : String(profile.qualifications ?? "");
-    handleEdit("qualifications", currentText);
+  const handleEditExpertise = () => {
+    const currentText = Array.isArray(profile.expertise)
+      ? profile.expertise.join(", ")
+      : String(profile.expertise ?? "");
+    handleEdit("expertise", currentText);
+  };
+
+  const handleEditDescription = () => {
+    handleEdit("description", String(profile.description ?? ""));
   };
 
   return (
@@ -71,12 +77,21 @@ export default function EditDoctorProfile({
         <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-16">Edit Profile</h1>
 
         {/* Main Container */}
-        <div className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1" style={{ border: "1px solid #2196F3" }}>
+        <div
+          className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1"
+          style={{ border: "1px solid #2196F3" }}
+        >
           {/* Profile Picture Section */}
-          <div className="absolute top-0 -translate-y-1/2 w-[calc(100%-2rem)] bg-white rounded-2xl p-4" style={{ border: "1px solid #2196F3" }}>
+          <div
+            className="absolute top-0 -translate-y-1/2 w-[calc(100%-2rem)] bg-white rounded-2xl p-4"
+            style={{ border: "1px solid #2196F3" }}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden" style={{ border: "2px solid #1E3CA7" }}>
+                <div
+                  className="w-12 h-12 rounded-full overflow-hidden"
+                  style={{ border: "2px solid #1E3CA7" }}
+                >
                   <Image
                     src={profile.profile_image || "/doc.png"}
                     alt="Doctor"
@@ -86,7 +101,9 @@ export default function EditDoctorProfile({
                   />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">{profile.display_name}</h2>
+                  <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">
+                    {profile.display_name}
+                  </h2>
                   <p className="text-md text-[#1E3CA7]">{profile.specialization}</p>
                 </div>
               </div>
@@ -94,13 +111,15 @@ export default function EditDoctorProfile({
                 text="Edit Profile Picture"
                 onClick={() => handleEdit("profile_image", profile.profile_image || "")}
                 className="px-6 py-1.5 rounded-full text-md font-semibold flex items-center gap-2"
-              >
-              </PrimaryButton>
+              ></PrimaryButton>
             </div>
           </div>
 
           {/* Profile Fields */}
-          <div className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2" style={{ border: "1px solid #2196F3" }}>
+          <div
+            className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2"
+            style={{ border: "1px solid #2196F3" }}
+          >
             {/* Display Name */}
             <EditableRow
               label="Display Name"
@@ -114,7 +133,7 @@ export default function EditDoctorProfile({
               handleCancel={handleCancel}
             />
 
-            {/* Email (readonly — redirect to change email page elsewhere) */}
+            {/* Email */}
             <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
               <div>
                 <label className="text-base font-bold text-[#444444]">Email</label>
@@ -223,57 +242,110 @@ export default function EditDoctorProfile({
             />
           </div>
 
-          {/* Qualification Section */}
-          <div className="bg-white rounded-2xl p-4" style={{ border: "1px solid #2196F3" }}>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-bold text-[#444444]">Qualification</h3>
-              {editingField !== "qualifications" && (
-                <button
-                  onClick={handleEditQualifications}
-                  className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                >
-                  Edit
-                </button>
+          {/* Expertise + About me Section */}
+          <div
+            className="bg-white rounded-2xl p-4"
+            style={{ border: "1px solid #2196F3" }}
+          >
+            {/* Expertise */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-bold text-[#444444]">Expertise</h3>
+                {editingField !== "expertise" && (
+                  <button
+                    onClick={handleEditExpertise}
+                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {editingField === "expertise" ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-md"
+                    placeholder="Comma or newline separated, e.g. CBT, Anxiety, Trauma"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSave("expertise")}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {expertiseList.length > 0 ? (
+                    <ul className="list-disc pl-5 space-y-1">
+                      {expertiseList.map((q, idx) => (
+                        <li key={idx} className="text-md text-[#444444]">
+                          {q}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-md text-[#444444]">No expertise added yet.</p>
+                  )}
+                </div>
               )}
             </div>
 
-            {editingField === "qualifications" ? (
-              <div className="space-y-2">
-                <textarea
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-md"
-                  placeholder='One per line, or comma-separated (kept as a single string in backend JSON)'
-                />
-                <div className="flex gap-2">
+            {/* About me */}
+            <div className="mt-2">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-bold text-[#444444]">About me</h3>
+                {editingField !== "description" && (
                   <button
-                    onClick={() => handleSave("qualifications")}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                    onClick={handleEditDescription}
+                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
                   >
-                    Save
+                    Edit
                   </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {qualificationsList.length > 0 ? (
-                  <ul className="list-disc pl-5 space-y-1">
-                    {qualificationsList.map((q, idx) => (
-                      <li key={idx} className="text-md text-[#444444]">{q}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-md text-[#444444]">No qualifications added yet.</p>
                 )}
               </div>
-            )}
+
+              {editingField === "description" ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    rows={5}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-md"
+                    placeholder="Briefly describe your approach, training, and what clients can expect."
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSave("description")}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-md text-[#444444]">
+                  {profile.description?.trim() ? profile.description : "—"}
+                </p>
+              )}
+            </div>
           </div>
 
           {message && (
@@ -299,7 +371,18 @@ function EditableRow(props: {
   handleCancel: () => void;
   placeholder?: string;
 }) {
-  const { label, field, value, editingField, tempValue, setTempValue, handleEdit, handleSave, handleCancel, placeholder } = props;
+  const {
+    label,
+    field,
+    value,
+    editingField,
+    tempValue,
+    setTempValue,
+    handleEdit,
+    handleSave,
+    handleCancel,
+    placeholder,
+  } = props;
   const isEditing = editingField === field;
   return (
     <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
@@ -314,15 +397,28 @@ function EditableRow(props: {
               className="px-2 py-1 border border-gray-300 rounded text-md w-[300px] max-w-full"
               placeholder={placeholder}
             />
-            <button onClick={() => handleSave(field)} className="bg-green-600 text-white px-2 py-1 rounded text-xs">Save</button>
-            <button onClick={handleCancel} className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Cancel</button>
+            <button
+              onClick={() => handleSave(field)}
+              className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+            >
+              Cancel
+            </button>
           </div>
         ) : (
           <p className="text-md text-[#444444] mt-1">{value || "—"}</p>
         )}
       </div>
       {!isEditing && (
-        <button onClick={() => handleEdit(field, value)} className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70">
+        <button
+          onClick={() => handleEdit(field, value)}
+          className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+        >
           Edit
         </button>
       )}
