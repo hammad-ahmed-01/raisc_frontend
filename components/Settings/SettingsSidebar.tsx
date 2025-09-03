@@ -1,14 +1,26 @@
 "use client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-
+import { useEffect, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 
 export default function SettingsSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userType, setUserType] = useState<string | null>(null);
 
-  const user = localStorage.getItem("user_data");
-  const userType = user ? JSON.parse(user).user_type : null;
-
+  // Avoid hydration mismatch by reading localStorage only on client
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user_data");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUserType(parsed.user_type || null);
+      }
+    } catch (e) {
+      console.error("Error reading user_data from localStorage:", e);
+    }
+  }, []);
 
   let settingsNavItems = [
     { href: "/settings/account", label: "My Account", id: "account" },
@@ -20,7 +32,7 @@ export default function SettingsSidebar() {
     { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
   ];
 
-  if(userType==="organization"){
+  if (userType === "organization") {
     settingsNavItems = [
       { href: "/settings/account", label: "My Account", id: "account" },
       { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
@@ -33,9 +45,22 @@ export default function SettingsSidebar() {
   }
 
   return (
-    <div className="fixed left-0 top-0 w-80 h-screen bg-transparent shadow-lg overflow-y-auto z-10 flex flex-col">
-      <h1 className="text-2xl text-left px-12 pt-8 pb-2 font-bold text-[#1E3CA7] mb-6">Settings</h1>
-      
+    <div
+      className="fixed left-0 top-0 w-80 h-screen shadow-lg overflow-y-auto z-10 flex flex-col bg-cover bg-center"
+      style={{ backgroundImage: "url('/settings/bgsettings.png')" }}
+    >
+      {/* Header with Back Icon */}
+      <div className="flex items-center gap-3 px-12 pt-8 pb-2 mb-6">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="text-[#1E3CA7] hover:text-blue-800 transition-colors"
+          aria-label="Back to Dashboard"
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <h1 className="text-2xl font-bold text-[#1E3CA7]">Settings</h1>
+      </div>
+
       <nav className="space-y-1">
         {settingsNavItems.map((item) => (
           <Link
