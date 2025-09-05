@@ -125,7 +125,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
         {/* Doctor Info */}
         <div className="flex-1">
           <h3 className="text-[28px] text-[#1E3CA7] mb-1" style={{ fontWeight: 700 }}>
-            Dr. {doctor.name}
+            {doctor.name}
           </h3>
           <p className="text-xl text-[#1E3CA7] mb-2" style={{ fontWeight: 400 }}>
             {doctor.specialization}

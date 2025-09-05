@@ -14,7 +14,8 @@ type Doctor = {
   rating: number;
   expertise: string[];
   education: string;
-  rates?: string; // NEW: pass through for display if needed
+  description?: string; // <-- added
+  rates?: string;
 };
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
@@ -45,7 +46,8 @@ function normalizeDoctor(raw: any): Doctor {
     rating: Number(p?.rating ?? 0),
     expertise: toArray(p?.expertise),
     education: safeStr(p?.education),
-    rates: safeStr(raw?.rates), // from serializer field "rates"
+    description: safeStr(p?.description) || safeStr((p as any)?.bio) || undefined, // prefer description, fallback bio
+    rates: safeStr(raw?.rates),
   };
 }
 
@@ -64,6 +66,7 @@ export async function GET(req: Request) {
           rating: 4.7,
           expertise: ["CBT", "Anxiety"],
           education: "MSc Clinical Psych",
+          description: "Passionate about CBT and anxiety management.",
           rates: "480.00",
         },
         {
@@ -77,6 +80,7 @@ export async function GET(req: Request) {
           rating: 4.5,
           expertise: ["Family Counseling", "Relationship Issues"],
           education: "MSc Family Psychology",
+          description: "Helping families build healthier relationships.",
           rates: "480.00",
         },
       ];
@@ -92,6 +96,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ detail: "Missing Authorization header" }, { status: 401 });
     }
 
+    // backend endpoint (requires Token auth)
     const url = `${BASE}/users/doctor/list/`;
     const upstream = await fetch(url, {
       method: "GET",

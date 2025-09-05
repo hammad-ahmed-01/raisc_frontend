@@ -1,3 +1,4 @@
+// app/DoctorsPage/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +17,7 @@ import {
   Sparkles,
   Search,
   BadgeDollarSign,
+  Info,
 } from "lucide-react";
 
 /* ------------------------------- types ------------------------------- */
@@ -25,19 +27,24 @@ interface PatientProfile {
   associated_psychologist: string | null;
   associated_psychologist_name: string | null;
   sent_requests?: string[];
+  /** added: used for correct display name resolution */
+  profile_data?: Record<string, unknown> | null;
 }
 
+interface DoctorProfilePI {
+  specialization?: string;
+  experience?: string | number;
+  location?: string;
+  expertise?: string[] | string;
+  profile_image?: string;
+  rating?: number;
+  education?: string;
+  description?: string; // "About me"
+  bio?: string;         // fallback for older data
+  display_name?: string;
+}
 interface DoctorProfile {
-  professional_information: {
-    specialization: string;
-    experience: string | number;
-    qualifications: string | string[];
-    location?: string;
-    expertise?: string[];
-    profile_image?: string;
-    rating?: number;
-    education?: string;
-  };
+  professional_information: DoctorProfilePI;
   chatgroup_nickname: string;
   rates: string | number;
 }
@@ -47,7 +54,7 @@ export interface User {
   username: string;
   email: string;
   user_type: "patient" | "doctor" | "organization";
-  display_name?: string; // prefer this for greetings
+  display_name?: string;
   patient_profile?: PatientProfile | null;
   doctor_profile?: DoctorProfile | null;
 }
@@ -63,7 +70,8 @@ interface Doctor {
   rating: number;
   expertise: string[];
   education: string;
-  rates?: string; // NEW: display rates if provided
+  description?: string; // shown as "About me" snippet
+  rates?: string;
   requestStatus?: "none" | "pending";
 }
 
@@ -80,6 +88,7 @@ const yearsFromExperience = (exp: unknown): number => {
   const m = String(exp ?? "").match(/\d+/);
   return m ? parseInt(m[0], 10) : 0;
 };
+const truncate = (s: string, max = 140) => (s.length > max ? s.slice(0, max - 1) + "…" : s);
 
 const readUserFromLocalStorage = (): User | null => {
   try {
@@ -91,8 +100,23 @@ const readUserFromLocalStorage = (): User | null => {
   }
 };
 
-const displayNameOf = (u: User | null) =>
-  (u?.display_name && String(u.display_name).trim()) || u?.username || "";
+/** NEW: same resolution strategy you’re using elsewhere */
+const resolveDisplayName = (u: User | null) => {
+  if (!u) return "";
+  if (u.user_type === "doctor") {
+    return (
+      u.doctor_profile?.professional_information?.display_name?.toString().trim() ||
+      u.username
+    );
+  }
+  if (u.user_type === "patient") {
+    const pd = (u.patient_profile?.profile_data ?? {}) as Record<string, unknown>;
+    const dn = (pd?.display_name as string) || "";
+    return dn.trim() || u.username;
+  }
+  // org or other types fallback
+  return u.username;
+};
 
 /* ------------------------------ component ---------------------------- */
 
@@ -107,36 +131,43 @@ export default function DoctorsPage() {
   const [authError, setAuthError] = useState("");
   const [authVerified, setAuthVerified] = useState(false);
 
-  // keep a ref to avoid stale closures in listeners
   const mountedRef = useRef(false);
 
-  // ensure patient_profile exists (defensive for UI)
+  // ensure patient_profile exists + carry profile_data for display name
   const normalizeUser = (u: User): User => {
     if (u?.user_type !== "patient") return u;
+
+    // try to merge profile_data from backend/localStorage (whichever has it)
+    let profileData: Record<string, unknown> | null = null;
+    try {
+      profileData = (u.patient_profile as any)?.profile_data ?? null;
+    } catch {}
+    if (!profileData) {
+      const raw = localStorage.getItem("user_data");
+      try {
+        const parsed = raw ? JSON.parse(raw) : {};
+        profileData = (parsed?.patient_profile?.profile_data ?? null) as Record<string, unknown> | null;
+      } catch {}
+    }
+
     const pp = u.patient_profile ?? null;
-    const safe: PatientProfile = {
+    const safePP: PatientProfile = {
       level: typeof pp?.level === "number" ? pp.level : 0,
       associated_psychologist: pp?.associated_psychologist ?? null,
       associated_psychologist_name: pp?.associated_psychologist_name ?? null,
       sent_requests: pp?.sent_requests ?? [],
+      profile_data: profileData ?? null,
     };
-    // pull display_name from localStorage if present (set by /users/profile/ page)
-    const raw = localStorage.getItem("user_data");
-    let dn = undefined;
-    try {
-      const parsed = raw ? JSON.parse(raw) : {};
-      dn = parsed?.display_name;
-    } catch {}
-    return { ...u, patient_profile: safe, display_name: dn ?? u.display_name };
+
+    return { ...u, patient_profile: safePP };
   };
 
-  // Initial optimistic user to prevent header flicker
+  // optimistic user to prevent header flicker
   useEffect(() => {
     const cached = readUserFromLocalStorage();
     if (cached) setUser(normalizeUser(cached));
   }, []);
 
-  // Core loader (auth + doctors list)
   const loadEverything = async () => {
     const res = await checkAuth();
 
@@ -163,7 +194,6 @@ export default function DoctorsPage() {
       return;
     }
 
-    // Always hit local API route
     const resp = await fetch("/api/doctors/list", {
       headers: {
         "Content-Type": "application/json",
@@ -203,31 +233,23 @@ export default function DoctorsPage() {
 
   /* --------------------- live sync after profile changes -------------------- */
   useEffect(() => {
-    // 1) Same-tab event fired after successful settings save
     const onProfileUpdated = () => {
       if (!mountedRef.current) return;
+      // reload to reflect updated display_name/profile_data
       loadEverything();
     };
     window.addEventListener("profile:updated", onProfileUpdated);
 
-    // 2) Cross-tab/channel sync
     let bc: BroadcastChannel | null = null;
     try {
       bc = new BroadcastChannel("profile-sync");
       bc.onmessage = (ev) => {
-        if (ev?.data?.type === "profile-updated") {
-          onProfileUpdated();
-        }
+        if (ev?.data?.type === "profile-updated") onProfileUpdated();
       };
-    } catch {
-      // ignore unsupported
-    }
+    } catch {}
 
-    // 3) storage change from other tabs
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "user_data") {
-        onProfileUpdated();
-      }
+      if (e.key === "user_data") onProfileUpdated();
     };
     window.addEventListener("storage", onStorage);
 
@@ -269,7 +291,7 @@ export default function DoctorsPage() {
                 sent_requests: [...sent],
               },
             };
-            // sync localStorage for other tabs
+            // sync localStorage + broadcast
             try {
               const raw = localStorage.getItem("user_data");
               const parsed = raw ? JSON.parse(raw) : {};
@@ -279,14 +301,12 @@ export default function DoctorsPage() {
             } catch {}
             return updated;
           });
-        } else {
-          console.warn("sendRequest non-200:", await resp.text());
         }
       } catch (e) {
         console.log("sendRequest failed:", e);
       }
     } else {
-      // demo: only update UI/local
+      // demo path
       setDoctors((prev) =>
         prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "pending" } : d))
       );
@@ -310,7 +330,7 @@ export default function DoctorsPage() {
     if (!user) return;
 
     if (isBackendConnected) {
-      // NOTE: backend method for cancel not yet available (kept as info)
+      // backend cancel endpoint not present yet
       console.info("Cancel request is not supported by backend yet.");
       return;
     } else {
@@ -395,179 +415,193 @@ export default function DoctorsPage() {
   }
 
   return (
-    <div
-      className="min-h-screen py-4 sm:py-8"
-      style={{
-        backgroundImage: "url('/bg/patientbg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="max-w-6xl mx-auto px-2 sm:px-4">
-        <div className="text-center mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-3xl font-bold text-blue-800 mb-1 font-weight-700">
-            Welcome, {displayNameOf(user)}
-          </h1>
-          <p className="text-sm sm:text-lg text-blue-600">
-            Choose your support companion
-          </p>
-        </div>
+    <>
+      {/* FIXED background layer */}
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url('/bg/patientbg.png')" }}
+      />
 
-        {/* filters */}
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
-              filterType === "experience" ? "bg-white border-blue-300 font-medium" : "bg-white border-gray-200 shadow-sm"
-            }`}
-            onClick={() => setFilterType("experience")}
-          >
-            <Compass className={filterType === "experience" ? "w-4 h-4 text-green-600" : "w-4 h-4 text-blue-600"} />
-            Sort by Experience
-          </button>
-          <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
-              filterType === "rating" ? "bg-white border-yellow-300 font-medium" : "bg-white border-gray-200 shadow-sm"
-            }`}
-            onClick={() => setFilterType("rating")}
-          >
-            <Star className="w-4 h-4 text-yellow-500" /> Highest Rated
-          </button>
-          <button
-            className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
-              filterType === "specialty" ? "bg-white border-purple-300 font-medium" : "bg-white border-gray-200 shadow-sm"
-            }`}
-            onClick={() => setFilterType("specialty")}
-          >
-            <Sparkles className="w-4 h-4 text-blue-500" /> Specialties
-          </button>
-        </div>
-
-        {/* search */}
-        <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4 sm:mb-7">
-          <div className="relative w-full sm:w-auto">
-            <input
-              type="text"
-              placeholder="Search by city e.g, Lahore"
-              className="pl-9 sm:pl-10 pr-3 sm:pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
-              value={searchCity}
-              onChange={(e) => setSearchCity(e.target.value)}
-            />
-            <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
+      {/* Foreground content (scrolls) */}
+      <div className="min-h-screen py-4 sm:py-8">
+        <div className="max-w-6xl mx-auto px-2 sm:px-4">
+          <div className="text-center mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-3xl font-bold text-blue-800 mb-1 font-weight-700">
+              Welcome, {resolveDisplayName(user)}
+            </h1>
+            <p className="text-sm sm:text-lg text-blue-600">Choose your support companion</p>
           </div>
-          <div className="relative w-full sm:w-auto">
-            <input
-              type="text"
-              placeholder="Search by specialties e.g, CBT"
-              className="pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
-              value={searchSpecialty}
-              onChange={(e) => setSearchSpecialty(e.target.value)}
-            />
-            <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
-          </div>
-        </div>
 
-        {/* doctors */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
-          {sortedDoctors.map((doctor) => (
-            <div
-              key={doctor.id}
-              className="bg-white bg-opacity-95 rounded-xl p-3 sm:p-6 shadow border-0 min-h-[280px] sm:h-[300px] flex flex-col"
+          {/* filters */}
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <button
+              className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[#1E3CA7] flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
+                filterType === "experience" ? "bg-white border-blue-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+              }`}
+              onClick={() => setFilterType("experience")}
             >
-              <div className="flex items-start gap-2 sm:gap-4">
-                <div className="rounded-full overflow-hidden w-12 sm:w-20 h-12 sm:h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
-                  <Image
-                    src={doctor.profile_image}
-                    alt={doctor.name}
-                    width={80}
-                    height={80}
-                    className="object-cover w-full h-full"
-                  />
+              <Compass className={filterType === "experience" ? "w-4 h-4 text-green-600" : "w-4 h-4 text-blue-600"} />
+              Sort by Experience
+            </button>
+            <button
+              className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
+                filterType === "rating" ? "bg-white border-yellow-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+              }`}
+              onClick={() => setFilterType("rating")}
+            >
+              <Star className="w-4 h-4 text-yellow-500" /> Highest Rated
+            </button>
+            <button
+              className={`px-2 sm:px-4 py-1 sm:py-1.5 text-[#1E3CA7] rounded-full flex items-center gap-1.5 sm:gap-2 border text-xs sm:text-sm ${
+                filterType === "specialty" ? "bg-white border-purple-300 font-medium" : "bg-white border-gray-200 shadow-sm"
+              }`}
+              onClick={() => setFilterType("specialty")}
+            >
+              <Sparkles className="w-4 h-4 text-blue-500" /> Specialties
+            </button>
+          </div>
+
+          {/* search */}
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4 sm:mb-7">
+            <div className="relative w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search by city e.g, Lahore"
+                className="pl-9 sm:pl-10 pr-3 sm:pr-4 font-weight-400 py-2 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+              />
+              <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
+            </div>
+            <div className="relative w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search by specialties e.g, CBT"
+                className="pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 font-weight-400 rounded-full bg-[#FFD2DC] border-0 w-full sm:w-64 shadow-sm text-[#444444] text-xs sm:text-sm"
+                value={searchSpecialty}
+                onChange={(e) => setSearchSpecialty(e.target.value)}
+              />
+              <Search className="text-[#444444] absolute left-2 sm:left-3 top-2.5 w-4 h-4" />
+            </div>
+          </div>
+
+          {/* doctors */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
+            {sortedDoctors.map((doctor) => (
+              <div
+                key={doctor.id}
+                className="bg-white bg-opacity-95 rounded-xl p-3 sm:p-6 shadow border-0 min-h-[300px] flex flex-col"
+              >
+                <div className="flex items-start gap-2 sm:gap-4">
+                  <div className="rounded-full overflow-hidden w-12 sm:w-20 h-12 sm:h-20 border-2 border-blue-200 flex-shrink-0 bg-blue-50">
+                    <Image
+                      src={doctor.profile_image}
+                      alt={doctor.name}
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm sm:text-xl font-bold text-blue-800 font-weight-700">
+                      {doctor.name}
+                    </h3>
+                    <p className="text-blue-600 font-weight-400 text-xs sm:text-base">
+                      {doctor.specialization}
+                    </p>
+                    <div className="flex items-center mt-1">
+                      <Star className="w-4 h-4 text-yellow-500" />
+                      <span className="ml-1 font-medium text-gray-700 font-weight-400 text-xs sm:text-base">
+                        {Number(doctor.rating || 0).toFixed(1)} Rating
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-sm sm:text-xl font-bold text-blue-800 font-weight-700">
-                    {doctor.name}
-                  </h3>
-                  <p className="text-blue-600 font-weight-400 text-xs sm:text-base">
-                    {doctor.specialization}
-                  </p>
-                  <div className="flex items-center mt-1">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="ml-1 font-medium text-gray-700 font-weight-400 text-xs sm:text-base">
-                      {Number(doctor.rating || 0).toFixed(1)} Rating
+
+                <div className="mt-2 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-2 sm:gap-x-3 text-gray-700 text-xs sm:text-sm font-weight-400">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <MapPin className="w-4 h-4 text-red-500" />
+                    <span>Location: {doctor.location || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <MessageSquareText className="w-4 h-4 text-gray-600" />
+                    <span>Experience: {safeStr(doctor.experience) || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600" />
+                    <span className="truncate">{doctor.education || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    <span className="truncate">
+                      Expertise: {(doctor.expertise ?? []).join(", ") || "—"}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-2 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-2 sm:gap-x-3 text-gray-700 text-xs sm:text-sm font-weight-400">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <MapPin className="w-4 h-4 text-red-500" />
-                  <span>Location: {doctor.location || "—"}</span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <MessageSquareText className="w-4 h-4 text-gray-600" />
-                  <span>Experience: {safeStr(doctor.experience) || "—"}</span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <GraduationCap className="w-4 h-4 text-blue-600" />
-                  <span className="truncate">{doctor.education || "—"}</span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Heart className="w-4 h-4 text-pink-500" />
-                  <span className="truncate">
-                    Expertise: {(doctor.expertise ?? []).join(", ") || "—"}
-                  </span>
-                </div>
-                {doctor.rates && (
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <BadgeDollarSign className="w-4 h-4 text-green-600" />
-                    <span>Rates: {doctor.rates}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center">
-                {doctor.requestStatus === "pending" && (
-                  <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1.5 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
-                    <Sparkles className="w-4 h-4 text-[#1E3CA7]" /> Status: Pending Request
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full">
-                  <PrimaryButton
-                    text="View Profile"
-                    onClick={() => {
-                      localStorage.setItem("selectedDoctor", JSON.stringify(doctor));
-                      router.push("/AssociatedPsychologist");
-                    }}
-                    className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
-                  />
-                  {doctor.requestStatus === "pending" ? (
-                    <SecondaryButton
-                      text="Cancel Request"
-                      onClick={() => removeRequest(doctor.id)}
-                      className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold font-weight-700"
-                    />
-                  ) : (
-                    <SecondaryButton
-                      text="Send Request"
-                      onClick={() => sendRequest(doctor.id)}
-                      className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
-                    />
+                  {doctor.rates && (
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <BadgeDollarSign className="w-4 h-4 text-green-600" />
+                      <span>Rates: {doctor.rates}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {sortedDoctors.length === 0 && (
-          <div className="text-center py-6 sm:py-10">
-            <p className="text-lg sm:text-xl text-gray-600">No doctors found matching your criteria.</p>
-            <p className="text-gray-500 mt-2 text-sm sm:text-base">Try adjusting your search filters.</p>
+                {/* About me snippet */}
+                <div className="mt-3 sm:mt-4 bg-blue-50 border border-blue-100 rounded-lg p-2 sm:p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-4 h-4 text-blue-700" />
+                    <span className="text-blue-800 font-semibold text-xs sm:text-sm">About me</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-blue-900">
+                    {doctor.description?.trim()
+                      ? truncate(doctor.description.trim(), 180)
+                      : "—"}
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center">
+                  {doctor.requestStatus === "pending" && (
+                    <div className="mb-2 sm:mb-3 flex justify-center items-center gap-1.5 sm:gap-2 font-weight-700 text-[#1E3CA7] text-xs sm:text-sm">
+                      <Sparkles className="w-4 h-4 text-[#1E3CA7]" /> Status: Pending Request
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full">
+                    <PrimaryButton
+                      text="View Profile"
+                      onClick={() => {
+                        localStorage.setItem("selectedDoctor", JSON.stringify(doctor));
+                        router.push("/AssociatedPsychologist");
+                      }}
+                      className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
+                    />
+                    {doctor.requestStatus === "pending" ? (
+                      <SecondaryButton
+                        text="Cancel Request"
+                        onClick={() => removeRequest(doctor.id)}
+                        className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold font-weight-700"
+                      />
+                    ) : (
+                      <SecondaryButton
+                        text="Send Request"
+                        onClick={() => sendRequest(doctor.id)}
+                        className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold font-weight-700 text-xs sm:text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+
+          {sortedDoctors.length === 0 && (
+            <div className="text-center py-6 sm:py-10">
+              <p className="text-lg sm:text-xl text-gray-600">No doctors found matching your criteria.</p>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">Try adjusting your search filters.</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
