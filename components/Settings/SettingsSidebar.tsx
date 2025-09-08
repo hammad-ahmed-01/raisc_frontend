@@ -3,13 +3,14 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
+import { getToken, clearSession } from "@/lib/auth";
 
 export default function SettingsSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [userType, setUserType] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  // Avoid hydration mismatch by reading localStorage only on client
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user_data");
@@ -42,6 +43,47 @@ export default function SettingsSidebar() {
       { href: "/settings/privacy-policy", label: "Privacy Policy", id: "privacy-policy" },
       { href: "/settings/terms", label: "Terms and Conditions", id: "terms" },
     ];
+  }
+
+  async function handleDeleteAccount() {
+    if (busy) return;
+    const sure = window.confirm(
+      "This will permanently delete your account and associated data. Continue?"
+    );
+    if (!sure) return;
+
+    try {
+      setBusy(true);
+
+      const token = getToken();
+      if (!token) {
+        alert("Not logged in. Please sign in again.");
+        return;
+      }
+
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error("Delete failed:", payload);
+        throw new Error(payload?.detail || "Failed to delete account.");
+      }
+
+      clearSession();
+      router.replace("/goodbye"); // or "/login"
+    } catch (err) {
+      console.error(err);
+      alert("Could not delete account. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -79,8 +121,14 @@ export default function SettingsSidebar() {
 
       {/* Delete Account Button */}
       <div className="mt-auto py-8">
-        <button className="w-full px-12 py-4 text-left bg-transparent text-[#A71515] font-semibold text-md hover:bg-red-50 transition-all duration-200">
-          Delete My Account
+        <button
+          onClick={handleDeleteAccount}
+          disabled={busy}
+          className={`w-full px-12 py-4 text-left bg-transparent font-semibold text-md transition-all duration-200 ${
+            busy ? "opacity-60 cursor-not-allowed" : "hover:bg-red-50"
+          } text-[#A71515]`}
+        >
+          {busy ? "Deleting..." : "Delete My Account"}
         </button>
       </div>
     </div>

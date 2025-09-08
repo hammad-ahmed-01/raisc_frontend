@@ -1,3 +1,4 @@
+// lib/auth.ts
 export type UserType = "patient" | "doctor" | "organization";
 
 export interface PatientProfile {
@@ -47,17 +48,14 @@ export interface AuthResult {
   error?: string;
 }
 
-/* ----------------------------- utilities ----------------------------- */
-
 const DJANGO_BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
 
 if (!DJANGO_BASE && typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-  // Dev-only hint so it doesn’t spam server logs nor production
   console.warn("auth.ts: NEXT_PUBLIC_DJANGO_BASE_URL is missing");
 }
 
 export function redirectToLogin() {
-  window.location.href = "/login";
+  if (typeof window !== "undefined") window.location.href = "/login";
 }
 
 export function saveSession(token: string, user: User) {
@@ -83,12 +81,6 @@ export function getToken(): string | null {
   }
 }
 
-/* ------------------------------ core api ------------------------------ */
-
-/**
- * Fetch the canonical user from the backend using the stored token.
- * If successful, also refreshes localStorage "user_data" to prevent stale roles.
- */
 export async function checkAuth(): Promise<AuthResult> {
   try {
     if (!DJANGO_BASE) return { isAuthenticated: false, error: "Backend URL missing" };
@@ -106,7 +98,6 @@ export async function checkAuth(): Promise<AuthResult> {
 
     if (!res.ok) {
       if (res.status === 401) {
-        // Nice-to-have: auto sign-out on 401 to avoid stale sessions
         clearSession();
         return { isAuthenticated: false, error: "Unauthorized" };
       }
@@ -121,11 +112,6 @@ export async function checkAuth(): Promise<AuthResult> {
   }
 }
 
-/**
- * Login helper:
- * - accepts identifier (email or username) + password
- * - hits Django /users/login/, stores token + user on success
- */
 export async function login(
   identifier: string,
   password: string
