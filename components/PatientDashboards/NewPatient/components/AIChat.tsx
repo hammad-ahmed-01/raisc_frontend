@@ -35,6 +35,10 @@ export default function AIChat() {
     fetchChatBotData();
   }, []);
 
+  const handleChatClick = () => {
+    router.push('/chatbot'); // Navigate to chatbot page
+  };
+
   return (
     <div
       className="relative mx-auto mt-8 lg:mt-20 rounded-3xl overflow-hidden shadow-2xl max-w-[95vw] lg:max-w-none"
