@@ -1,3 +1,5 @@
+// app/Doctor/Requests/PatientRequestCard.tsx
+"use client";
 import React from "react";
 import { FiCheck, FiX } from "react-icons/fi";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
@@ -41,7 +43,9 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
               <span className="font-bold">Condition:</span> {patientRequest.condition}
             </p>
           </div>
-          <p className="text-[#444444] mb-8">{patientRequest.message}</p>
+          {patientRequest.message && (
+            <p className="text-[#444444] mb-8">{patientRequest.message}</p>
+          )}
           <PrimaryButton text="View Profile" className="font-bold px-6 py-2 rounded-full" />
         </div>
 
@@ -62,12 +66,14 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
             <button
               onClick={onAccept}
               className="bg-green-500 text-white rounded-full w-14 h-14 flex items-center justify-center hover:bg-green-600"
+              title="Approve"
             >
               <FiCheck size={24} />
             </button>
             <button
               onClick={onReject}
               className="bg-red-500 text-white rounded-full w-14 h-14 flex items-center justify-center hover:bg-red-600"
+              title="Reject"
             >
               <FiX size={24} />
             </button>

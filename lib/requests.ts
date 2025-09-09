@@ -1,8 +1,6 @@
 // lib/requests.ts
 export async function sendDoctorRequest(doctorId: number, message: string) {
-  // Align token source with the rest of the app
-  const token = (typeof window !== "undefined" ? localStorage.getItem("session_key") : "") || "";
-
+  const token = localStorage.getItem("session_key") || localStorage.getItem("authToken") || "";
   const res = await fetch(`/api/doctors/${doctorId}/request/`, {
     method: "POST",
     headers: {

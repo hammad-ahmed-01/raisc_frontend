@@ -1,5 +1,6 @@
+// app/Doctor/Requests/page.tsx
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import TopRightIcons from "@/components/TopRightIcons";
 import PatientRequestCard from "./PatientRequestCard";
@@ -19,28 +20,23 @@ interface PatientRequest {
 
 /* ----------------------------- helpers --------------------------- */
 const safeStr = (v: any, fallback = "") => (v == null ? fallback : String(v));
+const toNumber = (v: any, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
 
 const toDisplayName = (user: any, profileData?: Record<string, any>) => {
   const pdName = safeStr(profileData?.display_name).trim();
   if (pdName) return pdName;
-  const full = safeStr(user?.full_name).trim();
+  const full = safeStr(user?.full_name || `${user?.first_name ?? ""} ${user?.last_name ?? ""}`).trim();
   if (full) return full;
   const disp = safeStr(user?.display_name).trim();
   if (disp) return disp;
   const un = safeStr(user?.username).trim();
   return un || "Patient";
 };
-
-const toEmail = (user: any, profileData?: Record<string, any>) => {
-  const em = safeStr(user?.email).trim() || safeStr(profileData?.email).trim();
-  return em;
-};
-
-const toNumber = (v: any, fallback = 0) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
-
+const toEmail = (user: any, profileData?: Record<string, any>) =>
+  safeStr(user?.email).trim() || safeStr(profileData?.email).trim();
 const toCondition = (obj: any, profileData?: Record<string, any>) => {
   const candidates = [
     obj?.primary_concern,
@@ -55,12 +51,8 @@ const toCondition = (obj: any, profileData?: Record<string, any>) => {
   }
   return "—";
 };
-
-const toGender = (obj: any, profileData?: Record<string, any>) => {
-  const g = safeStr(obj?.gender).trim() || safeStr(profileData?.gender).trim();
-  return g || "—";
-};
-
+const toGender = (obj: any, profileData?: Record<string, any>) =>
+  safeStr(obj?.gender).trim() || safeStr(profileData?.gender).trim() || "—";
 const toAge = (obj: any, profileData?: Record<string, any>) => {
   if (obj?.age != null) return toNumber(obj.age, 0);
   if (profileData?.age != null) return toNumber(profileData.age, 0);
@@ -69,7 +61,6 @@ const toAge = (obj: any, profileData?: Record<string, any>) => {
   if (m) return toNumber(m[0], 0);
   return 0;
 };
-
 const toRequestDate = (r: any) => {
   const raw = r?.requested_at || r?.created_at || r?.request_date;
   if (!raw) return "";
@@ -77,20 +68,26 @@ const toRequestDate = (r: any) => {
   return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
 };
 
-/** Extracts patient info from various serializer shapes into normalized card data */
+/** Extracts patient info from DRF DoctorRequestSerializer → normalized card data */
 const mapToCard = (r: any): PatientRequest => {
-  const patient = r?.patient ?? r?.patient_profile ?? r?.patient_user ?? {};
-  const user = patient?.user ?? patient;
-  const profileData = patient?.profile_data ?? patient?.profile ?? null;
+  // DRF returns: { id, patient: { id, username, email, profile_data }, status, requested_at }
+  const patient = r?.patient ?? {};
+  const user = {
+    username: patient?.username,
+    email: patient?.email,
+    first_name: patient?.first_name,
+    last_name: patient?.last_name,
+  };
+  const profileData = patient?.profile_data ?? null;
 
   return {
     id: safeStr(r?.id ?? ""),
     name: toDisplayName(user, profileData),
     email: toEmail(user, profileData),
-    age: toAge(patient, profileData),
-    gender: toGender(patient, profileData),
-    condition: toCondition(patient, profileData),
-    message: safeStr(r?.message).trim(),
+    age: toAge(profileData, profileData),
+    gender: toGender(profileData, profileData),
+    condition: toCondition(profileData, profileData),
+    message: "", // optional message not present in current serializer
     requestDate: toRequestDate(r),
   };
 };
@@ -100,32 +97,17 @@ const PendingRequestsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [patientRequests, setPatientRequests] = useState<PatientRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const bcRef = useRef<BroadcastChannel | null>(null);
-
-  const token =
-    typeof window !== "undefined" ? (localStorage.getItem("session_key") || "").trim() : "";
-
-  useEffect(() => {
-    try {
-      bcRef.current = new BroadcastChannel("doctor-patients");
-    } catch {
-      bcRef.current = null;
-    }
-    return () => {
-      try {
-        bcRef.current?.close();
-      } catch {}
-    };
-  }, []);
 
   async function fetchRequests() {
     setLoading(true);
     try {
-      // Always go via Next.js API proxy
+      // Next proxy → Django /users/doctor/requests/
       const res = await fetch(`/api/doctors/requests`, {
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Token ${token}` } : {}),
+          ...(typeof window !== "undefined" && localStorage.getItem("session_key")
+            ? { Authorization: `Token ${localStorage.getItem("session_key")}` }
+            : {}),
         },
         cache: "no-store",
       });
@@ -140,13 +122,9 @@ const PendingRequestsPage: React.FC = () => {
       }
 
       const data = await res.json();
-      const items: any[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
-
-      setPatientRequests(items.map(mapToCard));
+      const items: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+      const mapped = items.map(mapToCard);
+      setPatientRequests(mapped);
     } catch (e) {
       console.error(e);
     } finally {
@@ -156,17 +134,16 @@ const PendingRequestsPage: React.FC = () => {
 
   async function actionRequest(id: string, action: "accept" | "reject") {
     try {
-      // Friendly status; API maps to Django's exact values.
+      // Our Next route normalizes → 'approved' or 'rejected'
       const res = await fetch(`/api/doctors/requests`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Token ${token}` } : {}),
+          ...(typeof window !== "undefined" && localStorage.getItem("session_key")
+            ? { Authorization: `Token ${localStorage.getItem("session_key")}` }
+            : {}),
         },
-        body: JSON.stringify({
-          requestId: id,
-          status: action, // "accept" | "reject"
-        }),
+        body: JSON.stringify({ requestId: id, status: action === "accept" ? "approved" : "rejected" }),
       });
 
       if (!res.ok) {
@@ -178,12 +155,14 @@ const PendingRequestsPage: React.FC = () => {
         throw new Error(msg);
       }
 
-      // Optimistic remove from pending
+      // Remove from list
       setPatientRequests((prev) => prev.filter((p) => p.id !== id));
 
-      // 🔔 Tell Patients page to refresh immediately
+      // Tell /patients page to refresh its list immediately
       try {
-        bcRef.current?.postMessage({ type: "refresh" });
+        const bc = new BroadcastChannel("doctor-patients");
+        bc.postMessage({ type: "refresh" });
+        bc.close();
       } catch {}
     } catch (e: any) {
       alert(e?.message || "Something went wrong");
@@ -192,17 +171,13 @@ const PendingRequestsPage: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAccept = (id: string) => actionRequest(id, "accept");
   const handleReject = (id: string) => actionRequest(id, "reject");
 
   const filteredRequests = useMemo(
-    () =>
-      patientRequests.filter((r) =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
+    () => patientRequests.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase())),
     [patientRequests, searchQuery]
   );
 
@@ -222,9 +197,7 @@ const PendingRequestsPage: React.FC = () => {
             </div>
           </div>
           <p className="text-lg text-[#1E3CA7] mt-2">
-            {loading
-              ? "Loading patient requests…"
-              : "You have new patient requests waiting to be accepted or rejected."}
+            {loading ? "Loading patient requests…" : "You have new patient requests waiting to be accepted or rejected."}
           </p>
         </div>
 
@@ -286,9 +259,7 @@ const PendingRequestsPage: React.FC = () => {
               ))}
 
               {!loading && filteredRequests.length === 0 && (
-                <div className="text-[#1E3CA7] opacity-70">
-                  No pending requests found.
-                </div>
+                <div className="text-[#1E3CA7] opacity-70">No pending requests found.</div>
               )}
             </div>
           </div>

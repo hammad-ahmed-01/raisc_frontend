@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 export const runtime = "edge";
 
 type Doctor = {
-  id: number;
+  id: number;            // Doctor model id
+  user_id: number;       // <-- NEW: underlying auth User.id to match patient association
   username: string;
   name: string;
   profile_image: string;
@@ -14,7 +15,7 @@ type Doctor = {
   rating: number;
   expertise: string[];
   education: string;
-  description?: string; // <-- added
+  description?: string;
   rates?: string;
 };
 
@@ -37,6 +38,7 @@ function normalizeDoctor(raw: any): Doctor {
 
   return {
     id: Number(raw?.id ?? 0),
+    user_id: Number(raw?.user?.id ?? 0),            // <-- include it
     username,
     name: displayName,
     profile_image: safeStr(p?.profile_image) || "/doc.png",
@@ -46,17 +48,19 @@ function normalizeDoctor(raw: any): Doctor {
     rating: Number(p?.rating ?? 0),
     expertise: toArray(p?.expertise),
     education: safeStr(p?.education),
-    description: safeStr(p?.description) || safeStr((p as any)?.bio) || undefined, // prefer description, fallback bio
+    description: safeStr(p?.description) || safeStr((p as any)?.bio) || undefined,
     rates: safeStr(raw?.rates),
   };
 }
 
 export async function GET(req: Request) {
   try {
+    // Demo fallback (also includes user_id so matching still works)
     if (!isBackendConnected) {
       const demo: Doctor[] = [
         {
           id: 12,
+          user_id: 1012,
           username: "drali",
           name: "Dr. Ali Hamza",
           profile_image: "/doc.png",
@@ -71,6 +75,7 @@ export async function GET(req: Request) {
         },
         {
           id: 16,
+          user_id: 1016,
           username: "draisha",
           name: "Dr. Aisha Mahmood",
           profile_image: "/doc.png",
@@ -96,7 +101,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ detail: "Missing Authorization header" }, { status: 401 });
     }
 
-    // backend endpoint (requires Token auth)
+    // upstream (Token auth)
     const url = `${BASE}/users/doctor/list/`;
     const upstream = await fetch(url, {
       method: "GET",
