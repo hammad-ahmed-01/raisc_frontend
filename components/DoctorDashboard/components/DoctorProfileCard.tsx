@@ -113,7 +113,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
         <div className="mr-8">
           <div className="w-36 h-36 rounded-full border-2 border-[#2196F3] flex items-center justify-center overflow-hidden">
             <Image
-              src="/doctordashboard/doctor.png"
+              src="/doctor.jpg"
               width={144}
               height={144}
               alt="Doctor Avatar"
@@ -125,7 +125,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
         {/* Doctor Info */}
         <div className="flex-1">
           <h3 className="text-[28px] text-[#1E3CA7] mb-1" style={{ fontWeight: 700 }}>
-            Dr. {doctor.name}
+            Dr. Yusuf Haroon
           </h3>
           <p className="text-xl text-[#1E3CA7] mb-2" style={{ fontWeight: 400 }}>
             {doctor.specialization}
@@ -147,7 +147,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
             </p>
             <p className="text-xl text-[#1E3CA7]">
               <span style={{ fontWeight: 700 }}>Rates:</span> 
-              <span style={{ fontWeight: 400 }}> {doctor.rates}</span>
+              <span style={{ fontWeight: 400 }}> Rs. 5000 / session</span>
             </p>
           </div>
         </div>

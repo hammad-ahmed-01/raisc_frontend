@@ -21,16 +21,16 @@ export const SessionCalendar: React.FC = () => {
       {
         id: '1',
         patient_name: 'Sarah Malik',
-        date: '2025-06-24',
+        date: '2025-09-05',
         time: '11:00 AM',
         type: 'video'
       },
       {
         id: '2',
-        patient_name: 'Ahmed Khan',
-        date: '2025-06-25',
+        patient_name: 'Hammad Ahmed',
+        date: '2025-09-08',
         time: '2:00 PM',
-        type: 'audio'
+        type: 'in-person'
       }
     ];
     

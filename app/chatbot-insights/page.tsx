@@ -31,7 +31,7 @@ const ChatbotInsightsContent = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<ChatbotProfile[]>([]);
   const [patientName, setPatientName] = useState<string>("");
   const [patientId, setPatientId] = useState<string>("");
-  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "97bb09258dcb1dffae5ac9c375809e473c65740b");
+  const [testSessionKey, setTestSessionKey] = useState(process.env.TEST_SESSION_KEY || "83afb1f455a6dc74ce3fa3f93521c25d41e09208");
 
   const [filters, setFilters] = useState({
     topic: '',
@@ -72,7 +72,7 @@ const ChatbotInsightsContent = () => {
     // Get patient info from URL params
     const name = searchParams.get("name") || "Patient";
     // const id = searchParams.get("id") || process.env.TEST_PATIENT_ID;
-    const id = process.env.TEST_PATIENT_ID || "24";
+    const id = process.env.TEST_PATIENT_ID || "25";
     setPatientName(name);
     setPatientId(id);
 

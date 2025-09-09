@@ -36,7 +36,7 @@ export const NextSessionBox: React.FC<NextSessionBoxProps> = ({ nextSession }) =
         <>
           <div className="space-y-3 mb-8">
             <div className="flex items-center">
-              <span className="text-xl text-[#1E3CA7]" style={{ fontWeight: 700 }}>• June 24, 2025</span>
+              <span className="text-xl text-[#1E3CA7]" style={{ fontWeight: 700 }}>• Sept 05, 2025</span>
             </div>
             <div className="flex items-center">
               <span className="text-xl text-[#1E3CA7]" style={{ fontWeight: 700 }}>• At 11:00 AM</span>

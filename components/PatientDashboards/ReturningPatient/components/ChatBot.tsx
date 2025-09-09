@@ -5,9 +5,9 @@ import Image from 'next/image';
 export const ChatBot: React.FC = () => (
   <div className="bg-[#F0F7FF] shadow-md p-6 rounded-2xl items-end text-center w-fit max-w-xs">
     <Image
-      src="/raisc-chatbot.png"
+      src="/chatbot-wave.png"
       alt="Chatbot"
-      className="w-24 h-24 mx-auto rounded-full mb-3"
+      className="w-30 h-50 mx-auto mb-3"
       width={96}
       height={96}
     />

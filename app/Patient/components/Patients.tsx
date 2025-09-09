@@ -4,9 +4,9 @@ export const patients: Patient[] = [
   {
     id: "1",
     name: "Hammad Ahmed",
-    age: 21,
+    age: 19,
     gender: "Male",
-    condition: "Anxiety and Sleep issues",
+    condition: "Stress and Depression",
   },
   {
     "id": "2",

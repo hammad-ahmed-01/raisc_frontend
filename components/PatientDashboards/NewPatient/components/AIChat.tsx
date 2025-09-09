@@ -3,6 +3,7 @@
 import ChatBotImage from "@/public/bg/chatbotbg.png";
 import { useEffect, useState } from 'react';
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import { useRouter } from 'next/navigation';
 
 interface ChatBotData {
   greeting: string;
@@ -10,6 +11,7 @@ interface ChatBotData {
 }
 
 export default function AIChat() {
+  const router = useRouter();
   const [chatBot, setChatBot] = useState<ChatBotData>({
     greeting: "Hi! \nNeed help today?",
     description: "I'm here to help you anytime. Let's chat!"
@@ -79,6 +81,9 @@ export default function AIChat() {
           <PrimaryButton
             text="Try Chat Now"
             className="text-xs sm:text-sm lg:text-base px-3 sm:px-4 lg:px-6 py-1.5 sm:py-4 rounded-full"
+            onClick={() => {
+              router.push('/chatbot');
+            }}
           />
         </div>
       </div>

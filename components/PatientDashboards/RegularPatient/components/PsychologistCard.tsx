@@ -24,7 +24,7 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
     role: "Clinical Psychologist",
     isAvailable: true,
     imageUrl: "/doctor.jpg",
-    upcomingSession: "Monday, 1 September – 10:00 PM"
+    upcomingSession: "Monday, 8 September – 10:00 PM"
   });
   
   useEffect(() => {

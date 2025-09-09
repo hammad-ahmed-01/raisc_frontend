@@ -21,16 +21,16 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     {
       id: '123',
       name: 'Dr. Sara Khan',
-      specialization: 'Clinical Psychologist',
-      profile_image: '/doctors/female-doctor.png',
+      specialization: 'Behavioral Therapy',
+      profile_image: '/testimonials/woman.png',
       rating: 4.7,
       location: 'Islamabad'
     },
     {
       id: '456',
-      name: 'Dr. Fahad Malik',
-      specialization: 'Behavioral Therapy',
-      profile_image: '/doctors/male-doctor.png',
+      name: 'Dr. Yusuf Haroon',
+      specialization: 'Clinical Psychologist',
+      profile_image: '/doctor.jpg',
       rating: 4.9,
       location: 'Karachi'
     }
