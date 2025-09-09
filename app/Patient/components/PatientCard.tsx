@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Patient } from "@/src/types";
-import CreateSessionForm from "./CreateNewSession"; 
+import type { Patient } from "@/src/types";
+import CreateSessionForm from "./CreateNewSession";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
 import { useRouter } from "next/navigation";
@@ -22,13 +22,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
         <div className="ml-4">
           <h2 className="text-lg font-bold text-heading2">{patient.name}</h2>
           <p className="text-sm font-semibold text-normal mt-1">
-            Age: {patient.age} | Gender: {patient.gender}
+            Age: {patient.age ?? "—"} | Gender: {patient.gender || "—"}
           </p>
         </div>
 
         {/* Column 2: Condition */}
         <div>
-          <p className="text-sm text-normal ml-8">{patient.condition}</p>
+          <p className="text-sm text-normal ml-8">{patient.condition || "—"}</p>
         </div>
 
         {/* Column 3: View Profile Button */}
@@ -48,7 +48,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
             onClick={() => setShowForm(true)}
             disabled={false}
           />
-
         </div>
       </div>
 

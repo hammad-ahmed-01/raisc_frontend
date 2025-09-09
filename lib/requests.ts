@@ -1,6 +1,8 @@
 // lib/requests.ts
 export async function sendDoctorRequest(doctorId: number, message: string) {
-  const token = localStorage.getItem("authToken"); // or however you store it
+  // Align token source with the rest of the app
+  const token = (typeof window !== "undefined" ? localStorage.getItem("session_key") : "") || "";
+
   const res = await fetch(`/api/doctors/${doctorId}/request/`, {
     method: "POST",
     headers: {
@@ -12,7 +14,7 @@ export async function sendDoctorRequest(doctorId: number, message: string) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.detail || "Failed to send request");
+    throw new Error(err?.detail || err?.error || "Failed to send request");
   }
   return res.json();
 }

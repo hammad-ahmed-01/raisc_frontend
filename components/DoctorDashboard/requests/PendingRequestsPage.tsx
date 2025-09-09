@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import TopRightIcons from "@/components/TopRightIcons";
 import PatientRequestCard from "./PatientRequestCard";
 import { FiSearch, FiChevronDown } from "react-icons/fi";
 
 /* ----------------------------- types ----------------------------- */
-/** Must match your PatientRequestCard props (string id, required fields) */
 interface PatientRequest {
   id: string;
   name: string;
@@ -18,61 +17,136 @@ interface PatientRequest {
   requestDate: string;
 }
 
-/* ----------------------------- config ---------------------------- */
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+/* ----------------------------- helpers --------------------------- */
+const safeStr = (v: any, fallback = "") => (v == null ? fallback : String(v));
+
+const toDisplayName = (user: any, profileData?: Record<string, any>) => {
+  const pdName = safeStr(profileData?.display_name).trim();
+  if (pdName) return pdName;
+  const full = safeStr(user?.full_name).trim();
+  if (full) return full;
+  const disp = safeStr(user?.display_name).trim();
+  if (disp) return disp;
+  const un = safeStr(user?.username).trim();
+  return un || "Patient";
+};
+
+const toEmail = (user: any, profileData?: Record<string, any>) => {
+  const em = safeStr(user?.email).trim() || safeStr(profileData?.email).trim();
+  return em;
+};
+
+const toNumber = (v: any, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const toCondition = (obj: any, profileData?: Record<string, any>) => {
+  const candidates = [
+    obj?.primary_concern,
+    obj?.condition,
+    profileData?.primary_concern,
+    profileData?.condition,
+    profileData?.presenting_problem,
+  ];
+  for (const c of candidates) {
+    const s = safeStr(c).trim();
+    if (s) return s;
+  }
+  return "—";
+};
+
+const toGender = (obj: any, profileData?: Record<string, any>) => {
+  const g = safeStr(obj?.gender).trim() || safeStr(profileData?.gender).trim();
+  return g || "—";
+};
+
+const toAge = (obj: any, profileData?: Record<string, any>) => {
+  if (obj?.age != null) return toNumber(obj.age, 0);
+  if (profileData?.age != null) return toNumber(profileData.age, 0);
+  const s = safeStr(profileData?.age_group || "");
+  const m = s.match(/\d+/);
+  if (m) return toNumber(m[0], 0);
+  return 0;
+};
+
+const toRequestDate = (r: any) => {
+  const raw = r?.requested_at || r?.created_at || r?.request_date;
+  if (!raw) return "";
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+};
+
+/** Extracts patient info from various serializer shapes into normalized card data */
+const mapToCard = (r: any): PatientRequest => {
+  const patient = r?.patient ?? r?.patient_profile ?? r?.patient_user ?? {};
+  const user = patient?.user ?? patient;
+  const profileData = patient?.profile_data ?? patient?.profile ?? null;
+
+  return {
+    id: safeStr(r?.id ?? ""),
+    name: toDisplayName(user, profileData),
+    email: toEmail(user, profileData),
+    age: toAge(patient, profileData),
+    gender: toGender(patient, profileData),
+    condition: toCondition(patient, profileData),
+    message: safeStr(r?.message).trim(),
+    requestDate: toRequestDate(r),
+  };
+};
 
 /* ------------------------------ page ----------------------------- */
 const PendingRequestsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [patientRequests, setPatientRequests] = useState<PatientRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const bcRef = useRef<BroadcastChannel | null>(null);
 
   const token =
     typeof window !== "undefined" ? (localStorage.getItem("session_key") || "").trim() : "";
 
+  useEffect(() => {
+    try {
+      bcRef.current = new BroadcastChannel("doctor-patients");
+    } catch {
+      bcRef.current = null;
+    }
+    return () => {
+      try {
+        bcRef.current?.close();
+      } catch {}
+    };
+  }, []);
+
   async function fetchRequests() {
     setLoading(true);
     try {
-      // DRF: GET /users/doctor/requests/ (pending by default)
-      const res = await fetch(`${BASE}/users/doctor/requests/`, {
+      // Always go via Next.js API proxy
+      const res = await fetch(`/api/doctors/requests`, {
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Token ${token}` } : {}),
         },
         cache: "no-store",
       });
-      if (!res.ok) throw new Error("Failed to load requests");
+
+      if (!res.ok) {
+        let errTxt = "Failed to load requests";
+        try {
+          const err = await res.json();
+          errTxt = err?.detail || err?.error || errTxt;
+        } catch {}
+        throw new Error(errTxt);
+      }
+
       const data = await res.json();
+      const items: any[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
 
-      // Accept either paginated or plain list
-      const items = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      // Map to card-friendly structure, fill safe defaults
-      const mapped: PatientRequest[] = items.map((r: any) => {
-        const patient = r?.patient || {};
-        const pUser = patient?.user || {};
-        return {
-          id: String(r?.id ?? ""),
-          name:
-            pUser?.full_name?.toString?.().trim?.() ||
-            pUser?.display_name?.toString?.().trim?.() ||
-            pUser?.username?.toString?.().trim?.() ||
-            "Patient",
-          email: String(pUser?.email || ""),
-          age: Number(patient?.age ?? 0),
-          gender: String(patient?.gender ?? "").trim() || "—",
-          condition:
-            String(patient?.primary_concern ?? patient?.condition ?? "").trim() || "—",
-          message: String(r?.message ?? "").trim(),
-          requestDate: r?.requested_at
-            ? new Date(r.requested_at).toLocaleDateString()
-            : r?.created_at
-            ? new Date(r.created_at).toLocaleDateString()
-            : "",
-        };
-      });
-
-      setPatientRequests(mapped);
+      setPatientRequests(items.map(mapToCard));
     } catch (e) {
       console.error(e);
     } finally {
@@ -80,27 +154,37 @@ const PendingRequestsPage: React.FC = () => {
     }
   }
 
-  /** Accept/Reject using your DRF endpoint:
-   * PATCH /users/doctor/manage-request/<pk>/
-   * body: { status: "accepted" | "request_again" }
-   */
   async function actionRequest(id: string, action: "accept" | "reject") {
     try {
-      const statusVal = action === "accept" ? "accepted" : "request_again";
-      const res = await fetch(`${BASE}/users/doctor/manage-request/${id}/`, {
+      // Friendly status; API maps to Django's exact values.
+      const res = await fetch(`/api/doctors/requests`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Token ${token}` } : {}),
         },
-        body: JSON.stringify({ status: statusVal }),
+        body: JSON.stringify({
+          requestId: id,
+          status: action, // "accept" | "reject"
+        }),
       });
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail || err?.error || "Action failed");
+        let msg = "Action failed";
+        try {
+          const err = await res.json();
+          msg = err?.detail || err?.error || msg;
+        } catch {}
+        throw new Error(msg);
       }
-      // Optimistically remove it from pending list
+
+      // Optimistic remove from pending
       setPatientRequests((prev) => prev.filter((p) => p.id !== id));
+
+      // 🔔 Tell Patients page to refresh immediately
+      try {
+        bcRef.current?.postMessage({ type: "refresh" });
+      } catch {}
     } catch (e: any) {
       alert(e?.message || "Something went wrong");
     }
@@ -129,12 +213,11 @@ const PendingRequestsPage: React.FC = () => {
         className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-8 overflow-y-auto"
         style={{ backgroundImage: "url('/doctordashboard/bg2.png')" }}
       >
-        <TopRightIcons />
-
         {/* Header */}
         <div className="pt-32 ml-20 sm:pt-16">
           <div className="flex items-center">
             <div className="text-4xl text-[#1E3CA7] font-bold">
+              <TopRightIcons />
               <span className="mr-2">👤</span> Pending Requests
             </div>
           </div>
