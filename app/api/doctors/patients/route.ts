@@ -1,26 +1,25 @@
-// app/api/doctor/patients/route.ts
+// app/api/doctors/patients/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const revalidate = 0;
-export const dynamic = "force-dynamic";
-
-const RAW_BASE =
-  process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-  process.env.DJANGO_BASE_URL ||
-  "";
-const BASE = RAW_BASE.replace(/\/+$/, "");
 
 export async function GET(req: NextRequest) {
   try {
-    if (!BASE) {
+    const rawBase =
+      process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
+      process.env.DJANGO_BASE_URL ||
+      "";
+    const base = rawBase.replace(/\/+$/, "");
+    if (!base) {
       return NextResponse.json(
         { error: "Missing Django base URL (NEXT_PUBLIC_DJANGO_BASE_URL)" },
         { status: 500 }
       );
     }
 
-    // Prefer Authorization header; fallback to cookie session_key
+    // Auth: header first, then cookie fallback
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
       const sessionKey = req.cookies.get("session_key")?.value;
@@ -30,13 +29,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const res = await fetch(`${BASE}/users/doctor/patients/`, {
+    const upstream = await fetch(`${base}/users/doctor/patients/`, {
       headers: { "Content-Type": "application/json", Authorization: auth },
       cache: "no-store",
     });
 
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    const text = await upstream.text();
+    try {
+      const json = text ? JSON.parse(text) : {};
+      return NextResponse.json(json, { status: upstream.status });
+    } catch {
+      return new NextResponse(text || "", {
+        status: upstream.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Failed to fetch patients" },

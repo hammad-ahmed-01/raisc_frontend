@@ -1,11 +1,13 @@
 // app/api/doctors/list/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const dynamic = "force-dynamic";
+// Edge is okay, but switch to nodejs if you later need Node-only libs.
+// export const runtime = "edge";
 
 type Doctor = {
-  id: number;            // Doctor model id
-  user_id: number;       // <-- NEW: underlying auth User.id to match patient association
+  id: number;       // Doctor model id
+  user_id: number;  // Underlying auth User.id
   username: string;
   name: string;
   profile_image: string;
@@ -20,7 +22,7 @@ type Doctor = {
 };
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || process.env.DJANGO_BASE_URL || "").replace(/\/+$/, "");
 
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
 
@@ -38,7 +40,7 @@ function normalizeDoctor(raw: any): Doctor {
 
   return {
     id: Number(raw?.id ?? 0),
-    user_id: Number(raw?.user?.id ?? 0),            // <-- include it
+    user_id: Number(raw?.user?.id ?? 0),
     username,
     name: displayName,
     profile_image: safeStr(p?.profile_image) || "/doc.png",
@@ -55,7 +57,7 @@ function normalizeDoctor(raw: any): Doctor {
 
 export async function GET(req: Request) {
   try {
-    // Demo fallback (also includes user_id so matching still works)
+    // Demo fallback (returns normalized list with user_id as well)
     if (!isBackendConnected) {
       const demo: Doctor[] = [
         {
@@ -101,7 +103,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ detail: "Missing Authorization header" }, { status: 401 });
     }
 
-    // upstream (Token auth)
     const url = `${BASE}/users/doctor/list/`;
     const upstream = await fetch(url, {
       method: "GET",
@@ -110,11 +111,10 @@ export async function GET(req: Request) {
     });
 
     const rawText = await upstream.text();
-
     if (!upstream.ok) {
       return NextResponse.json(
         { detail: `Upstream error ${upstream.status}`, body: rawText },
-        { status: upstream.status },
+        { status: upstream.status }
       );
     }
 
@@ -127,7 +127,7 @@ export async function GET(req: Request) {
 
     const doctors = Array.isArray(parsed) ? parsed.map(normalizeDoctor) : [];
     return NextResponse.json(doctors, { status: 200 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("GET /api/doctors/list error:", err);
     return NextResponse.json({ detail: "Internal server error" }, { status: 500 });
   }

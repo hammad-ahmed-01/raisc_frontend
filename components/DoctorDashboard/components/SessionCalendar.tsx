@@ -1,42 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { NextSessionBox } from './NextSessionBox';
-import { SessionsCalendarBox } from './SessionsCalendarBox';
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
+import { NextSessionBox } from "./NextSessionBox";
+import { SessionsCalendarBox } from "./SessionsCalendarBox";
 
 interface Session {
   id: string;
   patient_name: string;
-  date: string;
-  time: string;
-  type: 'video' | 'audio' | 'in-person';
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm (24h)
+  type: "video" | "audio" | "in-person";
 }
 
 export const SessionCalendar: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [nextSession, setNextSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const load = async () => {
+    setIsLoading(true);
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("session_key") : null;
+      const res = await fetch("/api/calendar/sessions", {
+        headers: { Authorization: token ? `Token ${token}` : "" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setSessions(data);
+    } catch (e) {
+      console.error("Failed to load sessions", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
   useEffect(() => {
-    // Mock data for demonstration
-    const mockSessions: Session[] = [
-      {
-        id: '1',
-        patient_name: 'Sarah Malik',
-        date: '2025-06-24',
-        time: '11:00 AM',
-        type: 'video'
-      },
-      {
-        id: '2',
-        patient_name: 'Ahmed Khan',
-        date: '2025-06-25',
-        time: '2:00 PM',
-        type: 'audio'
-      }
-    ];
-    
-    setSessions(mockSessions);
-    setNextSession(mockSessions[0]);
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("calendar-events");
+      bc.onmessage = (ev) => { if (ev?.data?.type === "refresh-sessions") load(); };
+    } catch {}
+    return () => { try { bc?.close(); } catch {} };
   }, []);
+
+  const nextSession = useMemo(() => {
+    const now = new Date();
+    let best: Session | null = null;
+    sessions.forEach((s) => {
+      const [yyyy, mm, dd] = s.date.split("-").map((n) => parseInt(n, 10));
+      const [H, M] = s.time.split(":").map((n) => parseInt(n, 10));
+      const when = new Date(yyyy, (mm || 1) - 1, dd || 1, H || 0, M || 0, 0, 0);
+      if (when >= now && (!best || when < new Date(`${best.date}T${best.time}`))) best = s;
+    });
+    return best;
+  }, [sessions]);
 
   if (isLoading) {
     return (
@@ -62,12 +79,9 @@ export const SessionCalendar: React.FC = () => {
 
   return (
     <div className="grid grid-cols-5 gap-4">
-      {/* Next Session Box - Takes 1/5 of the width */}
       <div className="col-span-1">
-        <NextSessionBox nextSession={nextSession} />
+        <NextSessionBox nextSession={nextSession || null} />
       </div>
-      
-      {/* Sessions Calendar Box - Takes 4/5 of the width */}
       <div className="col-span-4">
         <SessionsCalendarBox sessions={sessions} />
       </div>

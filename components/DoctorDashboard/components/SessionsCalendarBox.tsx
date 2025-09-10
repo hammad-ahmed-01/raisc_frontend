@@ -1,23 +1,17 @@
-'use client';
-import { useState } from 'react';
-import {
-  Calendar,
-  dateFnsLocalizer,
-  View,
-} from 'react-big-calendar';
+"use client";
+import { useState } from "react";
+import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 
-import { format } from 'date-fns/format';
-import { parse } from 'date-fns/parse';
-import { startOfWeek } from 'date-fns/startOfWeek';
-import { getDay } from 'date-fns/getDay';
-import {enUS} from 'date-fns/locale/en-US';
+import { format } from "date-fns/format";
+import { parse } from "date-fns/parse";
+import { startOfWeek } from "date-fns/startOfWeek";
+import { getDay } from "date-fns/getDay";
+import { enUS } from "date-fns/locale/en-US";
 
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './custom-calendar.css'; 
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import "./custom-calendar.css";
 
-const locales = {
-  'en-US': enUS,
-};
+const locales = { "en-US": enUS };
 
 const localizer = dateFnsLocalizer({
   format,
@@ -30,9 +24,9 @@ const localizer = dateFnsLocalizer({
 interface Session {
   id: string;
   patient_name: string;
-  date: string;
-  time: string;
-  type: 'video' | 'audio' | 'in-person';
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm (24h) -> we keep your existing parsing logic intact
+  type: "video" | "audio" | "in-person";
 }
 
 interface SessionsCalendarBoxProps {
@@ -40,13 +34,15 @@ interface SessionsCalendarBoxProps {
 }
 
 export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessions }) => {
-  const [view, setView] = useState<View>('month');
+  const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
 
   const events = sessions.map((s) => {
-    const [hour, minute] = s.time.split(':');
+    // s.time comes in "HH:mm" (24h) so your original split/parseInt code stays valid
+    const [hourStr, minuteStr] = s.time.split(":");
     const start = new Date(s.date);
-    start.setHours(parseInt(hour), parseInt(minute));
+    start.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+
     const end = new Date(start);
     end.setMinutes(end.getMinutes() + 30);
 
@@ -60,23 +56,21 @@ export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessio
 
   const handleNext = () => {
     const newDate = new Date(date);
-    if (view === 'month') newDate.setMonth(newDate.getMonth() + 1);
-    else if (view === 'week' || view === 'agenda') newDate.setDate(newDate.getDate() + 7);
-    else if (view === 'day') newDate.setDate(newDate.getDate() + 1);
+    if (view === "month") newDate.setMonth(newDate.getMonth() + 1);
+    else if (view === "week" || view === "agenda") newDate.setDate(newDate.getDate() + 7);
+    else if (view === "day") newDate.setDate(newDate.getDate() + 1);
     setDate(newDate);
   };
 
   const handleBack = () => {
     const newDate = new Date(date);
-    if (view === 'month') newDate.setMonth(newDate.getMonth() - 1);
-    else if (view === 'week' || view === 'agenda') newDate.setDate(newDate.getDate() - 7);
-    else if (view === 'day') newDate.setDate(newDate.getDate() - 1);
+    if (view === "month") newDate.setMonth(newDate.getMonth() - 1);
+    else if (view === "week" || view === "agenda") newDate.setDate(newDate.getDate() - 7);
+    else if (view === "day") newDate.setDate(newDate.getDate() - 1);
     setDate(newDate);
   };
 
-  const handleToday = () => {
-    setDate(new Date());
-  };
+  const handleToday = () => setDate(new Date());
 
   return (
     <div className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-2xl p-4 shadow-md">
@@ -94,18 +88,18 @@ export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessio
           Next
         </button>
         <div className="col-span-2 px-4 py-2 text-xl font-bold text-[#1E3CA7] bg-[#D0E9FF] border-r border-[#2196F3] flex items-center justify-center">
-          {format(date, 'MMMM yyyy')}
+          {format(date, "MMMM yyyy")}
         </div>
-        <button onClick={() => setView('month')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'month' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView("month")} className={`px-4 py-2 font-bold hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === "month" ? "bg-[#2196F3] text-white" : "bg-[#F6E9F9] text-[#1E3CA7]"}`}>
           Month
         </button>
-        <button onClick={() => setView('week')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'week' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView("week")} className={`px-4 py-2 font-bold hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === "week" ? "bg-[#2196F3] text-white" : "bg-[#F6E9F9] text-[#1E3CA7]"}`}>
           Week
         </button>
-        <button onClick={() => setView('day')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'day' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView("day")} className={`px-4 py-2 font-bold hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === "day" ? "bg-[#2196F3] text-white" : "bg-[#F6E9F9] text-[#1E3CA7]"}`}>
           Day
         </button>
-        <button onClick={() => setView('agenda')} className={`px-4 py-2 font-bold  hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === 'agenda' ? 'bg-[#2196F3] text-white' : 'bg-[#F6E9F9] text-[#1E3CA7]'}`}>
+        <button onClick={() => setView("agenda")} className={`px-4 py-2 font-bold hover:bg-[#2196F3] hover:text-white border-r border-[#2196F3] transition ${view === "agenda" ? "bg-[#2196F3] text-white" : "bg-[#F6E9F9] text-[#1E3CA7]"}`}>
           Agenda
         </button>
       </div>
@@ -116,13 +110,13 @@ export const SessionsCalendarBox: React.FC<SessionsCalendarBoxProps> = ({ sessio
         events={events}
         startAccessor="start"
         endAccessor="end"
-        views={['month', 'week', 'day', 'agenda']}
+        views={["month", "week", "day", "agenda"]}
         view={view}
         date={date}
         onView={(newView) => setView(newView)}
         onNavigate={(newDate) => setDate(newDate)}
-        toolbar={false} 
-        style={{ height: '600px' }}
+        toolbar={false}
+        style={{ height: "600px" }}
         className="custom-calendar"
       />
     </div>
