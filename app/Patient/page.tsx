@@ -37,7 +37,6 @@ export default function PatientsPage() {
         if (tok) headers.Authorization = `Token ${tok}`;
       }
 
-      // via Next proxy -> Django /users/doctor/patients/
       const res = await fetch("/api/doctors/patients", {
         headers,
         cache: "no-store",
@@ -98,7 +97,6 @@ export default function PatientsPage() {
     })();
   }, [router]);
 
-  // 👂 Live refresh when a pending request is approved in Requests page
   useEffect(() => {
     let bc: BroadcastChannel | null = null;
     try {
@@ -136,10 +134,10 @@ export default function PatientsPage() {
 
   return (
     <main
-      className="relative min-h-screen bg-cover bg-center bg-no-repeat"
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg/mypatientsbg.png')" }}
     >
-      <div className="h-full backdrop-blur-sm bg-blue-50/40">
+      <div className="backdrop-blur-sm bg-blue-50/40 min-h-screen">
         <PatientList patients={patients} />
       </div>
     </main>

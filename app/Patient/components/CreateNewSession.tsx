@@ -7,7 +7,11 @@ import { UploadCloud, X } from "lucide-react";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
-export default function CreateSessionForm() {
+interface CreateSessionFormProps {
+  onCancel: () => void; // 👈 parent passes this
+}
+
+export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) {
   const [sessionType, setSessionType] = useState("Follow-up");
   const [time, setTime] = useState("2:00 PM");
   const [date, setDate] = useState("2025-07-16");
@@ -136,12 +140,13 @@ export default function CreateSessionForm() {
         <SecondaryButton
           text="Cancel"
           className="px-10 py-2 rounded-full flex items-center text-center font-semibold"
-          />
+          onClick={onCancel} // 👈 just call parent’s close handler
+        />
 
-        <PrimaryButton 
-          text="Create Session" 
-          className="px-4 py-2 rounded-full flex items-center text-center font-semibold" 
-          />
+        <PrimaryButton
+          text="Create Session"
+          className="px-4 py-2 rounded-full flex items-center text-center font-semibold"
+        />
       </div>
     </div>
   );
