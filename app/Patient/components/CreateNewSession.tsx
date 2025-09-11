@@ -1,3 +1,4 @@
+// CreateSessionForm.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,22 +9,24 @@ import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 interface CreateSessionFormProps {
-  onCancel: () => void; // 👈 parent passes this
+  onCancel: () => void;
+  /** Optional: pass the clicked patient's display name to prefill the field */
+  initialPatientName?: string;
 }
 
 type PatientRow = {
-  id: string;        // coerced string
-  name: string;      // display name or username
+  id: string;
+  name: string;
   age?: number;
   gender?: "Male" | "Female" | "Other";
   condition?: string;
 };
 
-export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) {
+export default function CreateSessionForm({ onCancel, initialPatientName }: CreateSessionFormProps) {
   const [sessionType, setSessionType] = useState("Follow-up");
-  const [time, setTime] = useState("2:00 PM");
-  const [date, setDate] = useState("2025-07-16");
-  const [patientName, setPatientName] = useState("Ayesha Khan");
+  const [time, setTime] = useState("");   // no default; acts like placeholder
+  const [date, setDate] = useState("");   // no default; acts like placeholder
+  const [patientName, setPatientName] = useState(initialPatientName || "");
   const [notes, setNotes] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [patients, setPatients] = useState<PatientRow[]>([]);
@@ -32,13 +35,8 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Broadcast to refresh the calendar list
   const bc = useMemo(() => {
-    try {
-      return new BroadcastChannel("calendar-events");
-    } catch {
-      return null;
-    }
+    try { return new BroadcastChannel("calendar-events"); } catch { return null; }
   }, []);
 
   useEffect(() => {
@@ -52,7 +50,9 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
 
         const res = await fetch("/api/doctors/patients", { headers, cache: "no-store" });
         const data = await res.json().catch(() => []);
-        const items: any[] = Array.isArray(data) ? data : (Array.isArray((data as any)?.results) ? (data as any).results : []);
+        const items: any[] = Array.isArray(data)
+          ? data
+          : (Array.isArray((data as any)?.results) ? (data as any).results : []);
 
         const mapped: PatientRow[] = items.map((row: any) => {
           const u = row?.user ?? {};
@@ -70,15 +70,11 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
       }
     })();
 
-    return () => {
-      try {
-        bc?.close();
-      } catch {}
-    };
+    return () => { try { bc?.close(); } catch {} };
   }, [bc]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.currentTarget.files; 
+    const files = e.currentTarget.files;
     if (!files || files.length === 0) return;
     setAttachments(prev => [...prev, ...Array.from(files)]);
   };
@@ -109,21 +105,22 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
     setError("");
     setSubmitting(true);
     try {
-      // Resolve patient by name (case-insensitive exact, then contains)
+      if (!patientName.trim()) throw new Error("Please enter/select a patient.");
+      if (!date) throw new Error("Please select a date.");
+      if (!time) throw new Error("Please select a time.");
+
       const q = patientName.trim().toLowerCase();
       const match =
         patients.find((p) => p.name.toLowerCase() === q) ||
         patients.find((p) => p.name.toLowerCase().includes(q));
       if (!match) {
-        setError("Patient not found. Please type their exact display name as shown in My Patients.");
-        setSubmitting(false);
-        return;
+        throw new Error("Patient not found. Please type their exact display name as shown in My Patients.");
       }
 
-      // Build a description that carries the time tag for the calendar
+      // Carry both time and session_type as tags so the calendar API can read them reliably
       const time24 = to24h(time); // "HH:mm"
-      const timeTag = `[time=${time24}]`;
-      const description = `${notes.trim()}${notes.trim() ? "\n" : ""}${timeTag}`;
+      const tags = [`[time=${time24}]`, `[session_type=${sessionType}]`];
+      const description = `${notes.trim()}${notes.trim() ? "\n" : ""}${tags.join(" ")}`;
 
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (typeof window !== "undefined") {
@@ -131,14 +128,13 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
         if (tok) headers.Authorization = `Token ${tok}`;
       }
 
-      // IMPORTANT: Send date-only to Django (Calendar.date is likely a DateField)
       const res = await fetch("/api/doctors/create-session", {
         method: "POST",
         headers,
         body: JSON.stringify({
           patient_id: match.id,
           title: `${sessionType} Session`,
-          description, // includes [time=HH:mm]
+          description, // includes [time=HH:mm] and [session_type=...]
           date,        // YYYY-MM-DD only
         }),
       });
@@ -153,15 +149,9 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
         throw new Error(msg);
       }
 
-      // notify calendar to refresh
-      try {
-        bc?.postMessage({ type: "refresh-sessions" });
-      } catch {}
+      try { bc?.postMessage({ type: "refresh-sessions" }); } catch {}
 
-      // clear attachments (we're not uploading them in this flow)
       setAttachments([]);
-
-      // close the modal/sheet
       onCancel?.();
     } catch (e: any) {
       console.error(e);
@@ -194,14 +184,14 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
             className="bg-white"
-            placeholder="Type the patient name as in My Patients"
+            placeholder="Ayesha Khan"
           />
         </div>
         <div>
           <label className="block text-sm text-normal mb-1">Session Type</label>
           <select
             value={sessionType}
-            onChange={(e) => setSessionType(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionType(e.target.value)}  
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
           >
             <option>Follow-up</option>
@@ -217,6 +207,7 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="bg-white"
+            placeholder="YYYY-MM-DD"
           />
         </div>
         <div>
@@ -226,6 +217,11 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
             onChange={(e) => setTime(e.target.value)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
           >
+            {time === "" && (
+              <option value="" disabled>
+                Select a time
+              </option>
+            )}
             <option>2:00 PM</option>
             <option>3:00 PM</option>
             <option>4:00 PM</option>
@@ -244,7 +240,6 @@ export default function CreateSessionForm({ onCancel }: CreateSessionFormProps) 
         />
       </div>
 
-      {/* Attachment Section (UI only for now) */}
       <div className="mt-4">
         <label className="block text-sm text-normal mb-1">Attachments (optional)</label>
         <div

@@ -1,10 +1,12 @@
-// app/api/doctors/create-session/route.ts
+// app/api/doctors/reschedule-session/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// We will POST to "create-session" because backend has no update endpoint.
+const CREATE_PATH = "/users/doctor/create-session/";
+
 function toDateOnly(s: string): string {
-  // Accepts "YYYY-MM-DD" or any ISO string and returns "YYYY-MM-DD"
   if (!s) return s;
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
   if (m) return m[1];
@@ -19,7 +21,7 @@ function toDateOnly(s: string): string {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const rawBase =
       process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Auth: header first, then cookie fallback
+    // Authorization from header or cookie
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
       const sessionKey = req.cookies.get("session_key")?.value;
@@ -43,26 +45,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Read incoming JSON
+    // Expect: { patient_id, title, description, date }
+    // Client adds [rescheduled_from=<oldId>] in description before sending.
     const incoming = await req.json().catch(() => ({} as any));
-    const patient_id = incoming?.patient_id;
+    const patient_id = (incoming?.patient_id ?? "").toString();
     const title = (incoming?.title ?? "").toString();
     const description = (incoming?.description ?? "").toString();
-    const dateIn = (incoming?.date ?? "").toString();
+    const date = toDateOnly((incoming?.date ?? "").toString());
 
-    // Ensure date-only for Django DateField safety
-    const date = toDateOnly(dateIn);
+    if (!patient_id || !title || !date) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
 
-    // Pass through; description may include [time=HH:mm] and [session_type=...] tags
-    const payload = { patient_id, title, description, date };
-
-    const upstream = await fetch(`${base}/users/doctor/create-session/`, {
+    const upstream = await fetch(`${base}${CREATE_PATH}`, {
       method: "POST",
       headers: {
         Authorization: auth,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ patient_id, title, description, date }),
     });
 
     const text = await upstream.text();
