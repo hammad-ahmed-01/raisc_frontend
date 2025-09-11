@@ -1,9 +1,12 @@
-// app/api/doctors/reschedule-session/[id]/route.ts
+// app/api/doctors/update-summary/[sessionId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { sessionId: string } }
+) {
   try {
     const rawBase =
       process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
@@ -17,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       );
     }
 
+    // Auth: header first, then cookie fallback
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
       const sessionKey = req.cookies.get("session_key")?.value;
@@ -26,27 +30,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const incoming = await req.json().catch(() => ({} as any));
-    const { title, description, date } = incoming;
+    const body = await req.text(); // forward raw body
 
-    if (!title || !date) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-    }
-
-    const upstream = await fetch(`${base}/users/doctor/reschedule-session/${params.id}/`, {
-      method: "PATCH",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title, description, date }),
-    });
+    // Proxy to Django
+    const upstream = await fetch(
+      `${base}/users/doctor/update-summary/${encodeURIComponent(params.sessionId)}/`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/json",
+        },
+        body,
+      }
+    );
 
     const text = await upstream.text();
     try {
       const json = text ? JSON.parse(text) : {};
       return NextResponse.json(json, { status: upstream.status });
     } catch {
+      // Upstream didn’t return JSON; return as-is
       return new NextResponse(text || "", {
         status: upstream.status,
         headers: { "Content-Type": "application/json" },

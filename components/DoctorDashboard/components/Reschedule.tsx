@@ -1,3 +1,4 @@
+// Reschedule.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -12,9 +13,9 @@ export type TransportType = "video" | "audio" | "in-person";
 export interface Session {
   id: string;
   patient_name: string;
-  patient_user_id: string | null; // ✅ needed to POST create-session
+  patient_user_id?: string | null; // optional now; NOT required for reschedule
   date: string; // YYYY-MM-DD
-  time: string; // HH:mm
+  time: string; // HH:mm (24h) or "3:00 PM" at runtime; we normalize before sending
   type?: TransportType;
   session_type?: string; // "Follow-up" | "Initial" | "Emergency"
   title?: string;
@@ -90,10 +91,10 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
     try {
       if (!date) throw new Error("Please select a date.");
       if (!time) throw new Error("Please select a time.");
-      if (!session.patient_user_id) throw new Error("Missing patient id for this session.");
 
       const time24 = /^\d{2}:\d{2}$/.test(time) ? time : to24h(time);
-      // include reschedule pointer — the calendar API will hide the old one
+
+      // Keep time + type hints inside description (since Calendar has no time field)
       const tags = [
         `[time=${time24}]`,
         `[session_type=${sessionType || "Follow-up"}]`,
@@ -107,12 +108,11 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
         if (tok) headers.Authorization = `Token ${tok}`;
       }
 
-      // Use the create-session proxy (no backend changes)
+      // ✅ PATCH the existing session via our Next.js proxy — no patient_id required
       const res = await fetch(`/api/doctors/reschedule-session/${session.id}`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({
-          patient_id: session.patient_user_id,
           title: `${sessionType} Session`,
           description,
           date, // YYYY-MM-DD
@@ -121,7 +121,7 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
 
       const text = await res.text();
       if (!res.ok) {
-        let msg = "Failed to create rescheduled session";
+        let msg = "Failed to reschedule session";
         try {
           const j = JSON.parse(text);
           msg = j?.error || j?.detail || msg;
