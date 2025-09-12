@@ -84,8 +84,8 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-        <h2 className="text-2xl font-bold text-[#1E3CA7] text-center mb-4">Session Summary</h2>
+      <div className="bg-white border-2 border-[#2196F3] rounded-2xl shadow-xl w-full max-w-lg p-6">
+        <h2 className="text-2xl font-bold text-heading2 text-center mb-4">Session Summary</h2>
 
         <div className="space-y-3 mb-4">
           <div className="flex items-center justify-between">
@@ -98,7 +98,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
           </div>
         </div>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Summary</label>
+        <label className="block text-base font-semibold text-gray-700 mb-1">Doctor Summary</label>
         <textarea
           className="w-full border rounded-md p-3 h-40 focus:ring-2 focus:ring-[#2196F3] outline-none"
           placeholder="Write your notes or session summary here…"
