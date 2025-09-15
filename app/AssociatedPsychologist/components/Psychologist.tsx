@@ -2,8 +2,8 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getToken, fetchMe } from "@/lib/auth";
 
 /* ----------------------------- types ----------------------------- */
@@ -22,8 +22,8 @@ interface PsychologistData {
 }
 
 type Doctor = {
-  id: number;          // Doctor model id
-  user_id: number;     // Underlying User.id (from /api/doctors/list)
+  id: number;             // Doctor model id
+  user_id?: number;       // Underlying User.id (if exposed)
   username?: string;
   name: string;
   profile_image: string;
@@ -51,6 +51,20 @@ function toArray(v: unknown): string[] {
     .filter(Boolean);
 }
 
+/** Try multiple common keys for images coming from various backends */
+function pickImage(src: any): string {
+  const p = src?.professional_information || src?.professionalInformation || src || {};
+  return (
+    safeStr(p.avatar_url) ||
+    safeStr(p.profile_image_url) ||
+    safeStr(p.profileImageUrl) ||
+    safeStr(p.profile_image) ||
+    safeStr(src.profile_image) ||
+    "/doctor.jpg"
+  );
+}
+
+/** Single place to turn any backend doctor shape into our UI Doctor */
 function normalizeDoctor(raw: any): Doctor {
   const p = raw?.professional_information || raw?.professionalInformation || {};
   const username = safeStr(raw?.user?.username || raw?.username);
@@ -66,12 +80,19 @@ function normalizeDoctor(raw: any): Doctor {
     safeStr(raw?.description) ||
     safeStr(raw?.bio);
 
+  const user_id =
+    raw?.user_id != null
+      ? Number(raw.user_id)
+      : raw?.user?.id != null
+      ? Number(raw.user.id)
+      : undefined;
+
   return {
     id: Number(raw?.id ?? raw?.pk ?? 0),
-    user_id: Number(raw?.user_id ?? raw?.user?.id ?? 0),  // <-- we rely on list route exposing user_id
+    user_id,
     username,
     name: displayName,
-    profile_image: safeStr(p?.profile_image || raw?.profile_image) || "/doctor.jpg",
+    profile_image: pickImage(raw),
     specialization: safeStr(p?.specialization || raw?.specialization),
     location: safeStr(p?.location || raw?.location),
     experience: p?.experience ?? raw?.experience ?? "",
@@ -80,6 +101,27 @@ function normalizeDoctor(raw: any): Doctor {
     education: safeStr(p?.education || raw?.education),
     description,
     rates: safeStr(raw?.rates),
+  };
+}
+
+function toUI(d: Doctor): PsychologistData {
+  return {
+    name: d.name || d.username || "Doctor",
+    role: d.specialization || "Psychologist",
+    affiliation: d.location || "—",
+    image: d.profile_image || "/doctor.jpg",
+    about:
+      d.description ||
+      (d.expertise?.length
+        ? `Specializes in ${d.specialization} with expertise in ${d.expertise.join(", ")}.`
+        : d.specialization
+        ? `Specializes in ${d.specialization}.`
+        : "—"),
+    qualifications: d.education ? [d.education] : [],
+    languages: ["English", "Urdu"],
+    experience: safeStr(d.experience) || "",
+    rating: Number.isFinite(d.rating) ? d.rating : 0,
+    reviews: Math.max(0, Math.floor((Number(d.rating) || 0) * 20)),
   };
 }
 
@@ -123,6 +165,7 @@ const StarBar = ({
 /* ----------------------------- component ----------------------------- */
 
 export default function Psychologist() {
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [psychologist, setPsychologist] = useState<PsychologistData>({
     name: "—",
     role: "Psychologist",
@@ -136,98 +179,122 @@ export default function Psychologist() {
     reviews: 0,
   });
 
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
+
   const pollStopAt = useRef<number>(0);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const toUI = (d: Doctor): PsychologistData => ({
-    name: d.name || d.username || "Doctor",
-    role: d.specialization || "Psychologist",
-    affiliation: d.location || "—",
-    image: d.profile_image || "/doctor.jpg",
-    about:
-      d.description ||
-      (d.expertise?.length
-        ? `Specializes in ${d.specialization} with expertise in ${d.expertise.join(", ")}.`
-        : `Specializes in ${d.specialization}.`),
-    qualifications: d.education ? [d.education] : [],
-    languages: ["English", "Urdu"],
-    experience: safeStr(d.experience) || "",
-    rating: Number.isFinite(d.rating) ? d.rating : 0,
-    reviews: Math.max(0, Math.floor((Number(d.rating) || 0) * 20)),
-  });
-
-  const pickDoctor = (docs: Doctor[], assocId: number | null, assocName: string) => {
-    if (assocId != null) {
-      const byUserId = docs.find((d) => Number(d.user_id) === Number(assocId));
-      if (byUserId) return byUserId;
-      const byDoctorId = docs.find((d) => Number(d.id) === Number(assocId));
-      if (byDoctorId) return byDoctorId;
+  /** #1 LocalStorage handoff from DoctorsPage (fast path) */
+  const tryLocalSelectedDoctor = (): Doctor | null => {
+    try {
+      const raw = localStorage.getItem("selectedDoctor");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return normalizeDoctor(parsed);
+    } catch {
+      return null;
     }
-    if (assocName) {
-      const lower = assocName.toLowerCase();
-      return (
-        docs.find((d) => d.name.toLowerCase() === lower) ||
-        docs.find((d) => safeStr(d.username).toLowerCase() === lower) ||
-        null
-      );
-    }
-    return null;
   };
 
-  const loadAssociatedDoctor = useCallback(async () => {
+  /** #2 Dedicated endpoint for the associated/current psychologist */
+  const tryApiCurrent = async (token: string | null): Promise<Doctor | null> => {
     try {
-      // 1) Always fetch the canonical, fresh user profile from backend
+      const headers: HeadersInit = token ? { Authorization: `Token ${token}` } : {};
+      const res = await fetch("/api/psychologist/current", {
+        headers,
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const doc = normalizeDoctor(data);
+      return doc.id || doc.user_id ? doc : null;
+    } catch {
+      return null;
+    }
+  };
+
+  /** #3 Doctor list + match using patient_profile.associated_psychologist(_id/_name) */
+  const tryDirectoryMatch = async (token: string | null): Promise<Doctor | null> => {
+    try {
       const me: any = await fetchMe().catch(() => null);
       const assocRaw =
         me?.patient_profile?.associated_psychologist ??
         me?.patient_profile?.associated_psychologist_id ??
         null;
       const assocName = safeStr(me?.patient_profile?.associated_psychologist_name);
+      const assocId =
+        assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
 
-      const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
-
-      // 2) Load doctor directory via Next proxy
-      const token = getToken();
       const headers: HeadersInit = token ? { Authorization: `Token ${token}` } : {};
       const res = await fetch("/api/doctors/list", { headers, cache: "no-store" });
-      const raw = await res.json().catch(() => []);
-      const doctors: Doctor[] = Array.isArray(raw) ? raw.map(normalizeDoctor) : [];
+      const list = (await res.json().catch(() => [])) as any[];
+      const docs = Array.isArray(list) ? list.map(normalizeDoctor) : [];
 
-      // 3) Pick the associated doctor (by user_id first)
-      const chosen = pickDoctor(doctors, assocId, assocName);
-
-      if (chosen) {
-        setSelectedDoctor(chosen);
-        setPsychologist(toUI(chosen));
-        // Stop any active polling once we resolve a doctor
-        if (pollTimer.current) {
-          clearInterval(pollTimer.current);
-          pollTimer.current = null;
-        }
-        return true;
+      // Match by user_id or id, else by name/username
+      if (assocId != null) {
+        const byUID = docs.find((d) => Number(d.user_id) === Number(assocId));
+        if (byUID) return byUID;
+        const byDoc = docs.find((d) => Number(d.id) === Number(assocId));
+        if (byDoc) return byDoc;
+      }
+      if (assocName) {
+        const lower = assocName.toLowerCase();
+        const byName =
+          docs.find((d) => safeStr(d.name).toLowerCase() === lower) ||
+          docs.find((d) => safeStr(d.username).toLowerCase() === lower) ||
+          null;
+        if (byName) return byName;
       }
 
-      // not found yet
-      return false;
-    } catch (e) {
-      console.error("Failed to resolve associated psychologist:", e);
-      return false;
+      return null;
+    } catch {
+      return null;
     }
+  };
+
+  /** Resolve + set doctor in the best possible way */
+  const resolveDoctor = useCallback(async () => {
+    const token = getToken();
+
+    // 1) localStorage handoff
+    const fromLocal = tryLocalSelectedDoctor();
+    if (fromLocal) {
+      setSelectedDoctor(fromLocal);
+      setPsychologist(toUI(fromLocal));
+      return true;
+    }
+
+    // 2) dedicated endpoint
+    const fromCurrent = await tryApiCurrent(token);
+    if (fromCurrent) {
+      setSelectedDoctor(fromCurrent);
+      setPsychologist(toUI(fromCurrent));
+      return true;
+    }
+
+    // 3) directory match
+    const fromDirectory = await tryDirectoryMatch(token);
+    if (fromDirectory) {
+      setSelectedDoctor(fromDirectory);
+      setPsychologist(toUI(fromDirectory));
+      return true;
+    }
+
+    return false;
   }, []);
 
   // Initial load
   useEffect(() => {
-    loadAssociatedDoctor();
-  }, [loadAssociatedDoctor]);
+    resolveDoctor();
+  }, [resolveDoctor]);
 
-  // Refresh when tab regains focus or becomes visible (common case right after approval)
+  // Refresh when tab regains focus or becomes visible (approval just happened)
   useEffect(() => {
-    const onFocus = () => loadAssociatedDoctor();
+    const onFocus = () => resolveDoctor();
     const onVis = () => {
-      if (document.visibilityState === "visible") loadAssociatedDoctor();
+      if (document.visibilityState === "visible") resolveDoctor();
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
@@ -235,30 +302,29 @@ export default function Psychologist() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [loadAssociatedDoctor]);
+  }, [resolveDoctor]);
 
-  // Short, gentle polling (max ~2 minutes) to auto-update right after an approval
+  // Gentle polling for ~2 minutes until an associated doctor appears
   useEffect(() => {
-    // Only start if we don't have a doctor yet
     if (selectedDoctor) return;
     if (pollTimer.current) return;
-    pollStopAt.current = Date.now() + 2 * 60 * 1000; // stop in 2 minutes
+    pollStopAt.current = Date.now() + 2 * 60 * 1000;
     pollTimer.current = setInterval(async () => {
-      const ok = await loadAssociatedDoctor();
+      const ok = await resolveDoctor();
       if (ok || Date.now() > pollStopAt.current) {
         if (pollTimer.current) {
           clearInterval(pollTimer.current);
           pollTimer.current = null;
         }
       }
-    }, 10_000); // check every 10s
+    }, 10_000);
     return () => {
       if (pollTimer.current) {
         clearInterval(pollTimer.current);
         pollTimer.current = null;
       }
     };
-  }, [selectedDoctor, loadAssociatedDoctor]);
+  }, [selectedDoctor, resolveDoctor]);
 
   /* ----------------------------- submit rating ----------------------------- */
 
@@ -314,13 +380,15 @@ export default function Psychologist() {
     }
   };
 
+  /* -------------------------------- render -------------------------------- */
+
   return (
     <div className="flex flex-col gap-2 sm:gap-4 mt-6 sm:mt-10">
       {/* Header Card */}
       <div className="flex flex-col sm:flex-row items-center justify-between bg-white rounded-2xl shadow-lg p-3 sm:p-6 gap-3 sm:gap-0">
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
           <Image
-            src={psychologist.image}
+            src={psychologist.image || "/doctor.jpg"}
             alt={psychologist.name}
             width={80}
             height={80}
@@ -332,11 +400,14 @@ export default function Psychologist() {
             </h2>
             <p className="text-heading2 text-xs sm:text-base">{psychologist.role}</p>
             <p className="text-xs sm:text-sm text-heading2">
-              <span className="text-red-500">📍</span> Location: <strong>{psychologist.affiliation}</strong>
+              <span className="text-red-500">📍</span> Location:{" "}
+              <strong>{psychologist.affiliation}</strong>
             </p>
             <div className="flex items-center justify-center sm:justify-start gap-1 mt-1">
               <span className="text-yellow-400">★</span>
-              <span className="text-xs sm:text-sm">{psychologist.rating} Rating</span>
+              <span className="text-xs sm:text-sm">
+                {Number(psychologist.rating || 0).toFixed(1)} Rating
+              </span>
             </div>
           </div>
         </div>
@@ -350,7 +421,7 @@ export default function Psychologist() {
             <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
               👤 About Me
             </h3>
-            <p className="text-xs sm:text-sm text-heading2">{psychologist.about}</p>
+            <p className="text-xs sm:text-sm text-heading2">{psychologist.about || "—"}</p>
 
             <h3 className="font-semibold text-heading mt-3 mb-1 flex items-center gap-2 text-sm sm:text-base">
               🎓 Qualification
@@ -371,7 +442,9 @@ export default function Psychologist() {
             <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
               💬 Languages Spoken
             </h3>
-            <p className="text-xs sm:text-sm text-heading2">{psychologist.languages.join(", ")}</p>
+            <p className="text-xs sm:text-sm text-heading2">
+              {psychologist.languages.join(", ")}
+            </p>
           </div>
         </div>
 
@@ -381,7 +454,9 @@ export default function Psychologist() {
             <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
               🧳 Experience
             </h3>
-            <p className="text-xs sm:text-sm text-heading2">{psychologist.experience || "—"}</p>
+            <p className="text-xs sm:text-sm text-heading2">
+              {psychologist.experience || "—"}
+            </p>
           </div>
 
           <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-2xl border border-[#D7E2FE] shadow-sm">
@@ -389,7 +464,7 @@ export default function Psychologist() {
               ⭐ Rating / Reviews
             </h3>
             <p className="text-heading2 mb-2 sm:mb-3 flex items-center gap-1 text-xs sm:text-sm">
-              <span>⭐</span> {psychologist.rating} rating
+              <span>⭐</span> {Number(psychologist.rating || 0).toFixed(1)} rating
             </p>
             <button
               className="w-full bg-[#E9F5FE] text-heading2 font-medium py-1.5 sm:py-2 rounded-full hover:bg-blue-100 transition text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
