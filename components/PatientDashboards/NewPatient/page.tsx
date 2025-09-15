@@ -1,7 +1,8 @@
-// NewPatientHome.tsx
-import Quote from "./components/Quote";
-import AIChat from "./components/AIChat";
+"use client";
+
 import TopRightIcons from "@/components/TopRightIcons";
+import AIChat from "./components/AIChat";
+import CTAButtons from "./components/CTAButtons";
 import { User } from "@/app/dashboard/page";
 
 interface NewPatientHomeProps {
@@ -11,24 +12,34 @@ interface NewPatientHomeProps {
 export default function NewPatientHome({ user }: NewPatientHomeProps) {
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed relative py-10 px-4 lg:px-0"
-      style={{
-        backgroundImage: "url('/bg/patientbg.png')",
-      }}
+      className="min-h-screen bg-cover bg-center bg-fixed relative"
+      style={{ backgroundImage: "url('/bg/patientbg.png')" }}
     >
-      {/* Reusable top-right icons component */}
+      {/* top-right bell/settings/etc. */}
       <TopRightIcons />
 
-      <div className="relative min-h-screen ml-8 py-10 px-4 z-10 pt-16 lg:pt-10">
-        <h1 className="text-heading text-2xl lg:text-4xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)] text-center">
-          Welcome {user.username} to RAISC
-        </h1>
-        <p className="text-center text-lg lg:text-xl text-heading2 mt-2 px-4">
-          The journey of thousand miles begin with one step
-        </p>
-        <Quote />
-        <AIChat />
-      </div>
+      {/* page content */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-20">
+        {/* Heading */}
+        <header className="text-center mb-6 sm:mb-8">
+          <h1 className="text-heading text-[40px] font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
+            WELCOME TO RAISC
+          </h1>
+          <p className="text-heading2 text-[36px] mt-2">
+            Your safe space to begin therapy
+          </p>
+        </header>
+
+        {/* Hero AI card */}
+        <section className="mb-8 sm:mb-10">
+          <AIChat />
+        </section>
+
+        {/* CTA row */}
+        <section>
+          <CTAButtons />
+        </section>
+      </main>
     </div>
   );
 }

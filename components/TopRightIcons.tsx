@@ -43,30 +43,33 @@ export default function TopRightIcons() {
 
   return (
     <div className="absolute top-5 right-5 z-50">
-      <div className="flex gap-4 lg:gap-6 justify-end">
-        <div className="relative">
-          <button
-            className="text-2xl lg:text-3xl text-heading2 hover:opacity-80 transition relative"
-            aria-label="Notifications"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            <FiBell />
-            {notifications.filter((n) => n.isNew).length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                {notifications.filter((n) => n.isNew).length}
-              </span>
-            )}
-          </button>
-        </div>
+      {/* icons inline */}
+      <div className="flex items-center gap-4 lg:gap-6">
+        {/* Notifications */}
+        <button
+          className="relative text-2xl lg:text-3xl text-heading2 hover:opacity-80 transition"
+          aria-label="Notifications"
+          onClick={() => setShowDropdown(!showDropdown)}
+        >
+          <FiBell />
+          {notifications.filter((n) => n.isNew).length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {notifications.filter((n) => n.isNew).length}
+            </span>
+          )}
+        </button>
+
+        {/* Settings */}
         <button
           className="text-2xl lg:text-3xl text-heading2 hover:opacity-80 transition"
-          aria-label="Setting"
-          onClick={() => (window.location.href = "/settings")}
+          aria-label="Settings"
+          onClick={() => router.push("/settings")}
         >
           <FiSettings />
         </button>
       </div>
 
+      {/* Dropdown */}
       {showDropdown && (
         <div
           ref={dropdownRef}
