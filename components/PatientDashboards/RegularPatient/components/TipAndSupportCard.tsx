@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
 // components/TipAndSupportCard.tsx
 import { Lightbulb, HelpCircle, Sparkles } from "lucide-react";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface TipData {
   title: string;
@@ -12,24 +12,28 @@ interface TipData {
 export default function TipAndSupportCard() {
   const [tip, setTip] = useState<TipData>({
     title: "Tip of the Day",
-    content: "Relax. Breathe. \nLet go a little."
+    content: "Relax. Breathe. \nLet go a little.",
   });
-  
+
   useEffect(() => {
+    // Only fetch if you explicitly enable it
+    if (process.env.NEXT_PUBLIC_ENABLE_TIPS !== "true") return;
+
     const fetchTipData = async () => {
-      if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}api/tips/daily`);
-          if (response.ok) {
-            const data = await response.json();
-            setTip(data);
-          }
-        } catch (error) {
-          console.error("Failed to fetch tip data:", error);
+      try {
+        const base = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+        if (!base) return; // missing base url; keep default tip
+
+        const response = await fetch(`${base}/api/tips/daily`, { cache: "no-store" });
+        if (response.ok) {
+          const data = await response.json();
+          setTip(data);
         }
+      } catch (error) {
+        console.error("Failed to fetch tip data:", error);
       }
     };
-    
+
     fetchTipData();
   }, []);
 
@@ -44,10 +48,10 @@ export default function TipAndSupportCard() {
           <div>
             <h3 className="font-bold text-heading2 mb-1">{tip.title}</h3>
             <p className="text-heading2 text-sm leading-snug">
-              {tip.content.split('\n').map((line, i) => (
+              {tip.content.split("\n").map((line, i, arr) => (
                 <span key={i}>
                   {line}
-                  {i < tip.content.split('\n').length - 1 && <br />}
+                  {i < arr.length - 1 && <br />}
                 </span>
               ))}
             </p>
