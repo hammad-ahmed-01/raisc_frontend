@@ -80,6 +80,55 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
     }
   }
 
+  async function handleDelete() {
+    if (!current?.id) return;
+    const confirmed = typeof window !== "undefined"
+      ? window.confirm("Delete this session permanently?")
+      : false;
+    if (!confirmed) return;
+
+    try {
+      setSubmitting(true);
+      setError("");
+
+      const headers: Record<string, string> = {};
+      if (typeof window !== "undefined") {
+        const tok = (localStorage.getItem("session_key") || "").trim();
+        if (tok) headers.Authorization = `Token ${tok}`;
+      }
+
+      const sid = encodeURIComponent(String(current.id));
+
+      const res = await fetch(`/api/doctors/delete-session/${sid}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        let msg = "Failed to delete session";
+        try {
+          const j = JSON.parse(text);
+          msg = j?.error || j?.detail || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      try {
+        const bc = new BroadcastChannel("calendar-events");
+        bc.postMessage({ type: "refresh-sessions" });
+        bc.close();
+      } catch {}
+
+      onSaved?.();
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || "Failed to delete session");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const patientLabel = current.patient_display_name || current.patient_name || "Patient";
 
   return (
@@ -112,17 +161,25 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
           </div>
         ) : null}
 
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex items-center justify-between gap-2">
+          {/* Delete on the left for destructive action */}
           <SecondaryButton
-            text="Cancel"
-            className="px-6 py-2 rounded-full font-semibold"
-            onClick={onClose}
+            text="Delete"
+            className="px-6 py-2 rounded-full font-semibold border-red-600 text-red-600 hover:bg-red-50"
+            onClick={submitting ? undefined : handleDelete}
           />
-          <PrimaryButton
-            text={submitting ? "Saving..." : "Save"}
-            className="px-6 py-2 rounded-full font-semibold"
-            onClick={submitting ? undefined : handleSave}
-          />
+          <div className="flex gap-2">
+            <SecondaryButton
+              text="Cancel"
+              className="px-6 py-2 rounded-full font-semibold"
+              onClick={onClose}
+            />
+            <PrimaryButton
+              text={submitting ? "Saving..." : "Save"}
+              className="px-6 py-2 rounded-full font-semibold"
+              onClick={submitting ? undefined : handleSave}
+            />
+          </div>
         </div>
       </div>
     </div>

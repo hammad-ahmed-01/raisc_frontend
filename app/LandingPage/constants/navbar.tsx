@@ -156,7 +156,7 @@ export default function Navbar() {
             {isLoggedIn ? (
               <a
                 href="/logout"
-                className={`px-6 py-2 shadow-sm rounded-full font-semibold transition bg-red-50 text-red-600 border border-red-200 hover:bg-red-50`}
+                className={`px-6 py-2 shadow-sm rounded-full font-semibold transition border border-red-600 text-white bg-gradient-to-b from-[#A71515] to-[#410808] hover:bg-[#A71515]`}
               >
                 Logout
               </a>
