@@ -1,4 +1,5 @@
 import Sidebar from '@/components/Sidebar/Sidebar';
+import TopRightIcons from '@/components/TopRightIcons';
 
 export default function PatientLayout({
   children,
@@ -14,6 +15,7 @@ export default function PatientLayout({
 
       {/* Main content below the fixed header */}
       <main className="flex-1 w-full">
+        <TopRightIcons />
         {children}
       </main>
     </div>

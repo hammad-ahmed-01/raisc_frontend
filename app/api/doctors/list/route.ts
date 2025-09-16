@@ -1,13 +1,10 @@
-// app/api/doctors/list/route.ts
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-// Edge is okay, but switch to nodejs if you later need Node-only libs.
-// export const runtime = "edge";
 
 type Doctor = {
-  id: number;       // Doctor model id
-  user_id: number;  // Underlying auth User.id
+  id: number;
+  user_id: number;
   username: string;
   name: string;
   profile_image: string;
@@ -19,10 +16,18 @@ type Doctor = {
   education: string;
   description?: string;
   rates?: string;
+  // NEW
+  phone?: string;               // empty => show "No number" in UI
+  affiliated_organization?: string;
+  availability?: string;        // empty => "Not added"
+  website?: string;             // empty => "Not added"
 };
 
-const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || process.env.DJANGO_BASE_URL || "").replace(/\/+$/, "");
+const isBackendConnected =
+  process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
+  process.env.DJANGO_BASE_URL ||
+  "").replace(/\/+$/, "");
 
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
 
@@ -30,13 +35,37 @@ function toArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.map((x) => safeStr(x)).filter(Boolean);
   const s = safeStr(v);
   if (!s) return [];
-  return s.split(/[,\|]/g).map((x) => x.trim()).filter(Boolean);
+  return s
+    .split(/[,\|]/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
+// Pulls from common keys; keeps backend untouched
 function normalizeDoctor(raw: any): Doctor {
   const p = raw?.professional_information || {};
   const username = safeStr(raw?.user?.username);
   const displayName = safeStr(p?.display_name) || username || "Doctor";
+
+  // try a few likely keys for each field
+  const affiliatedOrg =
+    safeStr(p?.affiliated_organization) ||
+    safeStr(p?.affiliation) ||
+    safeStr(p?.organization) ||
+    safeStr(p?.hospital);
+
+  const phone =
+    safeStr(p?.phone) ||
+    safeStr(p?.phone_number) ||
+    safeStr(p?.contact) ||
+    safeStr(p?.contact_number);
+
+  const website = safeStr(p?.website) || safeStr(p?.site) || "";
+  const availability =
+    safeStr(p?.availability) ||
+    safeStr(p?.available_slots) ||
+    safeStr(p?.schedule) ||
+    "";
 
   return {
     id: Number(raw?.id ?? 0),
@@ -52,12 +81,18 @@ function normalizeDoctor(raw: any): Doctor {
     education: safeStr(p?.education),
     description: safeStr(p?.description) || safeStr((p as any)?.bio) || undefined,
     rates: safeStr(raw?.rates),
+
+    // NEW
+    phone,
+    affiliated_organization: affiliatedOrg,
+    availability,
+    website,
   };
 }
 
 export async function GET(req: Request) {
   try {
-    // Demo fallback (returns normalized list with user_id as well)
+    // Demo fallback (kept for local work)
     if (!isBackendConnected) {
       const demo: Doctor[] = [
         {
@@ -74,6 +109,10 @@ export async function GET(req: Request) {
           education: "MSc Clinical Psych",
           description: "Passionate about CBT and anxiety management.",
           rates: "480.00",
+          phone: "",
+          affiliated_organization: "Pakistan Institute of Mental Health (PIMH)",
+          availability: "",
+          website: "",
         },
         {
           id: 16,
@@ -89,18 +128,28 @@ export async function GET(req: Request) {
           education: "MSc Family Psychology",
           description: "Helping families build healthier relationships.",
           rates: "480.00",
+          phone: "+92 300 1234567",
+          affiliated_organization: "Shifa International Hospital",
+          availability: "",
+          website: "",
         },
       ];
       return NextResponse.json(demo, { status: 200 });
     }
 
     if (!BASE) {
-      return NextResponse.json({ detail: "Backend URL not configured" }, { status: 500 });
+      return NextResponse.json(
+        { detail: "Backend URL not configured" },
+        { status: 500 }
+      );
     }
 
     const token = req.headers.get("authorization");
     if (!token) {
-      return NextResponse.json({ detail: "Missing Authorization header" }, { status: 401 });
+      return NextResponse.json(
+        { detail: "Missing Authorization header" },
+        { status: 401 }
+      );
     }
 
     const url = `${BASE}/users/doctor/list/`;
@@ -125,7 +174,9 @@ export async function GET(req: Request) {
       parsed = [];
     }
 
-    const doctors = Array.isArray(parsed) ? parsed.map(normalizeDoctor) : [];
+    const doctors = Array.isArray(parsed)
+      ? parsed.map(normalizeDoctor)
+      : [];
     return NextResponse.json(doctors, { status: 200 });
   } catch (err: any) {
     console.error("GET /api/doctors/list error:", err);
