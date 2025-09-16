@@ -155,7 +155,7 @@ export default function Header() {
   // Loading shimmer
   if (loading) {
     return (
-      <div className="bg-[#EEE7FD] border border-[#D1D5DB] p-6 rounded-[28px] flex flex-col md:flex-row justify-between items-center md:items-stretch min-h-28 font-quicksand animate-pulse">
+      <div className="bg-[#CDD2F4] border-2 border-[#2196F3] p-6 rounded-[28px] min-h-28 font-quicksand shadow-sm">
         <div className="flex flex-col justify-center text-center md:text-left w-full">
           <div className="h-6 w-48 bg-white/70 rounded mb-2" />
           <div className="h-4 w-64 bg-white/60 rounded" />

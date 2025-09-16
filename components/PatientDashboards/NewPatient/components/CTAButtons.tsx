@@ -18,12 +18,12 @@ function CTAButtonCard({ title, subtitle, onClick, gradient }: CardProps) {
     >
       <div className="flex flex-col h-full">
         {/* Title on top */}
-        <div className="font-bold text-heading text-xl sm:text-[36px] lg:text-[36px]">
+        <div className="font-bold text-heading text-xl sm:text-[32px] lg:text-[28px]">
           {title}
         </div>
 
         {/* Subtitle right under title */}
-        <div className="mt-2 text-heading2 text-base sm:text-[32px] lg:text-[32px] leading-snug">
+        <div className="mt-2 text-heading2 text-base sm:text-[28px] lg:text-[28px] leading-snug">
           {subtitle}
         </div>
       </div>

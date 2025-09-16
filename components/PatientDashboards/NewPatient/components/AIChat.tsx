@@ -49,7 +49,7 @@ export default function AIChat() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 lg:p-10 items-center">
           {/* Left: Greeting + Description + Button */}
           <div className="flex flex-col items-center text-center order-2 lg:order-1">
-            <div className="text-heading2 text-2xl sm:text-3xl lg:text-[36px] font-bold leading-snug">
+            <div className="text-heading2 text-2xl sm:text-2xl lg:text-[32px] font-bold leading-snug">
               {chatBot.greeting.split("\n").map((line, i) => (
                 <span key={i} className="block">
                   {line}
@@ -57,7 +57,7 @@ export default function AIChat() {
               ))}
             </div>
 
-            <p className="mt-4 text-heading2 text-base text-[30px]">
+            <p className="mt-4 text-heading2 text-base text-[28px]">
               {chatBot.description}
             </p>
 

@@ -78,7 +78,7 @@ export default function Home() {
       {/* Main Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b shadow-sm">
+        <div className="p-4">
           <Header />
         </div>
 

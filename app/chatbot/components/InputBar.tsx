@@ -40,8 +40,8 @@ const InputBar = ({
   };
 
   return (
-    <div className="p-4 bg-blue-100 font-quicksand">
-      <div className="relative w-full">
+    <div className="p-4 bg-[#FFFFFF] font-quicksand">
+      <div className="relative w-full text-heading2">
         <input
           type="text"
           value={message}
@@ -61,7 +61,7 @@ const InputBar = ({
               title={isConnectedToSTT ? "Start voice recording" : "Voice not available"}
               className={`hover:opacity-70 transition-opacity bg-transparent border-none p-0 ${
                 isConnectedToSTT && !voiceLoading 
-                  ? 'text-[#1E3CA7]' 
+                  ? 'text-heading2' 
                   : 'text-gray-400 cursor-not-allowed'
               }`}
             >

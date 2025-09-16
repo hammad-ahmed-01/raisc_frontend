@@ -400,7 +400,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
 
   return (
     <RoomContext.Provider value={roomInstance}>
-      <div className="h-full w-full max-w-screen mx-auto flex flex-col bg-blue-100 border rounded-xl shadow-md font-quicksand">
+      <div className="h-full w-full max-w-screen mx-auto flex flex-col bg-[#FFFFFF] rounded-xl font-quicksand">
         <RoomAudioRenderer />
         
         {/* Messages */}
@@ -421,7 +421,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200 p-3">
+        <div className="p-3">
           <InputBar 
             onSend={handleSend}
             onVoiceStart={startVoiceRecording}
