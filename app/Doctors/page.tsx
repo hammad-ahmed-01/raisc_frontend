@@ -1,11 +1,17 @@
 // app/DoctorsPage/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { checkAuth, redirectToLogin } from "@/lib/auth";
-import { resolveDisplayName, readUserFromLocalStorage, normalizeUser, safeStr, yearsFromExperience } from "./_utils";
-import type { Doctor, User } from "./types";
+import { checkAuth, redirectToLogin, fetchMe } from "@/lib/auth";
+import {
+  resolveDisplayName,
+  readUserFromLocalStorage,
+  normalizeUser,
+  safeStr,
+  yearsFromExperience,
+} from "./_utils";
+import type { Doctor as BaseDoctor, User } from "./types";
 
 import FiltersBar from "./components/FiltersBar";
 import SearchInputs from "./components/SearchInputs";
@@ -14,6 +20,48 @@ import DoctorCard from "./components/DoctorCard";
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
 
+// Request status used locally
+type RequestStatus = "none" | "pending" | "accepted";
+
+// Extend the imported Doctor type locally; do not modify shared types file.
+type Doctor = BaseDoctor & {
+  user_id?: number;
+  username?: string;
+  requestStatus?: RequestStatus;
+};
+
+/** Accepted/Pending/None — mirrors Psychologist.tsx logic */
+function computeRequestStatus(doctor: Doctor, me: any): RequestStatus {
+  const pp = me?.patient_profile || {};
+  const assocRaw =
+    pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
+  const assocName = (pp?.associated_psychologist_name || "").toString().trim();
+  const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+
+  if (
+    assocId != null &&
+    (Number(doctor.user_id ?? NaN) === assocId || Number(doctor.id) === assocId)
+  ) {
+    return "accepted";
+  }
+  if (
+    assocName &&
+    (assocName.toLowerCase() === (doctor.name || "").toLowerCase() ||
+      assocName.toLowerCase() === (doctor.username || "").toLowerCase())
+  ) {
+    return "accepted";
+  }
+
+  const sentArr: string[] = Array.isArray(pp?.sent_requests) ? pp.sent_requests : [];
+  if (
+    sentArr.includes(String(doctor.id)) ||
+    (doctor.user_id != null && sentArr.includes(String(doctor.user_id)))
+  ) {
+    return "pending";
+  }
+  return "none";
+}
+
 export default function DoctorsPage() {
   const router = useRouter();
 
@@ -21,11 +69,14 @@ export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchCity, setSearchCity] = useState("");
   const [searchSpecialty, setSearchSpecialty] = useState("");
-  const [filterType, setFilterType] = useState<"experience" | "rating" | "specialty">("experience");
+  const [filterType, setFilterType] =
+    useState<"experience" | "rating" | "specialty">("experience");
   const [authError, setAuthError] = useState("");
   const [authVerified, setAuthVerified] = useState(false);
 
   const mountedRef = useRef(false);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollStopAt = useRef<number>(0);
 
   // optimistic user to prevent header flicker
   useEffect(() => {
@@ -33,7 +84,26 @@ export default function DoctorsPage() {
     if (cached) setUser(normalizeUser(cached));
   }, []);
 
-  const loadEverything = async () => {
+  const refreshStatuses = useCallback(
+    async (currentDoctors: Doctor[] | null = null) => {
+      try {
+        const me = await fetchMe().catch(() => null);
+        if (!me) return;
+        setDoctors((prev) => {
+          const base = currentDoctors ?? prev;
+          return base.map((d) => ({
+            ...d,
+            requestStatus: computeRequestStatus(d, me),
+          }));
+        });
+      } catch {
+        // ignore
+      }
+    },
+    []
+  );
+
+  const loadEverything = useCallback(async () => {
     const res = await checkAuth();
 
     if (!res.isAuthenticated) {
@@ -76,15 +146,18 @@ export default function DoctorsPage() {
     const list = (await resp.json().catch(() => [])) as any[];
     const arr: Doctor[] = Array.isArray(list) ? list : [];
 
-    // apply request statuses using user's sent_requests
-    const sentIds = normalizedUser.patient_profile?.sent_requests ?? [];
-    const withStatuses: Doctor[] = arr.map((d) => ({
-      ...d,
-      requestStatus: sentIds.includes(String(d.id)) ? "pending" : "none",
-    }));
-
-    setDoctors(withStatuses);
-  };
+    // compute initial status with freshest /me
+    try {
+      const me = await fetchMe().catch(() => null);
+      const withStatuses: Doctor[] = arr.map((d) => ({
+        ...d,
+        requestStatus: me ? computeRequestStatus(d, me) : "none",
+      }));
+      setDoctors(withStatuses);
+    } catch {
+      setDoctors(arr.map((d) => ({ ...d, requestStatus: "none" })));
+    }
+  }, [router]);
 
   // mount
   useEffect(() => {
@@ -93,14 +166,13 @@ export default function DoctorsPage() {
     return () => {
       mountedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [loadEverything]);
 
-  // live sync after profile changes
+  // live sync after profile changes & cross-tab
   useEffect(() => {
     const onProfileUpdated = () => {
       if (!mountedRef.current) return;
-      loadEverything();
+      refreshStatuses();
     };
     window.addEventListener("profile:updated", onProfileUpdated);
 
@@ -110,7 +182,9 @@ export default function DoctorsPage() {
       bc.onmessage = (ev) => {
         if (ev?.data?.type === "profile-updated") onProfileUpdated();
       };
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     const onStorage = (e: StorageEvent) => {
       if (e.key === "user_data") onProfileUpdated();
@@ -122,8 +196,42 @@ export default function DoctorsPage() {
       window.removeEventListener("storage", onStorage);
       if (bc) bc.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshStatuses]);
+
+  // refresh status when tab regains focus or becomes visible
+  useEffect(() => {
+    const onFocus = () => refreshStatuses();
+    const onVis = () => {
+      if (document.visibilityState === "visible") refreshStatuses();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [refreshStatuses]);
+
+  // short polling (~2 minutes) to catch acceptance
+  useEffect(() => {
+    if (pollTimer.current) return;
+    pollStopAt.current = Date.now() + 2 * 60 * 1000;
+    pollTimer.current = setInterval(async () => {
+      await refreshStatuses();
+      if (Date.now() > pollStopAt.current) {
+        if (pollTimer.current) {
+          clearInterval(pollTimer.current);
+          pollTimer.current = null;
+        }
+      }
+    }, 10_000);
+    return () => {
+      if (pollTimer.current) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+    };
+  }, [refreshStatuses]);
 
   /* ------------------------------- actions -------------------------------- */
 
@@ -140,54 +248,43 @@ export default function DoctorsPage() {
             Authorization: `Token ${sessionKey}`,
           },
         });
-        if (resp.ok) {
-          setDoctors((prev) =>
-            prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "pending" } : d))
-          );
-          setUser((prev) => {
-            if (!prev) return null;
-            const sent = new Set(prev.patient_profile?.sent_requests ?? []);
-            sent.add(String(doctorId));
-            const updated = {
-              ...prev,
-              patient_profile: {
-                ...(prev.patient_profile as NonNullable<User["patient_profile"]>),
-                sent_requests: [...sent],
-              },
-            };
-            // sync localStorage + broadcast
-            try {
-              const raw = localStorage.getItem("user_data");
-              const parsed = raw ? JSON.parse(raw) : {};
-              parsed.patient_profile = updated.patient_profile;
-              localStorage.setItem("user_data", JSON.stringify(parsed));
-              new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
-            } catch {}
-            return updated;
-          });
+        if (!resp.ok) {
+          const t = await resp.text();
+          console.error("Request failed", resp.status, t);
+          return;
         }
       } catch (e) {
         console.log("sendRequest failed:", e);
-      }
-    } else {
-      // demo path
-      setDoctors((prev) =>
-        prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "pending" } : d))
-      );
-      const raw = localStorage.getItem("user_data");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        const sent = new Set(parsed?.patient_profile?.sent_requests ?? []);
-        sent.add(String(doctorId));
-        const updatedUser = {
-          ...parsed,
-          patient_profile: { ...(parsed.patient_profile || {}), sent_requests: [...sent] },
-        };
-        localStorage.setItem("user_data", JSON.stringify(updatedUser));
-        new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
-        setUser(updatedUser);
+        return;
       }
     }
+
+    // Instant UI update
+    setDoctors((prev) =>
+      prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "pending" } : d))
+    );
+    setUser((prev) => {
+      if (!prev) return null;
+      const sent = new Set(prev.patient_profile?.sent_requests ?? []);
+      sent.add(String(doctorId));
+      const updated = {
+        ...prev,
+        patient_profile: {
+          ...(prev.patient_profile as NonNullable<User["patient_profile"]>),
+          sent_requests: [...sent],
+        },
+      };
+      try {
+        const raw = localStorage.getItem("user_data");
+        const parsed = raw ? JSON.parse(raw) : {};
+        parsed.patient_profile = updated.patient_profile;
+        localStorage.setItem("user_data", JSON.stringify(parsed));
+        new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
   };
 
   const removeRequest = async (doctorId: number) => {
@@ -198,7 +295,7 @@ export default function DoctorsPage() {
       console.info("Cancel request is not supported by backend yet.");
       return;
     } else {
-      // demo
+      // demo: revert to 'none'
       setDoctors((prev) =>
         prev.map((d) => (d.id === doctorId ? { ...d, requestStatus: "none" } : d))
       );
@@ -247,8 +344,10 @@ export default function DoctorsPage() {
           const bSpec = safeStr(b.specialization).toLowerCase().includes(term);
           if (aSpec && !bSpec) return -1;
           if (!aSpec && bSpec) return 1;
-          const aCount = (a.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
-          const bCount = (b.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term)).length;
+          const aCount = (a.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term))
+            .length;
+          const bCount = (b.expertise ?? []).filter((e) => safeStr(e).toLowerCase().includes(term))
+            .length;
           return bCount - aCount;
         });
       } else {
