@@ -181,6 +181,14 @@ const PendingRequestsPage: React.FC = () => {
     [patientRequests, searchQuery]
   );
 
+  // --- NEW: dynamic count text (uses the full pending list, not filtered) ---
+  const totalPending = patientRequests.length;
+  const countText = loading
+    ? "Loading patient requests…"
+    : totalPending === 0
+    ? "You have 0 requests to accept or reject."
+    : `You have ${totalPending} request${totalPending === 1 ? "" : "s"} to accept or reject.`;
+
   return (
     <div className="min-h-screen flex">
       <Sidebar />
@@ -196,9 +204,7 @@ const PendingRequestsPage: React.FC = () => {
               <span className="mr-2">👤</span> Pending Requests
             </div>
           </div>
-          <p className="text-lg text-[#1E3CA7] mt-2">
-            {loading ? "Loading patient requests…" : "You have new patient requests waiting to be accepted or rejected."}
-          </p>
+          <p className="text-lg text-[#1E3CA7] mt-2">{countText}</p>
         </div>
 
         {/* Search and Filter */}

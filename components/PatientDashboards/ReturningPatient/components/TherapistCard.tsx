@@ -557,8 +557,15 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   /* ------------------------------ render ------------------------------ */
 
   return (
-    <div className="bg-[#F6FDFE] shadow-md p-3 sm:p-6 rounded-2xl w-full max-w-[320px] sm:max-w-sm text-heading2">
-      <h2 className="text-heading2 bg-[#D7E2FE] text-sm sm:text-xl font-semibold p-2 sm:p-4 mb-4 sm:mb-6 rounded-full text-center">
+    <div
+      className="
+        bg-[#F6FDFE] shadow-md p-3 sm:p-6 rounded-2xl
+        w-full
+        max-w-[680px] sm:max-w-[720px] lg:max-w-[760px]
+        text-heading2
+      "
+    >
+      <h2 className="text-heading2 bg-[#D7E2FE] text-base sm:text-xl font-semibold p-3 sm:p-4 mb-4 sm:mb-6 rounded-full text-center">
         Choose Your Therapist
       </h2>
 
@@ -623,7 +630,7 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
 
       {/* Only when no pending exists → show the full list */}
       {!pendingDoctor && (
-        <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1" style={{ maxHeight: 320 }}>
+        <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>
           {loading && (
             <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
               Loading doctors…
