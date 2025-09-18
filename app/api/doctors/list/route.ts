@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
+export const runtime = "nodejs";
+export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 type Doctor = {
@@ -16,18 +18,47 @@ type Doctor = {
   education: string;
   description?: string;
   rates?: string;
-  // NEW
-  phone?: string;               // empty => show "No number" in UI
+  phone?: string;
   affiliated_organization?: string;
-  availability?: string;        // empty => "Not added"
-  website?: string;             // empty => "Not added"
+  availability?: string;
+  website?: string;
 };
 
-const isBackendConnected =
-  process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-  process.env.DJANGO_BASE_URL ||
-  "").replace(/\/+$/, "");
+const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+const BASE =
+  process.env.NEXT_PUBLIC_DJANGO_BASE_URL?.replace(/\/+$/, "") ||
+  process.env.DJANGO_BASE_URL?.replace(/\/+$/, "") ||
+  "";
+
+function flipScheme(auth: string) {
+  const s = auth.toLowerCase();
+  if (s.startsWith("bearer ")) return "Token " + auth.slice(7);
+  if (s.startsWith("token ")) return "Bearer " + auth.slice(6);
+  if (s.startsWith("jwt ")) return "Bearer " + auth.slice(4);
+  return auth;
+}
+
+function extractAuth(req: Request | NextRequest): string | null {
+  const direct = req.headers.get("authorization");
+  if (direct && direct.trim()) return direct;
+
+  const mirror = req.headers.get("x-authorization");
+  if (mirror && mirror.trim()) return mirror;
+
+  const cookieHeader = req.headers.get("cookie") || "";
+  const cookieMap = new Map<string, string>();
+  cookieHeader.split(";").forEach((p) => {
+    const [k, ...rest] = p.split("=");
+    if (!k) return;
+    cookieMap.set(k.trim(), decodeURIComponent((rest.join("=") || "").trim()));
+  });
+
+  for (const k of ["session_key", "access_token", "token", "authToken", "jwt", "id_token"]) {
+    const v = cookieMap.get(k);
+    if (v) return `${v.includes(".") ? "Bearer" : "Token"} ${v}`;
+  }
+  return null;
+}
 
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
 
@@ -35,19 +66,14 @@ function toArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.map((x) => safeStr(x)).filter(Boolean);
   const s = safeStr(v);
   if (!s) return [];
-  return s
-    .split(/[,\|]/g)
-    .map((x) => x.trim())
-    .filter(Boolean);
+  return s.split(/[,\|]/g).map((x) => x.trim()).filter(Boolean);
 }
 
-// Pulls from common keys; keeps backend untouched
 function normalizeDoctor(raw: any): Doctor {
   const p = raw?.professional_information || {};
-  const username = safeStr(raw?.user?.username);
-  const displayName = safeStr(p?.display_name) || username || "Doctor";
+  const username = safeStr(raw?.user?.username || raw?.username);
+  const displayName = safeStr(p?.display_name) || safeStr(raw?.name) || username || "Doctor";
 
-  // try a few likely keys for each field
   const affiliatedOrg =
     safeStr(p?.affiliated_organization) ||
     safeStr(p?.affiliation) ||
@@ -62,27 +88,22 @@ function normalizeDoctor(raw: any): Doctor {
 
   const website = safeStr(p?.website) || safeStr(p?.site) || "";
   const availability =
-    safeStr(p?.availability) ||
-    safeStr(p?.available_slots) ||
-    safeStr(p?.schedule) ||
-    "";
+    safeStr(p?.availability) || safeStr(p?.available_slots) || safeStr(p?.schedule) || "";
 
   return {
-    id: Number(raw?.id ?? 0),
-    user_id: Number(raw?.user?.id ?? 0),
+    id: Number(raw?.id ?? raw?.pk ?? 0),
+    user_id: Number(raw?.user?.id ?? raw?.user_id ?? 0),
     username,
     name: displayName,
-    profile_image: safeStr(p?.profile_image) || "/doc.png",
-    specialization: safeStr(p?.specialization),
-    location: safeStr(p?.location),
-    experience: p?.experience ?? "",
-    rating: Number(p?.rating ?? 0),
+    profile_image: safeStr(p?.profile_image) || safeStr(raw?.profile_image) || "/doc.png",
+    specialization: safeStr(p?.specialization || raw?.specialization),
+    location: safeStr(p?.location || raw?.location),
+    experience: p?.experience ?? raw?.experience ?? "",
+    rating: Number(p?.rating ?? raw?.rating ?? 0),
     expertise: toArray(p?.expertise),
-    education: safeStr(p?.education),
-    description: safeStr(p?.description) || safeStr((p as any)?.bio) || undefined,
+    education: safeStr(p?.education || raw?.education),
+    description: safeStr(p?.description || (p as any)?.bio || raw?.description) || undefined,
     rates: safeStr(raw?.rates),
-
-    // NEW
     phone,
     affiliated_organization: affiliatedOrg,
     availability,
@@ -92,7 +113,6 @@ function normalizeDoctor(raw: any): Doctor {
 
 export async function GET(req: Request) {
   try {
-    // Demo fallback (kept for local work)
     if (!isBackendConnected) {
       const demo: Doctor[] = [
         {
@@ -138,26 +158,26 @@ export async function GET(req: Request) {
     }
 
     if (!BASE) {
-      return NextResponse.json(
-        { detail: "Backend URL not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ detail: "Backend URL not configured" }, { status: 500 });
     }
 
-    const token = req.headers.get("authorization");
-    if (!token) {
-      return NextResponse.json(
-        { detail: "Missing Authorization header" },
-        { status: 401 }
-      );
-    }
+    const auth = extractAuth(req);
+    if (!auth) return NextResponse.json({ detail: "Missing Authorization" }, { status: 401 });
 
     const url = `${BASE}/users/doctor/list/`;
-    const upstream = await fetch(url, {
+    let upstream = await fetch(url, {
       method: "GET",
-      headers: { Authorization: token, "Content-Type": "application/json" },
+      headers: { Authorization: auth, "Content-Type": "application/json" },
       cache: "no-store",
     });
+
+    if (upstream.status === 401) {
+      upstream = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: flipScheme(auth), "Content-Type": "application/json" },
+        cache: "no-store",
+      });
+    }
 
     const rawText = await upstream.text();
     if (!upstream.ok) {
@@ -168,15 +188,9 @@ export async function GET(req: Request) {
     }
 
     let parsed: any = [];
-    try {
-      parsed = JSON.parse(rawText);
-    } catch {
-      parsed = [];
-    }
+    try { parsed = JSON.parse(rawText); } catch { parsed = []; }
 
-    const doctors = Array.isArray(parsed)
-      ? parsed.map(normalizeDoctor)
-      : [];
+    const doctors = Array.isArray(parsed) ? parsed.map(normalizeDoctor) : [];
     return NextResponse.json(doctors, { status: 200 });
   } catch (err: any) {
     console.error("GET /api/doctors/list error:", err);

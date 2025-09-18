@@ -30,15 +30,13 @@ type Doctor = {
   education?: string;
   description?: string;
   rates?: string;
-  requestStatus?: RequestStatus; // derived
+  requestStatus?: RequestStatus;
 };
 
 interface TherapistCardProps {
-  /** Back-compat props (optional). If provided as pending/accepted, the card shows that state and hides the list when pending. */
   doctor?: Partial<Doctor> | null;
   hasRequest?: boolean;
   requestStatus?: RequestStatus;
-  /** View more click handler (push to /Doctors) */
   onViewMoreClick: () => void;
 }
 
@@ -47,16 +45,61 @@ interface TherapistCardProps {
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
+const PENDING_CACHE_KEY = "pending_requests_cache";
+const SELECTED_DOCTOR_KEY = "selectedDoctor";
+
+/** durable pending store — only cleared on doctor REJECT or patient CANCEL */
+function readPendingCache(): Set<string> {
+  try {
+    const raw = localStorage.getItem(PENDING_CACHE_KEY);
+    const arr: string[] = raw ? JSON.parse(raw) : [];
+    return new Set(arr.map(String));
+  } catch {
+    return new Set();
+  }
+}
+function writePendingCache(set: Set<string>) {
+  try {
+    localStorage.setItem(PENDING_CACHE_KEY, JSON.stringify([...set]));
+  } catch {}
+}
+function addToPendingCache(idLike: number | string | undefined | null) {
+  if (idLike == null) return;
+  const s = String(idLike);
+  const cache = readPendingCache();
+  cache.add(s);
+  writePendingCache(cache);
+}
+function removeFromPendingCache(idLike: number | string | undefined | null) {
+  if (idLike == null) return;
+  const s = String(idLike);
+  const cache = readPendingCache();
+  cache.delete(s);
+  writePendingCache(cache);
+}
+
+function readSelectedDoctor(): Doctor | null {
+  try {
+    const raw = localStorage.getItem(SELECTED_DOCTOR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+function writeSelectedDoctor(doc: Partial<Doctor> & { requestStatus?: RequestStatus }) {
+  try {
+    localStorage.setItem(SELECTED_DOCTOR_KEY, JSON.stringify(doc));
+  } catch {}
+}
+
 function normalizeDoctor(raw: any): Doctor {
   const p = raw?.professional_information || {};
   const username = safeStr(raw?.user?.username || raw?.username);
-  const displayName =
-    safeStr(p?.display_name) || safeStr(raw?.name) || username || "Doctor";
-
-  const profile_image =
-    safeStr(p?.profile_image) ||
-    safeStr(raw?.profile_image) ||
-    "/doctor.jpg";
+  const displayName = safeStr(p?.display_name) || safeStr(raw?.name) || username || "Doctor";
+  const profile_image = safeStr(p?.profile_image) || safeStr(raw?.profile_image) || "/doctor.jpg";
 
   return {
     id: Number(raw?.id ?? raw?.pk ?? raw?.user?.id ?? 0),
@@ -80,37 +123,77 @@ function normalizeDoctor(raw: any): Doctor {
   };
 }
 
-function computeStatusForDoctor(d: Doctor, me: any): RequestStatus {
+function normalizeDecision(v: unknown): "pending" | "accepted" | "rejected" | "" {
+  const s = safeStr(v).toLowerCase();
+  if (!s) return "";
+  if (s === "pending") return "pending";
+  if (s === "approved" || s === "accepted" || s === "approve") return "accepted";
+  if (["rejected", "declined", "request_again", "canceled", "cancelled", "denied"].includes(s))
+    return "rejected";
+  return "";
+}
+
+/** pull doctor.user_id values for **explicitly rejected** requests (patient view) */
+function extractRejectedDoctorUserIds(payload: any): Set<string> {
+  const out = new Set<string>();
+  const add = (item: any) => {
+    if (normalizeDecision(item?.status) !== "rejected") return;
+    const uid =
+      item?.doctor?.user_id ??
+      item?.doctor?.user?.id ??
+      item?.doctor_id ??
+      item?.doctorId ??
+      null;
+    if (uid != null && !Number.isNaN(Number(uid))) out.add(String(uid));
+  };
+  if (Array.isArray(payload)) {
+    payload.forEach(add);
+    return out;
+  }
+  if (payload && typeof payload === "object") {
+    if (Array.isArray(payload.requests)) payload.requests.forEach(add);
+    else Object.values(payload).forEach((v) => v && typeof v === "object" && add(v));
+  }
+  return out;
+}
+
+/**
+ * Compute per-doctor status:
+ *  - "accepted" if backend associated the patient with this doctor (approved)
+ *  - "pending"  if our durable cache still says pending for this doctor
+ *  - "none"     otherwise
+ */
+function computeStatusForDoctor(d: Doctor, me: any, pendingCache: Set<string>): RequestStatus {
   const pp = me?.patient_profile || {};
   const assocRaw = pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
   const assocName = safeStr(pp?.associated_psychologist_name);
-  const assocId =
-    assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
-  const sentArr: string[] = Array.isArray(pp?.sent_requests) ? pp.sent_requests : [];
+  const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
 
-  if (
-    assocId != null &&
-    (Number(d.user_id) === assocId || Number(d.id) === assocId)
-  ) {
+  const matchesAssoc =
+    (assocId != null && (Number(d.user_id) === assocId || Number(d.id) === assocId)) ||
+    (assocName &&
+      (assocName.toLowerCase() === safeStr(d.name).toLowerCase() ||
+        assocName.toLowerCase() === safeStr(d.username).toLowerCase()));
+  if (matchesAssoc) {
+    removeFromPendingCache(d.id);
+    removeFromPendingCache(d.user_id);
     return "accepted";
   }
 
   if (
-    assocName &&
-    (assocName.toLowerCase() === safeStr(d.name).toLowerCase() ||
-      assocName.toLowerCase() === safeStr(d.username).toLowerCase())
-  ) {
-    return "accepted";
-  }
-
-  if (
-    sentArr.includes(String(d.id)) ||
-    (d.user_id != null && sentArr.includes(String(d.user_id)))
+    pendingCache.has(String(d.id)) ||
+    (d.user_id != null && pendingCache.has(String(d.user_id)))
   ) {
     return "pending";
   }
-
   return "none";
+}
+
+function authHeaders(): HeadersInit {
+  const t = getToken();
+  if (!t) return {};
+  const looksJWT = String(t).includes(".");
+  return { Authorization: `${looksJWT ? "Bearer" : "Token"} ${t}` };
 }
 
 /* ----------------------------- component ----------------------------- */
@@ -128,33 +211,95 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   const [cancelId, setCancelId] = useState<number | null>(null);
 
   const bcRef = useRef<BroadcastChannel | null>(null);
-  const token = useMemo(() => getToken(), []);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rejectWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /** patient’s own requests; only care about REJECT to clear pending */
+  const fetchRejectedSet = async (): Promise<Set<string> | null> => {
+    try {
+      const res = await fetch(`/api/patient/requests`, {
+        headers: { ...authHeaders() },
+        cache: "no-store",
+      });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      const set = extractRejectedDoctorUserIds(data);
+      return set.size ? set : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const applyImmediateRejectionSync = (rejectedDoctorUserIds: Set<string>) => {
+    if (!rejectedDoctorUserIds?.size) return;
+
+    // update the durable pending cache
+    let cache = readPendingCache();
+    let changed = false;
+    for (const pid of [...cache]) {
+      if (rejectedDoctorUserIds.has(pid)) {
+        cache.delete(pid);
+        changed = true;
+      }
+    }
+    if (changed) writePendingCache(cache);
+
+    // update selected doctor fallback
+    try {
+      const sel = readSelectedDoctor();
+      const selU = String(sel?.user_id ?? "");
+      if (sel && selU && rejectedDoctorUserIds.has(selU)) {
+        writeSelectedDoctor({ ...sel, requestStatus: "none" });
+      }
+      if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
+    } catch {}
+
+    // reflect in UI
+    setDoctors((prev) =>
+      prev.map((d) => {
+        const duid = String(d.user_id ?? "");
+        if (d.requestStatus === "pending" && duid && rejectedDoctorUserIds.has(duid)) {
+          return { ...d, requestStatus: "none" };
+        }
+        return d;
+      })
+    );
+  };
 
   const load = async () => {
     try {
       setLoading(true);
+
       const meData = await fetchMe().catch(() => null);
       setMe(meData);
 
-      const headers: HeadersInit = token ? { Authorization: `Token ${token}` } : {};
       const res = await fetch("/api/doctors/list", {
-        headers,
+        headers: { ...authHeaders() },
         cache: "no-store",
       });
       const list = (await res.json().catch(() => [])) as any[];
       const normalized: Doctor[] = Array.isArray(list) ? list.map(normalizeDoctor) : [];
 
+      let pendingCache = readPendingCache();
+
+      // only explicit rejections clear pending
+      const rejectedSet = await fetchRejectedSet();
+      if (rejectedSet && rejectedSet.size > 0) {
+        applyImmediateRejectionSync(rejectedSet);
+        pendingCache = readPendingCache();
+      }
+
       const withStatuses = normalized.map((d) => ({
         ...d,
-        requestStatus: computeStatusForDoctor(d, meData),
+        requestStatus: computeStatusForDoctor(d, meData, pendingCache),
       }));
+
       setDoctors(withStatuses);
     } finally {
       setLoading(false);
     }
   };
 
-  // initial + sync listeners
   useEffect(() => {
     void load();
 
@@ -164,7 +309,13 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     document.addEventListener("visibilitychange", onVisible);
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "user_data" || e.key === "selectedDoctor") void load();
+      if (
+        e.key === PENDING_CACHE_KEY ||
+        e.key === SELECTED_DOCTOR_KEY ||
+        e.key === "user_data"
+      ) {
+        void load();
+      }
     };
     window.addEventListener("storage", onStorage);
 
@@ -175,15 +326,71 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       };
     }
 
+    // doctor UI accepts/rejects → refresh immediately
+    const onDoctorDecision = () => void load();
+    window.addEventListener("doctor-request-updated", onDoctorDecision as EventListener);
+
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("doctor-request-updated", onDoctorDecision as EventListener);
       if (bcRef.current) bcRef.current.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // If legacy props are provided, shape them as an override doctor
+  // while any request is pending, slow poll to detect ACCEPT association quickly
+  useEffect(() => {
+    const hasPending =
+      readPendingCache().size > 0 ||
+      doctors.some((d) => d.requestStatus === "pending");
+    if (hasPending) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(() => void load(), 8000);
+    } else if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctors]);
+
+  // fast watcher (2s) to pick up REJECTION explicitly (and only that)
+  useEffect(() => {
+    const hasPending =
+      readPendingCache().size > 0 ||
+      doctors.some((d) => d.requestStatus === "pending");
+    if (hasPending) {
+      (async () => {
+        const rejectedSet = await fetchRejectedSet();
+        if (rejectedSet?.size) applyImmediateRejectionSync(rejectedSet);
+      })();
+
+      if (rejectWatchRef.current) clearInterval(rejectWatchRef.current);
+      rejectWatchRef.current = setInterval(async () => {
+        const rejectedSet = await fetchRejectedSet();
+        if (rejectedSet?.size) applyImmediateRejectionSync(rejectedSet);
+      }, 2000);
+    } else if (rejectWatchRef.current) {
+      clearInterval(rejectWatchRef.current);
+      rejectWatchRef.current = null;
+    }
+
+    return () => {
+      if (rejectWatchRef.current) {
+        clearInterval(rejectWatchRef.current);
+        rejectWatchRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctors]);
+
+  // optional one-card override (kept)
   const overrideDoctor = useMemo<Doctor | null>(() => {
     if (!doctorProp) return null;
     const id = Number((doctorProp as any)?.id ?? 0);
@@ -206,17 +413,47 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     return d;
   }, [doctorProp, hasRequest, requestStatus]);
 
-  const pendingDoctorComputed = useMemo(
-    () => doctors.find((d) => d.requestStatus === "pending") || null,
-    [doctors]
-  );
+  /** choose the pending card from:
+   *    1) computed doctors list
+   *    2) selectedDoctor fallback if its id/user_id is in durable cache
+   */
+  const pendingDoctorComputed = useMemo(() => {
+    const fromList = doctors.find((d) => d.requestStatus === "pending") || null;
+    if (fromList) return fromList;
+
+    const cache = readPendingCache();
+    if (!cache.size) return null;
+
+    const sel = readSelectedDoctor();
+    if (!sel) return null;
+
+    const selId = String(sel.id ?? "");
+    const selU = String(sel.user_id ?? "");
+    if ((selId && cache.has(selId)) || (selU && cache.has(selU))) {
+      return {
+        ...sel,
+        id: Number(sel.id || 0),
+        requestStatus: "pending" as const,
+        name: safeStr(sel.name || sel.username || "Doctor"),
+        profile_image: safeStr(sel.profile_image || "/doctor.jpg"),
+        specialization: safeStr(sel.specialization || "Psychologist"),
+      } as Doctor;
+    }
+    return null;
+  }, [doctors]);
+
   const acceptedDoctorComputed = useMemo(
     () => doctors.find((d) => d.requestStatus === "accepted") || null,
     [doctors]
   );
 
-  const pendingDoctor = overrideDoctor?.requestStatus === "pending" ? overrideDoctor : pendingDoctorComputed;
-  const acceptedDoctor = overrideDoctor?.requestStatus === "accepted" ? overrideDoctor : acceptedDoctorComputed;
+  // hide the list when ANY pending exists (from list OR fallback)
+  const hideList = !!pendingDoctorComputed;
+
+  const pendingDoctor =
+    overrideDoctor?.requestStatus === "pending" ? overrideDoctor : pendingDoctorComputed;
+  const acceptedDoctor =
+    overrideDoctor?.requestStatus === "accepted" ? overrideDoctor : acceptedDoctorComputed;
 
   /* ------------------------------ actions ------------------------------ */
 
@@ -224,128 +461,94 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     if (!doc?.id || sendingId != null) return;
     setSendingId(doc.id);
 
-    // demo/local path
-    if (!isBackendConnected || !BASE) {
+    // set durable pending immediately — only doctor REJECT or patient CANCEL clears it
+    addToPendingCache(doc.id);
+    addToPendingCache(doc.user_id);
+    writeSelectedDoctor({ ...doc, requestStatus: "pending" });
+
+    const markPendingLocally = () => {
       setDoctors((prev) =>
         prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "pending" } : d))
       );
       try {
-        const raw = localStorage.getItem("user_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const sent = new Set(parsed?.patient_profile?.sent_requests ?? []);
-          sent.add(String(doc.id));
-          parsed.patient_profile = { ...(parsed.patient_profile || {}), sent_requests: [...sent] };
-          localStorage.setItem("user_data", JSON.stringify(parsed));
-        }
-        localStorage.setItem("selectedDoctor", JSON.stringify({ ...doc, requestStatus: "pending" }));
+        writeSelectedDoctor({ ...doc, requestStatus: "pending" });
         if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
       } catch {}
+    };
+
+    if (!isBackendConnected || !BASE) {
+      markPendingLocally();
       setSendingId(null);
       return;
     }
 
     try {
-      const tok = token;
-      if (!tok) {
-        console.error("No auth token");
-        setSendingId(null);
-        return;
-      }
       const resp = await fetch(`${BASE}/users/doctor/request/${doc.id}/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Token ${tok}` },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
       });
       if (!resp.ok) {
         const t = await resp.text();
         console.error("Send request failed", resp.status, t);
-        setSendingId(null);
-        return;
       }
-      // mark pending locally
-      setDoctors((prev) =>
-        prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "pending" } : d))
-      );
-      try {
-        const raw = localStorage.getItem("user_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const sent = new Set(parsed?.patient_profile?.sent_requests ?? []);
-          sent.add(String(doc.id));
-          parsed.patient_profile = { ...(parsed.patient_profile || {}), sent_requests: [...sent] };
-          localStorage.setItem("user_data", JSON.stringify(parsed));
-        }
-        localStorage.setItem("selectedDoctor", JSON.stringify({ ...doc, requestStatus: "pending" }));
-        if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
-      } catch {}
+      markPendingLocally();
     } catch (e) {
       console.error("sendRequest error:", e);
+      markPendingLocally();
     } finally {
       setSendingId(null);
     }
   };
 
-  // Try several plausible cancel endpoints; fall back to local-only if not available.
   const cancelRequest = async (doc: Doctor) => {
     if (!doc?.id || cancelId != null) return;
     setCancelId(doc.id);
 
     const localCleanup = () => {
+      removeFromPendingCache(doc.id);
+      removeFromPendingCache(doc.user_id);
+
       setDoctors((prev) =>
         prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "none" } : d))
       );
+
       try {
-        const raw = localStorage.getItem("user_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const sentArr: string[] = parsed?.patient_profile?.sent_requests ?? [];
-          const filtered = sentArr.filter(
-            (x) => x !== String(doc.id) && x !== String(doc.user_id)
-          );
-          parsed.patient_profile = { ...(parsed.patient_profile || {}), sent_requests: filtered };
-          localStorage.setItem("user_data", JSON.stringify(parsed));
-        }
-        const selRaw = localStorage.getItem("selectedDoctor");
-        if (selRaw) {
-          const sel = JSON.parse(selRaw);
-          if (Number(sel?.id) === Number(doc.id)) {
-            localStorage.setItem("selectedDoctor", JSON.stringify({ ...sel, requestStatus: "none" }));
-          }
+        const sel = readSelectedDoctor();
+        if (sel && Number(sel?.id) === Number(doc.id)) {
+          writeSelectedDoctor({ ...sel, requestStatus: "none" });
         }
         if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
       } catch {}
     };
 
-    if (!isBackendConnected || !BASE || !token) {
+    if (!isBackendConnected || !BASE) {
       localCleanup();
       setCancelId(null);
       return;
     }
 
     try {
-      // Try multiple common patterns
-      const tok = token!;
       const candidates = [
         `${BASE}/users/doctor/request/${doc.id}/cancel/`,
         `${BASE}/users/doctor/request/cancel/${doc.id}/`,
-        `${BASE}/users/doctor/request/${doc.id}/`, // maybe DELETE
+        `${BASE}/users/doctor/request/${doc.id}/`,
       ];
-
+      let ok = false;
       for (const url of candidates) {
         const method = url.endsWith(`/${doc.id}/`) ? "DELETE" : "POST";
         try {
           const resp = await fetch(url, {
             method,
-            headers: { "Content-Type": "application/json", Authorization: `Token ${tok}` },
+            headers: { "Content-Type": "application/json", ...authHeaders() },
           });
-          if (resp.ok) break;
-        } catch {
-          // try next
-        }
+          if (resp.ok) {
+            ok = true;
+            break;
+          }
+        } catch {}
       }
-
-      // Regardless, make UI consistent
       localCleanup();
+      if (ok) void load();
     } finally {
       setCancelId(null);
     }
@@ -353,17 +556,12 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
 
   /* ------------------------------ render ------------------------------ */
 
-  // Hide the scrollable list when a request is pending (spec).
-  const hideList = !!pendingDoctor;
-
   return (
     <div className="bg-[#F6FDFE] shadow-md p-3 sm:p-6 rounded-2xl w-full max-w-[320px] sm:max-w-sm text-heading2">
-      {/* Title chip */}
       <h2 className="text-heading2 bg-[#D7E2FE] text-sm sm:text-xl font-semibold p-2 sm:p-4 mb-4 sm:mb-6 rounded-full text-center">
         Choose Your Therapist
       </h2>
 
-      {/* Accepted (connected) banner */}
       {acceptedDoctor && (
         <div className="border border-green-300 bg-green-50 rounded-xl p-3 sm:p-4 mb-4">
           <div className="flex items-center gap-3">
@@ -387,17 +585,13 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         </div>
       )}
 
-      {/* Pending card (single-line Status at TOP; list hidden while pending) */}
       {!acceptedDoctor && pendingDoctor && (
         <div className="border border-[#CFE0FF] bg-white rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-          {/* Status line at top, single line */}
           <div className="flex items-center justify-between">
-            <div className="text-[#1E3CA7] font-semibold text-xs sm:text-sm whitespace-nowrap">
-              Status:&nbsp;
-              <span className="inline-flex items-center gap-1">
-                <Hourglass className="w-4 h-4" />
-                Pending&nbsp;Request
-              </span>
+            <div className="inline-flex items-center gap-2 text-[#1E3CA7] font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <span>Status:</span>
+              <Hourglass className="w-4 h-4 flex-shrink-0" />
+              <span>Pending Request</span>
             </div>
             <SecondaryButton
               text={cancelId === pendingDoctor.id ? "Cancelling…" : "Cancel"}
@@ -407,7 +601,6 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
             />
           </div>
 
-          {/* Doctor row */}
           <div className="mt-3 flex items-center gap-3 sm:gap-4">
             <Image
               src={pendingDoctor.profile_image || "/doctor.jpg"}
@@ -428,12 +621,9 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         </div>
       )}
 
-      {/* Scrollable list — hidden while a request is pending */}
-      {!hideList && (
-        <div
-          className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1"
-          style={{ maxHeight: 320 }}
-        >
+      {/* Only when no pending exists → show the full list */}
+      {!pendingDoctor && (
+        <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1" style={{ maxHeight: 320 }}>
           {loading && (
             <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
               Loading doctors…
@@ -471,9 +661,7 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
                         ⭐ {isNum(d.rating) ? d.rating.toFixed(1) : "0.0"}
                       </span>
                       {safeStr(d.location) && (
-                        <span className="text-gray-400 text-xs sm:text-sm">
-                          • {d.location}
-                        </span>
+                        <span className="text-gray-400 text-xs sm:text-sm">• {d.location}</span>
                       )}
                     </div>
                   </div>
