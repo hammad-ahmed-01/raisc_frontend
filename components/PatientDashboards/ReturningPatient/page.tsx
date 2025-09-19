@@ -131,7 +131,7 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
         <Header name={displayName} />
 
         {/* Three Column Layout */}
-        <div className="mb-8 sm:mb-16 grid grid-cols-1 lg:grid-cols-3 mt-8 sm:mt-12 lg:mt-24 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 mt-8 sm:mt-12 lg:mt-24 gap-3 sm:gap-4 lg:gap-6">
           {/* Column 1: Quote + Resources */}
           <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 lg:gap-6 order-2 lg:order-1">
             <QuoteCarousel />
@@ -139,7 +139,7 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
           </div>
 
           {/* Column 2: Therapist Card */}
-          <div className="mb-8 sm:mb-16 flex justify-center order-1 lg:order-2">
+          <div className="flex justify-center order-1 lg:order-2">
             {/* The card now fetches doctors + shows pending/accepted itself.
                 No props (doctor/hasRequest/requestStatus) needed here, which
                 removes the TypeScript error you were seeing. */}
@@ -147,7 +147,7 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
           </div>
 
           {/* Column 3: ChatBot */}
-          <div className="flex justify-center items-end order-3 mb-8 sm:mb-16">
+          <div className="flex justify-center items-center order-3">
             <ChatBot />
           </div>
         </div>

@@ -14,7 +14,7 @@ const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "")
 
 /* ------------------------------ types ----------------------------- */
 
-export type RequestStatus = "none" | "pending" | "accepted";
+export type RequestStatus = "none" | "pending" | "accepted" | "rejected" | "cancelled";
 
 type Doctor = {
   id: number;
@@ -46,37 +46,47 @@ const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 const PENDING_CACHE_KEY = "pending_requests_cache";
+const CANCELLED_CACHE_KEY = "cancelled_requests_cache";
 const SELECTED_DOCTOR_KEY = "selectedDoctor";
 
-/** durable pending store — only cleared on doctor REJECT or patient CANCEL */
-function readPendingCache(): Set<string> {
+/** sets for durable flags */
+function readSet(key: string): Set<string> {
   try {
-    const raw = localStorage.getItem(PENDING_CACHE_KEY);
+    const raw = localStorage.getItem(key);
     const arr: string[] = raw ? JSON.parse(raw) : [];
     return new Set(arr.map(String));
   } catch {
     return new Set();
   }
 }
-function writePendingCache(set: Set<string>) {
+function writeSet(key: string, set: Set<string>) {
   try {
-    localStorage.setItem(PENDING_CACHE_KEY, JSON.stringify([...set]));
+    localStorage.setItem(key, JSON.stringify([...set]));
   } catch {}
 }
-function addToPendingCache(idLike: number | string | undefined | null) {
+function addToSet(key: string, idLike: number | string | undefined | null) {
   if (idLike == null) return;
   const s = String(idLike);
-  const cache = readPendingCache();
+  const cache = readSet(key);
   cache.add(s);
-  writePendingCache(cache);
+  writeSet(key, cache);
 }
-function removeFromPendingCache(idLike: number | string | undefined | null) {
+function removeFromSet(key: string, idLike: number | string | undefined | null) {
   if (idLike == null) return;
   const s = String(idLike);
-  const cache = readPendingCache();
+  const cache = readSet(key);
   cache.delete(s);
-  writePendingCache(cache);
+  writeSet(key, cache);
 }
+const readPendingCache = () => readSet(PENDING_CACHE_KEY);
+const writePendingCache = (s: Set<string>) => writeSet(PENDING_CACHE_KEY, s);
+const addToPendingCache = (id?: number | string | null) => addToSet(PENDING_CACHE_KEY, id);
+const removeFromPendingCache = (id?: number | string | null) => removeFromSet(PENDING_CACHE_KEY, id);
+
+const readCancelledCache = () => readSet(CANCELLED_CACHE_KEY);
+const writeCancelledCache = (s: Set<string>) => writeSet(CANCELLED_CACHE_KEY, s);
+const addToCancelledCache = (id?: number | string | null) => addToSet(CANCELLED_CACHE_KEY, id);
+const removeFromCancelledCache = (id?: number | string | null) => removeFromSet(CANCELLED_CACHE_KEY, id);
 
 function readSelectedDoctor(): Doctor | null {
   try {
@@ -133,35 +143,35 @@ function normalizeDecision(v: unknown): "pending" | "accepted" | "rejected" | ""
   return "";
 }
 
-/** pull doctor.user_id values for **explicitly rejected** requests (patient view) */
-function extractRejectedDoctorUserIds(payload: any): Set<string> {
-  const out = new Set<string>();
-  const add = (item: any) => {
-    if (normalizeDecision(item?.status) !== "rejected") return;
+/**
+ * Build a map of the **latest** status per doctor.user_id.
+ * Assumes payload is newest-first from backend.
+ */
+function buildLatestStatusByDoctor(payload: any): Map<string, "pending" | "accepted" | "rejected"> {
+  const map = new Map<string, "pending" | "accepted" | "rejected">();
+  const consider = (item: any) => {
+    const status = normalizeDecision(item?.status);
     const uid =
       item?.doctor?.user_id ??
       item?.doctor?.user?.id ??
       item?.doctor_id ??
       item?.doctorId ??
       null;
-    if (uid != null && !Number.isNaN(Number(uid))) out.add(String(uid));
+    if (!status || uid == null || Number.isNaN(Number(uid))) return;
+    const key = String(uid);
+    if (!map.has(key)) map.set(key, status);
   };
-  if (Array.isArray(payload)) {
-    payload.forEach(add);
-    return out;
+  if (Array.isArray(payload)) payload.forEach(consider);
+  else if (payload && typeof payload === "object") {
+    if (Array.isArray(payload.requests)) payload.requests.forEach(consider);
+    else Object.values(payload).forEach((v) => v && typeof v === "object" && consider(v));
   }
-  if (payload && typeof payload === "object") {
-    if (Array.isArray(payload.requests)) payload.requests.forEach(add);
-    else Object.values(payload).forEach((v) => v && typeof v === "object" && add(v));
-  }
-  return out;
+  return map;
 }
 
 /**
- * Compute per-doctor status:
- *  - "accepted" if backend associated the patient with this doctor (approved)
- *  - "pending"  if our durable cache still says pending for this doctor
- *  - "none"     otherwise
+ * Base list status: "accepted" (association), "pending" (cache), or "none".
+ * We overlay "cancelled" or "rejected" later depending on source.
  */
 function computeStatusForDoctor(d: Doctor, me: any, pendingCache: Set<string>): RequestStatus {
   const pp = me?.patient_profile || {};
@@ -177,6 +187,8 @@ function computeStatusForDoctor(d: Doctor, me: any, pendingCache: Set<string>): 
   if (matchesAssoc) {
     removeFromPendingCache(d.id);
     removeFromPendingCache(d.user_id);
+    removeFromCancelledCache(d.id);
+    removeFromCancelledCache(d.user_id);
     return "accepted";
   }
 
@@ -214,8 +226,10 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const rejectWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /** patient’s own requests; only care about REJECT to clear pending */
-  const fetchRejectedSet = async (): Promise<Set<string> | null> => {
+  /** patient’s requests (latest status map) */
+  const fetchLatestStatusMap = async (): Promise<
+    Map<string, "pending" | "accepted" | "rejected"> | null
+  > => {
     try {
       const res = await fetch(`/api/patient/requests`, {
         headers: { ...authHeaders() },
@@ -223,46 +237,54 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       });
       if (!res.ok) return null;
       const data = await res.json().catch(() => ({}));
-      const set = extractRejectedDoctorUserIds(data);
-      return set.size ? set : null;
+      return buildLatestStatusByDoctor(data);
     } catch {
       return null;
     }
   };
 
-  const applyImmediateRejectionSync = (rejectedDoctorUserIds: Set<string>) => {
-    if (!rejectedDoctorUserIds?.size) return;
+  /**
+   * Doctor-driven rejection:
+   * - Only flip currently-pending doctors whose latest status is "rejected"
+   * - Ignore if this doctor is in the CANCELLED cache (patient just cancelled)
+   */
+  const applyDoctorDrivenRejection = (
+    latestMap: Map<string, "pending" | "accepted" | "rejected">
+  ) => {
+    if (!latestMap || latestMap.size === 0) return;
 
-    // update the durable pending cache
-    let cache = readPendingCache();
-    let changed = false;
-    for (const pid of [...cache]) {
-      if (rejectedDoctorUserIds.has(pid)) {
-        cache.delete(pid);
-        changed = true;
+    const cancelledCache = readCancelledCache();
+
+    // Find pending doctors, test latest status
+    const affectedIds = new Set<string>();
+    doctors.forEach((d) => {
+      if (d.requestStatus !== "pending") return;
+      const uid = String(d.user_id ?? "");
+      const latest = uid ? latestMap.get(uid) : undefined;
+      if (latest === "rejected" && !cancelledCache.has(uid) && !cancelledCache.has(String(d.id))) {
+        affectedIds.add(String(d.id));
+        // clear pending flags
+        removeFromPendingCache(d.id);
+        removeFromPendingCache(d.user_id);
       }
-    }
-    if (changed) writePendingCache(cache);
+    });
 
-    // update selected doctor fallback
+    if (!affectedIds.size) return;
+
+    // Update selected doctor if affected
     try {
       const sel = readSelectedDoctor();
-      const selU = String(sel?.user_id ?? "");
-      if (sel && selU && rejectedDoctorUserIds.has(selU)) {
-        writeSelectedDoctor({ ...sel, requestStatus: "none" });
+      if (sel && affectedIds.has(String(sel.id ?? ""))) {
+        writeSelectedDoctor({ ...sel, requestStatus: "rejected" });
       }
       if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
     } catch {}
 
-    // reflect in UI
+    // Flip UI
     setDoctors((prev) =>
-      prev.map((d) => {
-        const duid = String(d.user_id ?? "");
-        if (d.requestStatus === "pending" && duid && rejectedDoctorUserIds.has(duid)) {
-          return { ...d, requestStatus: "none" };
-        }
-        return d;
-      })
+      prev.map((d) =>
+        affectedIds.has(String(d.id)) ? { ...d, requestStatus: "rejected" as const } : d
+      )
     );
   };
 
@@ -281,20 +303,31 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       const normalized: Doctor[] = Array.isArray(list) ? list.map(normalizeDoctor) : [];
 
       let pendingCache = readPendingCache();
+      const cancelledCache = readCancelledCache();
 
-      // only explicit rejections clear pending
-      const rejectedSet = await fetchRejectedSet();
-      if (rejectedSet && rejectedSet.size > 0) {
-        applyImmediateRejectionSync(rejectedSet);
-        pendingCache = readPendingCache();
-      }
-
-      const withStatuses = normalized.map((d) => ({
+      // 1) Base: accepted/pending/none
+      let withStatuses = normalized.map((d) => ({
         ...d,
         requestStatus: computeStatusForDoctor(d, meData, pendingCache),
       }));
 
+      // 2) Overlay "cancelled" from local cache (after pending was cleared)
+      withStatuses = withStatuses.map((d) => {
+        if (d.requestStatus === "none") {
+          const idKey = String(d.id);
+          const uidKey = String(d.user_id ?? "");
+          if ((uidKey && cancelledCache.has(uidKey)) || cancelledCache.has(idKey)) {
+            return { ...d, requestStatus: "cancelled" as const };
+          }
+        }
+        return d;
+      });
+
       setDoctors(withStatuses);
+
+      // 3) Check latest statuses to react to doctor-driven rejections of PENDING ones
+      const latest = await fetchLatestStatusMap();
+      if (latest) applyDoctorDrivenRejection(latest);
     } finally {
       setLoading(false);
     }
@@ -311,6 +344,7 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     const onStorage = (e: StorageEvent) => {
       if (
         e.key === PENDING_CACHE_KEY ||
+        e.key === CANCELLED_CACHE_KEY ||
         e.key === SELECTED_DOCTOR_KEY ||
         e.key === "user_data"
       ) {
@@ -360,21 +394,21 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctors]);
 
-  // fast watcher (2s) to pick up REJECTION explicitly (and only that)
+  // fast watcher (2s): only flip pending → rejected if latest says rejected AND not cancelled
   useEffect(() => {
     const hasPending =
       readPendingCache().size > 0 ||
       doctors.some((d) => d.requestStatus === "pending");
     if (hasPending) {
       (async () => {
-        const rejectedSet = await fetchRejectedSet();
-        if (rejectedSet?.size) applyImmediateRejectionSync(rejectedSet);
+        const latest = await fetchLatestStatusMap();
+        if (latest) applyDoctorDrivenRejection(latest);
       })();
 
       if (rejectWatchRef.current) clearInterval(rejectWatchRef.current);
       rejectWatchRef.current = setInterval(async () => {
-        const rejectedSet = await fetchRejectedSet();
-        if (rejectedSet?.size) applyImmediateRejectionSync(rejectedSet);
+        const latest = await fetchLatestStatusMap();
+        if (latest) applyDoctorDrivenRejection(latest);
       }, 2000);
     } else if (rejectWatchRef.current) {
       clearInterval(rejectWatchRef.current);
@@ -413,10 +447,7 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     return d;
   }, [doctorProp, hasRequest, requestStatus]);
 
-  /** choose the pending card from:
-   *    1) computed doctors list
-   *    2) selectedDoctor fallback if its id/user_id is in durable cache
-   */
+  /** pick pending from list or durable fallback */
   const pendingDoctorComputed = useMemo(() => {
     const fromList = doctors.find((d) => d.requestStatus === "pending") || null;
     if (fromList) return fromList;
@@ -446,14 +477,23 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     () => doctors.find((d) => d.requestStatus === "accepted") || null,
     [doctors]
   );
-
-  // hide the list when ANY pending exists (from list OR fallback)
-  const hideList = !!pendingDoctorComputed;
+  const rejectedDoctorComputed = useMemo(
+    () => doctors.find((d) => d.requestStatus === "rejected") || null,
+    [doctors]
+  );
+  const cancelledDoctorComputed = useMemo(
+    () => doctors.find((d) => d.requestStatus === "cancelled") || null,
+    [doctors]
+  );
 
   const pendingDoctor =
     overrideDoctor?.requestStatus === "pending" ? overrideDoctor : pendingDoctorComputed;
   const acceptedDoctor =
     overrideDoctor?.requestStatus === "accepted" ? overrideDoctor : acceptedDoctorComputed;
+  const rejectedDoctor =
+    overrideDoctor?.requestStatus === "rejected" ? overrideDoctor : rejectedDoctorComputed;
+  const cancelledDoctor =
+    overrideDoctor?.requestStatus === "cancelled" ? overrideDoctor : cancelledDoctorComputed;
 
   /* ------------------------------ actions ------------------------------ */
 
@@ -461,7 +501,11 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     if (!doc?.id || sendingId != null) return;
     setSendingId(doc.id);
 
-    // set durable pending immediately — only doctor REJECT or patient CANCEL clears it
+    // fresh request: clear any old "cancelled" mark
+    removeFromCancelledCache(doc.id);
+    removeFromCancelledCache(doc.user_id);
+
+    // mark pending immediately
     addToPendingCache(doc.id);
     addToPendingCache(doc.user_id);
     writeSelectedDoctor({ ...doc, requestStatus: "pending" });
@@ -505,17 +549,21 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     setCancelId(doc.id);
 
     const localCleanup = () => {
+      // clear pending
       removeFromPendingCache(doc.id);
       removeFromPendingCache(doc.user_id);
+      // mark cancelled (for UI distinction)
+      addToCancelledCache(doc.id);
+      addToCancelledCache(doc.user_id);
 
       setDoctors((prev) =>
-        prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "none" } : d))
+        prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "cancelled" } : d))
       );
 
       try {
         const sel = readSelectedDoctor();
         if (sel && Number(sel?.id) === Number(doc.id)) {
-          writeSelectedDoctor({ ...sel, requestStatus: "none" });
+          writeSelectedDoctor({ ...sel, requestStatus: "cancelled" });
         }
         if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
       } catch {}
@@ -628,6 +676,66 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         </div>
       )}
 
+      {/* Rejected info card (no Cancel button) */}
+      {!acceptedDoctor && !pendingDoctor && rejectedDoctor && (
+        <div className="border border-red-200 bg-red-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 text-red-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <span>Status:</span>
+              <span>Rejected</span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3 sm:gap-4">
+            <Image
+              src={rejectedDoctor.profile_image || "/doctor.jpg"}
+              alt={rejectedDoctor.name}
+              className="w-14 h-14 rounded-full border-red-200 border object-cover"
+              width={56}
+              height={56}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-red-800 font-semibold text-sm sm:text-base truncate">
+                {rejectedDoctor.name}
+              </p>
+              <p className="text-red-700 text-xs sm:text-sm truncate">
+                {rejectedDoctor.specialization || "Psychologist"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancelled info card (no Cancel button) */}
+      {!acceptedDoctor && !pendingDoctor && !rejectedDoctor && cancelledDoctor && (
+        <div className="border border-orange-200 bg-orange-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 text-orange-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <span>Status:</span>
+              <span>Cancelled</span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3 sm:gap-4">
+            <Image
+              src={cancelledDoctor.profile_image || "/doctor.jpg"}
+              alt={cancelledDoctor.name}
+              className="w-14 h-14 rounded-full border-orange-200 border object-cover"
+              width={56}
+              height={56}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-orange-800 font-semibold text-sm sm:text-base truncate">
+                {cancelledDoctor.name}
+              </p>
+              <p className="text-orange-700 text-xs sm:text-sm truncate">
+                {cancelledDoctor.specialization || "Psychologist"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Only when no pending exists → show the full list */}
       {!pendingDoctor && (
         <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>
@@ -680,6 +788,14 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
                   ) : d.requestStatus === "pending" ? (
                     <span className="inline-flex items-center gap-1 text-[#1E3CA7] text-xs sm:text-sm font-semibold whitespace-nowrap">
                       <Hourglass className="w-4 h-4" /> Pending
+                    </span>
+                  ) : d.requestStatus === "rejected" ? (
+                    <span className="text-red-600 text-xs sm:text-sm font-semibold">
+                      Rejected
+                    </span>
+                  ) : d.requestStatus === "cancelled" ? (
+                    <span className="text-orange-600 text-xs sm:text-sm font-semibold">
+                      Cancelled
                     </span>
                   ) : (
                     <SecondaryButton
