@@ -135,6 +135,7 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
   return (
     <div className="max-w-sm p-6 bg-gradient-to-br border-2 border-[#bfaaff] from-purple-100 to-blue-50 rounded-3xl shadow-md">
       <h2 className="text-2xl font-bold text-heading mb-3">Psychologist Connection</h2>
+      <hr className="border-blue-200 mb-4" />
 
       <div className="flex items-center gap-4">
         {psychologist.imageUrl ? (

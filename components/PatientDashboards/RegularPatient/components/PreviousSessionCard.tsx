@@ -168,7 +168,7 @@ export default function PreviousSessionCard() {
   return (
     <>
       <div className="max-w-sm p-6 bg-gradient-to-br border-2 border-[#bfaaff] from-purple-100 to-blue-50 rounded-3xl shadow-md">
-        <h2 className="text-xl font-semibold text-heading2 text-center mb-4">Previous Session</h2>
+        <h2 className="text-2xl font-bold text-heading mb-3">Previous Session</h2>
         <hr className="border-blue-200 mb-4" />
 
         <div className="text-heading2 space-y-4 text-left">
