@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
+
     const rawBase =
       process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
       process.env.DJANGO_BASE_URL ||
@@ -27,7 +32,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const upstream = await fetch(`${base}/users/doctor/delete-session/${params.id}/`, {
+    const upstream = await fetch(`${base}/users/doctor/delete-session/${id}/`, {
       method: "DELETE",
       headers: { Authorization: auth },
     });

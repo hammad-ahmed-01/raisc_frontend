@@ -3,10 +3,10 @@
 import TopRightIcons from "@/components/TopRightIcons";
 import AIChat from "./components/AIChat";
 import CTAButtons from "./components/CTAButtons";
-import { User } from "@/app/dashboard/page";
+import { UserShape } from "@/app/dashboard/page";
 
 interface NewPatientHomeProps {
-  user: User;
+  user: UserShape;
 }
 
 export default function NewPatientHome({ user }: NewPatientHomeProps) {

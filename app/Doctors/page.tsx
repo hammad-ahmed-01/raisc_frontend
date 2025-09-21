@@ -24,10 +24,10 @@ const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "")
 type RequestStatus = "none" | "pending" | "accepted";
 
 // Extend the imported Doctor type locally; do not modify shared types file.
-type Doctor = BaseDoctor & {
+type Doctor = Omit<BaseDoctor, "requestStatus"> & {
   user_id?: number;
   username?: string;
-  requestStatus?: RequestStatus;
+  requestStatus?: RequestStatus; // "none" | "pending" | "accepted"
 };
 
 /** Accepted/Pending/None — mirrors Psychologist.tsx logic */

@@ -23,10 +23,10 @@ type RequestStatus = "none" | "pending" | "accepted";
 
 // Extend the imported Doctor type locally so we don’t
 // have to change your shared types file.
-type Doctor = BaseDoctor & {
+type Doctor = Omit<BaseDoctor, "requestStatus"> & {
   user_id?: number;
   username?: string;
-  requestStatus?: RequestStatus;
+  requestStatus?: RequestStatus; // "none" | "pending" | "accepted"
 };
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";

@@ -5,9 +5,11 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { sessionId } = await params;
+
     const rawBase =
       process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
       process.env.DJANGO_BASE_URL ||
@@ -30,18 +32,19 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.text(); // forward raw body
+    // Forward raw body & preserve incoming content-type if present
+    const body = await req.text();
+    const contentType = req.headers.get("content-type") || "application/json";
 
-    // Proxy to Django
     const upstream = await fetch(
-      `${base}/users/doctor/update-summary/${encodeURIComponent(params.sessionId)}/`,
+      `${base}/users/doctor/update-summary/${encodeURIComponent(sessionId)}/`,
       {
         method: "PATCH",
         headers: {
           Authorization: auth,
-          "Content-Type": "application/json",
+          "Content-Type": contentType,
         },
-        body,
+        body: body || undefined,
       }
     );
 
@@ -50,7 +53,6 @@ export async function PATCH(
       const json = text ? JSON.parse(text) : {};
       return NextResponse.json(json, { status: upstream.status });
     } catch {
-      // Upstream didn’t return JSON; return as-is
       return new NextResponse(text || "", {
         status: upstream.status,
         headers: { "Content-Type": "application/json" },

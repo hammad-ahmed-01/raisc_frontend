@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
+
     const rawBase =
       process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
       process.env.DJANGO_BASE_URL ||
@@ -17,6 +22,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       );
     }
 
+    // auth from header or cookie
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
       const sessionKey = req.cookies.get("session_key")?.value;
@@ -26,20 +32,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const incoming = await req.json().catch(() => ({} as any));
-    const { title, description, date } = incoming;
-
-    if (!title || !date) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-    }
-
-    const upstream = await fetch(`${base}/users/doctor/reschedule-session/${params.id}/`, {
+    // pass through body to Django
+    const bodyText = await req.text(); // works for json/form; preserve content-type if present
+    const upstream = await fetch(`${base}/users/doctor/reschedule-session/${id}/`, {
       method: "PATCH",
       headers: {
         Authorization: auth,
-        "Content-Type": "application/json",
+        ...(req.headers.get("content-type")
+          ? { "Content-Type": req.headers.get("content-type")! }
+          : {}),
       },
-      body: JSON.stringify({ title, description, date }),
+      body: bodyText || undefined,
     });
 
     const text = await upstream.text();

@@ -3,7 +3,7 @@
 // components/PsychologistCard.tsx
 import { UserCircle2, Dot, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
-import { User } from "@/app/dashboard/page";
+import { UserShape } from "@/app/dashboard/page";
 import Image from "next/image";
 
 interface PsychologistData {
@@ -33,7 +33,7 @@ interface BackendLatestSession {
 }
 
 interface PsychologistCardProps {
-  user?: User;
+  user?: UserShape;
 }
 
 function getAuthHeaderFromStorage(): Record<string, string> {
