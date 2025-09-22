@@ -28,25 +28,21 @@ interface OrganizationProfile {
 }
 export interface User {
   id: number;
-  username?: string;              // sometimes comes nested as user.username
+  username?: string;
   email?: string;
   user_type?: "patient" | "doctor" | "organization";
   patient_profile?: PatientProfile | null;
   doctor_profile?: DoctorProfile;
   organization_profile?: OrganizationProfile;
-  // allow unknown extra fields (for nested shapes)
   [key: string]: any;
 }
 
-/** Try to pull a username from multiple possible shapes. */
 function extractUsername(u: any): string | null {
   if (!u) return null;
-  // common shapes
   if (typeof u.username === "string" && u.username.trim()) return u.username.trim();
   if (u.user && typeof u.user.username === "string" && u.user.username.trim()) {
     return u.user.username.trim();
   }
-  // occasionally APIs only give email
   const email = u.email || u.user?.email;
   if (typeof email === "string" && email.includes("@")) {
     return email.split("@")[0];
@@ -54,7 +50,6 @@ function extractUsername(u: any): string | null {
   return null;
 }
 
-/** Try localStorage "user" (as saved by your login page) */
 function getUserFromStorage(): User | null {
   try {
     const raw = localStorage.getItem("user");
@@ -65,10 +60,9 @@ function getUserFromStorage(): User | null {
   }
 }
 
-/** Fetch /users/user/ with token if we still don't have username */
 async function fetchUserFromAPI(): Promise<User | null> {
   const base = process.env.NEXT_PUBLIC_FASTAPI_BASE_URL?.replace(/\/+$/, "") || "";
-  const token = localStorage.getItem("token");
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   if (!base || !token) return null;
 
   try {
@@ -96,7 +90,6 @@ export default function Header() {
   useEffect(() => {
     (async () => {
       try {
-        // 1) Primary: your existing auth bootstrap
         const authResult = await checkAuth();
 
         if (!authResult.isAuthenticated) {
@@ -107,7 +100,6 @@ export default function Header() {
 
         let u: User | null = (authResult.user as User) ?? null;
 
-        // 2) Normalize patient payloads only (keep your existing contract)
         if (u?.user_type === "patient") {
           const pp = (u as any).patient_profile ?? null;
           const safeProfile: PatientProfile = {
@@ -117,24 +109,21 @@ export default function Header() {
           };
           u = { ...u, patient_profile: safeProfile };
         } else if (u) {
-          // strip unexpected nested patient_profile for non-patients
           const { patient_profile, ...rest } = u as any;
           u = rest as User;
         }
 
-        // 3) If username is still missing/empty, try API and then localStorage
         let name = extractUsername(u);
         if (!name) {
           const apiUser = await fetchUserFromAPI();
           if (apiUser) {
-            u = { ...apiUser, ...(u || {}) }; // prefer API fields if present
+            u = { ...apiUser, ...(u || {}) };
             name = extractUsername(u);
           }
         }
         if (!name) {
           const stored = getUserFromStorage();
           if (stored) {
-            // Do not overwrite server roles with storage, just pull username/email
             const merged = { ...(u || {}), username: stored.username ?? u?.username, email: stored.email ?? u?.email };
             u = merged;
             name = extractUsername(merged);
@@ -152,7 +141,6 @@ export default function Header() {
     })();
   }, [router]);
 
-  // Loading shimmer
   if (loading) {
     return (
       <div className="bg-[#CDD2F4] border-2 border-[#2196F3] p-6 rounded-[28px] min-h-28 font-quicksand shadow-sm">
@@ -167,7 +155,6 @@ export default function Header() {
     );
   }
 
-  // If unauthenticated, briefly show neutral header before redirect
   if (authError || !user) {
     return (
       <div className="bg-[#EEE7FD] border border-[#D1D5DB] p-6 rounded-[28px] flex flex-col md:flex-row justify-between items-center md:items-stretch min-h-28 font-quicksand">
@@ -185,22 +172,16 @@ export default function Header() {
     );
   }
 
-  // 🔥 Prefer username explicitly; never show placeholder "user"
-  const displayName =
-    extractUsername(user) ||
-    "friend"; // ultra-safe fallback (won’t show literal "user")
+  const displayName = extractUsername(user) || "friend";
 
   return (
     <div className="bg-[#EEE7FD] border border-[#D1D5DB] p-6 rounded-[28px] flex flex-col md:flex-row justify-between items-center md:items-stretch min-h-28 font-quicksand">
-      {/* Left Column */}
       <div className="flex flex-col justify-center text-center md:text-left">
         <h2 className="text-2xl font-bold text-heading">
           Welcome back, {displayName}
         </h2>
         <p className="text-md text-heading">Your AI Assistant is here to support you.</p>
       </div>
-
-      {/* Right Column */}
       <div className="flex items-end justify-center md:justify-end mt-4 md:mt-0">
         <div className="text-heading font-semibold flex items-center space-x-2">
           <span className="text-lg">🟢</span>

@@ -14,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     const performAuthCheck = async () => {
       const authResult = await checkAuth();
-      
+
       if (!authResult.isAuthenticated) {
         setAuthError(authResult.error || "Authentication failed");
         setTimeout(() => {
@@ -22,7 +22,7 @@ export default function Home() {
         }, 2000);
         return;
       }
-      
+
       // Check if user is a doctor (not allowed to access chatbot)
       if (authResult.user?.user_type === 'doctor') {
         setAuthError("Doctors cannot access the chatbot");
@@ -31,7 +31,7 @@ export default function Home() {
         }, 2000);
         return;
       }
-      
+
       setIsLoading(false);
     };
 
@@ -40,7 +40,7 @@ export default function Home() {
 
   if (authError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-red-50">
+      <div className="flex items-center justify-center min-h-dvh bg-red-50">
         <div className="text-center p-6 bg-white rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Unauthorized Access</h2>
           <p className="text-gray-700 mb-4">{authError}</p>
@@ -67,23 +67,25 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen w-screen bg-blue-100 font-quicksand flex overflow-hidden">
-      {/* Sidebar */}
-      <ChatHistory
-        onSelectChat={handleSelectChat}
-        onNewChat={handleNewChat}
-        onBackToDashboard={handleBackToDashboard}
-      />
+    <div className="min-h-dvh w-screen bg-blue-100 font-quicksand flex flex-col md:flex-row overflow-hidden">
+      {/* Sidebar (stacks on mobile, fixed column on desktop) */}
+      <div className="md:w-[300px] md:h-dvh md:overflow-y-auto md:shrink-0">
+        <ChatHistory
+          onSelectChat={handleSelectChat}
+          onNewChat={handleNewChat}
+          onBackToDashboard={handleBackToDashboard}
+        />
+      </div>
 
       {/* Main Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col md:h-dvh min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="p-4">
+        <div className="p-4 shrink-0">
           <Header />
         </div>
 
         {/* Chat Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
           <ChatWindow activeChatId={activeChatId} />
         </div>
       </div>

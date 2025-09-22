@@ -51,12 +51,12 @@ const Sidebar = () => {
   if (userType === "patient") {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
-      { id: 2, title: "Session History", icon: <FaHistory size={20} />, path: "/history" },
-      { id: 3, title: "Motivational Quotes", icon: <FaQuoteRight size={20} />, path: "/quotes" },
+      //{ id: 2, title: "Session History", icon: <FaHistory size={20} />, path: "/history" },
+      //{ id: 3, title: "Motivational Quotes", icon: <FaQuoteRight size={20} />, path: "/quotes" },
       { id: 4, title: "Chat with AI Bot", icon: <FaRobot size={20} />, path: "/chatbot" },
       { id: 5, title: "Psychologist", icon: <FaUserMd size={20} />, path: ["/AssociatedPsychologist", "/Doctors"] },
-      { id: 6, title: "Resources", icon: <FaBook size={20} />, path: "/resources" },
-      { id: 7, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
+      //{ id: 6, title: "Resources", icon: <FaBook size={20} />, path: "/resources" },
+      //{ id: 7, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
     ];
   } else if (userType === "doctor") {
     menuItems = [

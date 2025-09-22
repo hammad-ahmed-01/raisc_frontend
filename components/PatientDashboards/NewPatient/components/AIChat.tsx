@@ -16,7 +16,7 @@ export default function AIChat() {
 
   // ✅ Keep chatbot state local and easy to edit
   const [chatBot, setChatBot] = useState<ChatBotData>({
-    greeting: "Meet Lune\nYour AI Helper!",
+    greeting: "Meet Lune\nYour AI Companion!",
     description: "Share with me what you are feeling",
   });
 
@@ -57,7 +57,7 @@ export default function AIChat() {
               ))}
             </div>
 
-            <p className="mt-4 text-heading2 text-base text-[28px]">
+            <p className="mt-4 text-heading2 text-base text-[25px]">
               {chatBot.description}
             </p>
 
@@ -75,7 +75,7 @@ export default function AIChat() {
             <div className="relative w-[260px] sm:w-[320px] lg:w-[360px] aspect-[4/3]">
               <Image
                 src={ChatBotImage}
-                alt="Lune the AI helper"
+                alt="Lune the AI Companioon"
                 fill
                 priority
                 sizes="(max-width: 1024px) 320px, 360px"

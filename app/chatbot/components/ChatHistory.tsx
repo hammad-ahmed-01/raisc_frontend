@@ -23,9 +23,7 @@ const CHAT_DATA: Record<FilterKey, { id: string; title: string }[]> = {
     { id: "4", title: "How to reduce stress" },
     { id: "5", title: "Assist me in feeling better" },
   ],
-  older: [
-    // Keep empty or fill if you have older chats
-  ],
+  older: [],
 };
 
 const FILTER_LABELS: Record<FilterKey, string> = {
@@ -77,7 +75,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
   };
 
   return (
-    <aside className="w-full md:w-[300px] min-h-full bg-[#EAF4FF] text-heading rounded-tr-3xl rounded-br-3xl p-4 sm:p-6 flex flex-col justify-between border-r border-[#B2D5F1]">
+    <aside className="w-full md:w-full md:min-h-full bg-[#EAF4FF] text-heading rounded-none md:rounded-tr-3xl md:rounded-br-3xl p-4 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#B2D5F1]">
       {/* Top: Back + Dropdown */}
       <div>
         {/* Back to Dashboard */}
@@ -178,7 +176,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
             alt="Chatbot"
             width={200}
             height={350}
-            className="w-[200px] h-auto drop-shadow-md"
+            className="w-[160px] sm:w-[200px] h-auto drop-shadow-md"
             priority
           />
         </button>

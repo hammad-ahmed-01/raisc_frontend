@@ -9,8 +9,8 @@ type Props = {
 const MessageBubble = ({ text, isUser = false, isVoiceMessage = false }: Props) => {
   return (
     <div className={`my-2 ${isUser ? 'text-right' : 'text-left'}`}>
-      <div 
-        className={`inline-block px-4 py-2 rounded-2xl font-quicksand ${isUser ? 'bg-[#B2D5F166] text-[#444444]' : 'bg-[#A6B6CC66] text-[#444444]'}`}
+      <div
+        className={`inline-block max-w-[92%] sm:max-w-[80%] px-4 py-2 rounded-2xl font-quicksand ${isUser ? 'bg-[#B2D5F166] text-[#444444]' : 'bg-[#A6B6CC66] text-[#444444]'}`}
         style={{ boxShadow: '0px 4px 4px 0px #00000040' }}
       >
         <div className="flex items-center space-x-2">

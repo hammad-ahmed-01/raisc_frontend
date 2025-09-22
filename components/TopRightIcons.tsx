@@ -52,11 +52,13 @@ export default function TopRightIcons() {
           onClick={() => setShowDropdown(!showDropdown)}
         >
           <FiBell />
+          {/*
           {notifications.filter((n) => n.isNew).length > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
               {notifications.filter((n) => n.isNew).length}
             </span>
           )}
+          */}
         </button>
 
         {/* Settings */}

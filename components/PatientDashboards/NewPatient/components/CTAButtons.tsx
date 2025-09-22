@@ -13,17 +13,17 @@ function CTAButtonCard({ title, subtitle, onClick, gradient }: CardProps) {
   return (
     <button
       onClick={onClick}
-      className={`group text-center rounded-2xl w-full max-w-[360px] h-[180px] sm:h-[200px] p-6 border border-[#2196F3] 
+      className={`group text-center rounded-2xl w-full max-w-[342px] h-[120px] sm:h-[150px] p-6 border border-[#2196F3] 
                   hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${gradient}`}
     >
       <div className="flex flex-col h-full">
         {/* Title on top */}
-        <div className="font-bold text-heading text-xl sm:text-[32px] lg:text-[28px]">
+        <div className="font-bold text-heading text-xl sm:text-[28px] lg:text-[24px]">
           {title}
         </div>
 
         {/* Subtitle right under title */}
-        <div className="mt-2 text-heading2 text-base sm:text-[28px] lg:text-[28px] leading-snug">
+        <div className="mt-2 text-heading2 align-middle sm:text-[24px] lg:text-[24px] leading-snug">
           {subtitle}
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function CTAButtons() {
         title="Get Matched"
         subtitle="I’ll guide you to support."
         gradient="bg-[#D6F5F2]"
-        onClick={() => router.push("/get-matched")}
+        onClick={() => router.push("#")}
       />
     </div>
   );
