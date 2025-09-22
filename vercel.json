@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/chat", "destination": "https://raisc-chatbot-production.up.railway.app/api/chat" },
+    { "source": "/api/history/:session_key", "destination": "https://raisc-chatbot-production.up.railway.app/api/history/:session_key" }
+  ]
+}
