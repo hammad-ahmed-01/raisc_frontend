@@ -34,7 +34,7 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative h-screen px-4 pt-20 md:pt-24 lg:pt-28 pb-32 bg-blue-50 overflow-hidden"
+      className="relative min-h-screen px-4 pt-20 md:pt-24 lg:pt-28 pb-32 bg-blue-50 overflow-hidden"
       style={{ borderBottom: "5px solid #D0E3FFC7" }}
     >
       {/* Background image */}

@@ -139,7 +139,7 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative px-4 pt-12 pb-32 bg-blue-50 h-screen overflow-hidden">
+    <section id="contact" className="relative px-4 pt-12 pb-32 bg-blue-50 min-h-screen overflow-hidden">
       <div className="mb-2">
          <img
            src="/contact.png" 

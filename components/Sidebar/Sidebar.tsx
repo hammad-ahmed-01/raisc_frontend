@@ -105,13 +105,15 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white p-3 rounded-full shadow-lg"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-      </button>
+      {/* Mobile Menu Button (Hamburger only) */}
+      {!isMobileMenuOpen && (
+        <button
+          className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white p-3 rounded-full shadow-lg"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <FaBars size={20} />
+        </button>
+      )}
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
@@ -123,12 +125,22 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out z-40 ${
+        className={`fixed left-0 top-0 min-h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out z-40 ${
           "lg:block lg:w-20 lg:hover:w-64 lg:rounded-r-[20px]"
         } ${isMobileMenuOpen ? "block w-64" : "hidden lg:block"}`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
+        {/* Close button inside sidebar (top-right) */}
+        {isMobileMenuOpen && (
+          <button
+            className="absolute top-4 right-4 text-white z-50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <FaTimes size={24} />
+          </button>
+        )}
+
         {/* Logo */}
         <Link
           href="/"
