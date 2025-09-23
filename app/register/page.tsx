@@ -169,7 +169,7 @@ export default function Register() {
                   />
                   <span className="ml-2 text-gray-700">Patient</span>
                 </label>
-                <label className="inline-flex items-center cursor-pointer">
+                {/* <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
                     className="form-radio"
@@ -179,7 +179,7 @@ export default function Register() {
                     onChange={() => setUserType("doctor")}
                   />
                   <span className="ml-2 text-gray-700">Doctor</span>
-                </label>
+                </label> */}
               </div>
             </div>
 

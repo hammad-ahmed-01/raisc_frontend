@@ -141,16 +141,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
             setMessages(
               fromServer.length
                 ? fromServer
-                : [{ role: "assistant", content: "Hi there! How can I assist you today?" }]
+                : [{ role: "assistant", content: "Hi there!" }]
             );
           } else {
-            setMessages([{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
+            setMessages([{ role: "assistant", content: "Hi there!" }]);
           }
         } catch {
-          setMessages([{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
+          setMessages([{ role: "assistant", content: "Hi there!" }]);
         }
       } else {
-        setMessages([{ role: "assistant", content: "Hi there! How can I assist you today?" }]);
+        setMessages([{ role: "assistant", content: "Hi there!" }]);
       }
 
       initializeSTTRoom();
