@@ -8,17 +8,14 @@ import MessageBubble from "./MessageBubble";
 import InputBar from "./InputBar";
 
 interface ChatMessage {
-  role: string;             // "user" | "assistant"
+  role: string;
   content: string;
   isVoiceMessage?: boolean;
 }
-
 interface ChatWindowProps {
-  activeChatId: string | null; // comes from ChatHistory click
+  activeChatId: string | null;
 }
 
-/* ------------------------ Dummy threads for history ------------------------ */
-/* IDs match the items defined in ChatHistory (1..5). You can extend freely.  */
 const DUMMY_THREADS: Record<string, ChatMessage[]> = {
   "1": [
     { role: "assistant", content: "Hi! I’m here with you. What’s on your mind today?" },
@@ -56,11 +53,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [isConnectedToSTT, setIsConnectedToSTT] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
-  const [microphonePermission, setMicrophonePermission] = useState<
-    "granted" | "denied" | "prompt"
-  >("prompt");
 
-  // Session key (once)
   const sessionKeyRef = useRef<string>("");
   if (typeof window !== "undefined" && !sessionKeyRef.current) {
     sessionKeyRef.current =
@@ -70,7 +63,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   }
   const sessionKey = sessionKeyRef.current;
 
-  // Per-thread storage key: default (no chat selected) vs. specific history thread
   const BASE_STORAGE = useMemo(() => `chat_msgs_${sessionKey}`, [sessionKey]);
   const STORAGE_KEY = useMemo(
     () => (activeChatId ? `${BASE_STORAGE}_thread_${activeChatId}` : BASE_STORAGE),
@@ -96,35 +88,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     "Our service is temporarily unavailable. I apologize for any inconvenience. Consider reaching out to a trusted friend or practicing some self-care while we resolve this issue.",
   ];
 
-  const isBackendConnected =
-    process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+  const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
-  /* ----------------- load on mount + whenever chat selection changes ----------------- */
   useEffect(() => {
-    // 1) Try to restore the selected thread from localStorage
     try {
       const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as ChatMessage[];
         if (Array.isArray(parsed) && parsed.length) {
           setMessages(parsed);
-          // Initialize STT after we set messages (once per mount)
           initializeSTTRoom();
           return;
         }
       }
-    } catch {
-      // ignore cache issues
-    }
+    } catch {}
 
-    // 2) If a previous chat is selected, show its dummy thread (no design changes)
     if (activeChatId && DUMMY_THREADS[activeChatId]) {
       setMessages(DUMMY_THREADS[activeChatId]);
       initializeSTTRoom();
       return;
     }
 
-    // 3) No previous chat selected → original behavior: greeting or fetch history
     const boot = async () => {
       if (historyLoadedRef.current) return;
       historyLoadedRef.current = true;
@@ -138,11 +122,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
               data?.chat_history && Array.isArray(data.chat_history)
                 ? data.chat_history
                 : [];
-            setMessages(
-              fromServer.length
-                ? fromServer
-                : [{ role: "assistant", content: "Hi there!" }]
-            );
+            setMessages(fromServer.length ? fromServer : [{ role: "assistant", content: "Hi there!" }]);
           } else {
             setMessages([{ role: "assistant", content: "Hi there!" }]);
           }
@@ -157,59 +137,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     };
 
     boot();
-
-    return () => {
-      roomInstance.disconnect();
-    };
-    // re-run when switching chats (STORAGE_KEY changes with activeChatId)
+    return () => { roomInstance.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [STORAGE_KEY, activeChatId, isBackendConnected, sessionKey]);
 
-  /* ------------------------ persist messages per-thread ------------------------ */
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [messages, STORAGE_KEY]);
 
-  /* ------------------------------- autoscroll ------------------------------- */
   useEffect(() => {
-    chatBoxRef.current?.scrollTo({
-      top: chatBoxRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    chatBoxRef.current?.scrollTo({ top: chatBoxRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  /* ------------------------------- STT setup ------------------------------- */
   const initializeSTTRoom = async () => {
     if (sttInitializedRef.current) return;
-
     try {
       sttInitializedRef.current = true;
-      if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
-        setIsConnectedToSTT(false);
-        return;
-      }
-
-      const permission = await navigator.permissions.query({
-        name: "microphone" as PermissionName,
-      });
-      setMicrophonePermission(permission.state);
+      if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) { setIsConnectedToSTT(false); return; }
 
       const transcriptionRoom = `transcription_${sessionKey}_${Date.now()}`;
-      const resp = await fetch(
-        `/api/token?room=${transcriptionRoom}&username=user_${sessionKey.slice(-8)}`
-      );
+      const resp = await fetch(`/api/token?room=${transcriptionRoom}&username=user_${sessionKey.slice(-8)}`);
       const data = await resp.json();
 
       if (data.token && process.env.NEXT_PUBLIC_LIVEKIT_URL) {
-        await roomInstance.connect(
-          process.env.NEXT_PUBLIC_LIVEKIT_URL,
-          data.token
-        );
-
+        await roomInstance.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL, data.token);
         await roomInstance.localParticipant.setMicrophoneEnabled(true, undefined);
         setIsConnectedToSTT(true);
 
@@ -217,21 +170,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
           try {
             const parsed = JSON.parse(new TextDecoder().decode(payload));
             handleSTTResult(parsed);
-          } catch (error) {
-            console.error("Error parsing STT data:", error);
-          }
+          } catch (e) { console.error("Error parsing STT data:", e); }
         });
 
-        const micTrack = (roomInstance as any).localParticipant
-          ?.getTrackPublication("microphone")
-          ?.track;
-        if (micTrack) {
-          startAudioLevelMonitoring(micTrack);
-        }
+        const micTrack = (roomInstance as any).localParticipant?.getTrackPublication("microphone")?.track;
+        if (micTrack) startAudioLevelMonitoring(micTrack);
       }
-    } catch (error) {
-      console.error("Error connecting to STT room:", error);
-      setMicrophonePermission("denied");
+    } catch (e) {
+      console.error("Error connecting to STT room:", e);
       setIsConnectedToSTT(false);
       sttInitializedRef.current = false;
     }
@@ -240,11 +186,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const startAudioLevelMonitoring = (track: any) => {
     if (!track || !track.mediaStreamTrack) return;
     try {
-      const audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-      const source = audioContext.createMediaStreamSource(
-        new MediaStream([track.mediaStreamTrack])
-      );
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(new MediaStream([track.mediaStreamTrack]));
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
@@ -254,38 +197,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       const updateLevel = () => {
         if (!isRecording) return;
         analyser.getByteFrequencyData(dataArray);
-        const average =
-          dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-        const normalizedLevel = Math.min(average / 128, 1);
-        setAudioLevel(normalizedLevel);
+        const average = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
+        setAudioLevel(Math.min(average / 128, 1));
         requestAnimationFrame(updateLevel);
       };
       updateLevel();
-    } catch (error) {
-      console.error("Error setting up audio monitoring:", error);
+    } catch (e) {
+      console.error("Error setting up audio monitoring:", e);
     }
   };
 
   const handleSTTResult = (data: any) => {
     if (data.type === "voice_message_result" && data.success) {
-      const userVoiceMessage: ChatMessage = {
-        role: "user",
-        content: data.transcription,
-        isVoiceMessage: true,
-      };
+      const userVoiceMessage: ChatMessage = { role: "user", content: data.transcription, isVoiceMessage: true };
       setMessages((prev) => [...prev, userVoiceMessage]);
       processVoiceTranscription(data.transcription);
-    } else if (data.type === "voice_message_cancelled") {
-      // no-op
     } else if (!data.success) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Sorry, I could not process your voice message. Please try again.",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I could not process your voice message. Please try again." }]);
     }
     setVoiceLoading(false);
     setIsRecording(false);
@@ -299,47 +227,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_key: sessionKey, message: transcription }),
       });
-
       if (!response.ok) throw new Error("Failed to process voice message");
-
       const data = await response.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.response },
-      ]);
-    } catch (error) {
-      console.error("Error processing voice transcription:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Sorry, I encountered an error processing your voice message.",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error processing your voice message." }]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* --------------------------------- send --------------------------------- */
   const handleSend = async (text: string) => {
-    if (text.trim() === "") return;
-
-    const userMessage: ChatMessage = { role: "user", content: text };
-    setMessages((prev) => [...prev, userMessage]);
+    if (!text.trim()) return;
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
     setIsTyping(true);
 
-    if (!(process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true")) {
-      // Offline/demo mode → random fallback
+    if (!isBackendConnected) {
       setTimeout(() => {
-        const options = fallbackResponses;
-        const randomResponse = options[Math.floor(Math.random() * options.length)];
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: randomResponse },
-        ]);
+        const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        setMessages((prev) => [...prev, { role: "assistant", content: randomResponse }]);
         setLoading(false);
         setIsTyping(false);
       }, 900);
@@ -358,61 +265,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       const ct = response.headers.get("Content-Type") || "";
       if (ct.includes("application/json")) {
         const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.response },
-        ]);
+        setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
       } else {
         const txt = await response.text();
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: txt || "…" },
-        ]);
+        setMessages((prev) => [...prev, { role: "assistant", content: txt || "…" }]);
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "I apologize, but I'm experiencing technical difficulties right now. Please try again in a few moments. If the problem persists, consider reaching out to our support team.",
-        },
-      ]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "I’m having trouble right now. Please try again in a moment." }]);
     } finally {
       setLoading(false);
       setIsTyping(false);
     }
   };
 
-  /* ------------------------------ voice controls ------------------------------ */
   const startVoiceRecording = async () => {
     if (!isConnectedToSTT || isRecording) return;
     try {
       setIsRecording(true);
       await roomInstance.localParticipant.setMicrophoneEnabled(true);
       setTimeout(() => {
-        const pub = (roomInstance as any)
-          .localParticipant?.getTrackPublication("microphone");
+        const pub = (roomInstance as any).localParticipant?.getTrackPublication("microphone");
         if (pub?.track) startAudioLevelMonitoring(pub.track);
       }, 500);
-
-      await roomInstance.localParticipant.performRpc({
-        method: "start_turn",
-        destinationIdentity: "transcription-agent",
-        payload: "",
-      });
-    } catch (error) {
-      console.error("Error starting voice recording:", error);
+      await roomInstance.localParticipant.performRpc({ method: "start_turn", destinationIdentity: "transcription-agent", payload: "" });
+    } catch {
       setIsRecording(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Voice recording failed to start. Please check your connection and try again.",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Voice recording failed to start. Please check your connection and try again." }]);
     }
   };
 
@@ -421,13 +299,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     try {
       setVoiceLoading(true);
       setAudioLevel(0);
-      await roomInstance.localParticipant.performRpc({
-        method: "end_turn",
-        destinationIdentity: "transcription-agent",
-        payload: "",
-      });
-    } catch (error) {
-      console.error("Error sending voice recording:", error);
+      await roomInstance.localParticipant.performRpc({ method: "end_turn", destinationIdentity: "transcription-agent", payload: "" });
+    } catch {
       setIsRecording(false);
       setVoiceLoading(false);
     }
@@ -437,28 +310,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     if (!isConnectedToSTT) return;
     try {
       setAudioLevel(0);
-      await roomInstance.localParticipant.performRpc({
-        method: "cancel_turn",
-        destinationIdentity: "transcription-agent",
-        payload: "",
-      });
+      await roomInstance.localParticipant.performRpc({ method: "cancel_turn", destinationIdentity: "transcription-agent", payload: "" });
       setIsRecording(false);
       setVoiceLoading(false);
-    } catch (error) {
-      console.error("Error cancelling voice recording:", error);
-    }
+    } catch {}
   };
 
   return (
     <RoomContext.Provider value={roomInstance}>
-      <div className="h-full w-full max-w-screen mx-auto flex flex-col bg-[#FFFFFF] rounded-xl font-quicksand min-h-0">
+      {/* Mobile: fills available height from parent (which is min-h-screen); Desktop: unchanged */}
+      <div className="h-full w-full mx-auto flex flex-col rounded-none md:rounded-xl font-quicksand min-h-0 bg-gradient-to-br from-[#EEF5FF] to-[#F6E9F9] md:bg-white md:bg-none overflow-hidden">
         <RoomAudioRenderer />
 
-        {/* Messages */}
-        <div
-          ref={chatBoxRef}
-          className="flex-1 min-h-0 p-4 overflow-y-auto space-y-2"
-        >
+        {/* Scrollable messages area */}
+        <div ref={chatBoxRef} className="flex-1 min-h-0 p-4 overflow-y-auto space-y-2">
           {messages.map((msg, index) => (
             <MessageBubble
               key={`${index}-${msg.role}-${msg.content.slice(0, 12)}`}
@@ -467,14 +332,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
               isVoiceMessage={msg.isVoiceMessage}
             />
           ))}
-          {isTyping && (
-            <div className="text-sm text-gray-500 italic animate-pulse ml-2">
-              RAISC is typing...
-            </div>
-          )}
+          {isTyping && <div className="text-sm text-gray-500 italic animate-pulse ml-2">RAISC is typing...</div>}
         </div>
 
-        {/* Input */}
+        {/* Input stays at bottom */}
         <div className="p-3 shrink-0">
           <InputBar
             onSend={handleSend}

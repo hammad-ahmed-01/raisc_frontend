@@ -40,7 +40,7 @@ const InputBar = ({
   };
 
   return (
-    <div className="p-4 bg-[#FFFFFF] font-quicksand">
+    <div className="p-4 bg-transparent font-quicksand">
       <div className="relative w-full text-heading2">
         <input
           type="text"
