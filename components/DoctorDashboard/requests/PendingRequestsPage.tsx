@@ -1,4 +1,3 @@
-// app/Doctor/Requests/page.tsx
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
@@ -68,9 +67,7 @@ const toRequestDate = (r: any) => {
   return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
 };
 
-/** Extracts patient info from DRF DoctorRequestSerializer → normalized card data */
 const mapToCard = (r: any): PatientRequest => {
-  // DRF returns: { id, patient: { id, username, email, profile_data }, status, requested_at }
   const patient = r?.patient ?? {};
   const user = {
     username: patient?.username,
@@ -87,7 +84,7 @@ const mapToCard = (r: any): PatientRequest => {
     age: toAge(profileData, profileData),
     gender: toGender(profileData, profileData),
     condition: toCondition(profileData, profileData),
-    message: "", // optional message not present in current serializer
+    message: "",
     requestDate: toRequestDate(r),
   };
 };
@@ -101,7 +98,6 @@ const PendingRequestsPage: React.FC = () => {
   async function fetchRequests() {
     setLoading(true);
     try {
-      // Next proxy → Django /users/doctor/requests/
       const res = await fetch(`/api/doctors/requests`, {
         headers: {
           "Content-Type": "application/json",
@@ -134,7 +130,6 @@ const PendingRequestsPage: React.FC = () => {
 
   async function actionRequest(id: string, action: "accept" | "reject") {
     try {
-      // Our Next route normalizes → 'approved' or 'rejected'
       const res = await fetch(`/api/doctors/requests`, {
         method: "PATCH",
         headers: {
@@ -155,10 +150,8 @@ const PendingRequestsPage: React.FC = () => {
         throw new Error(msg);
       }
 
-      // Remove from list
       setPatientRequests((prev) => prev.filter((p) => p.id !== id));
 
-      // Tell /patients page to refresh its list immediately
       try {
         const bc = new BroadcastChannel("doctor-patients");
         bc.postMessage({ type: "refresh" });
@@ -181,7 +174,6 @@ const PendingRequestsPage: React.FC = () => {
     [patientRequests, searchQuery]
   );
 
-  // --- NEW: dynamic count text (uses the full pending list, not filtered) ---
   const totalPending = patientRequests.length;
   const countText = loading
     ? "Loading patient requests…"
@@ -191,40 +183,46 @@ const PendingRequestsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
+      {/* Keep sidebar on desktop, hide on mobile to save space */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
       <div
-        className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-8 overflow-y-auto"
+        className="flex-1 bg-cover bg-center bg-no-repeat pb-16 px-4 sm:px-8 overflow-y-auto"
         style={{ backgroundImage: "url('/doctordashboard/bg2.png')" }}
       >
         {/* Header */}
-        <div className="pt-32 ml-20 sm:pt-16">
+        {/* Added pt-16 for mobile so spacing matches desktop; left the rest intact */}
+        <div className="pt-16 md:pt-16 ml-0 md:ml-20">
           <div className="flex items-center">
-            <div className="text-4xl text-[#1E3CA7] font-bold">
+            <div className="text-2xl sm:text-3xl md:text-4xl text-[#1E3CA7] font-bold">
               <TopRightIcons />
               <span className="mr-2">👤</span> Pending Requests
             </div>
           </div>
-          <p className="text-lg text-[#1E3CA7] mt-2">{countText}</p>
+          <p className="text-base sm:text-lg text-[#1E3CA7] mt-2">{countText}</p>
         </div>
 
         {/* Search and Filter */}
-        <div className="mt-6 ml-20 flex flex-wrap gap-4">
-          <div className="flex-grow max-w-md relative">
+        <div className="mt-6 ml-0 md:ml-20 flex flex-wrap gap-4">
+          <div className="flex-grow w-full sm:max-w-md relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <FiSearch className="text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Search patients"
-              className="w-full pl-12 pr-4 py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] focus:outline-none focus:border-[#2196F3]"
+              className="w-full pl-12 pr-4 py-2.5 sm:py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] focus:outline-none focus:border-[#2196F3]"
               style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
+          {/* Keep filters as placeholders; make them wrap nicely on mobile */}
           <button
-            className="hover:opacity-70 px-6 py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2"
+            className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2 hover:opacity-70"
             style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
             disabled
             title="Coming soon"
@@ -233,7 +231,7 @@ const PendingRequestsPage: React.FC = () => {
           </button>
 
           <button
-            className="hover:opacity-70 px-6 py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2"
+            className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2 hover:opacity-70"
             style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
             disabled
             title="Coming soon"
@@ -242,7 +240,7 @@ const PendingRequestsPage: React.FC = () => {
           </button>
 
           <button
-            className="hover:opacity-70 px-6 py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2"
+            className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2 hover:opacity-70"
             style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
             disabled
             title="Coming soon"
@@ -252,8 +250,8 @@ const PendingRequestsPage: React.FC = () => {
         </div>
 
         {/* Requests List */}
-        <div className="my-8 ml-20 flex flex-col items-center">
-          <div className="max-w-4xl w-full">
+        <div className="my-8 ml-0 md:ml-20 flex flex-col items-center">
+          <div className="w-full max-w-4xl">
             <div className="flex flex-col gap-6">
               {filteredRequests.map((request) => (
                 <PatientRequestCard

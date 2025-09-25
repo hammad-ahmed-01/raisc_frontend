@@ -14,7 +14,7 @@ interface ChatBotData {
 export default function AIChat() {
   const router = useRouter();
 
-  // ✅ Keep chatbot state local and easy to edit
+  // Local defaults; can be overridden by backend
   const [chatBot, setChatBot] = useState<ChatBotData>({
     greeting: "Meet Lune\nYour AI Companion!",
     description: "Share with me what you are feeling",
@@ -44,9 +44,9 @@ export default function AIChat() {
   }, []);
 
   return (
-    <div className="overflow-hidden mx-auto max-w-[790px] max-h-[466px]">
-      <div className="relative bg-[#EEEEEE] rounded-[50px] border border-[#2196F3]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 lg:p-10 items-center">
+    <div className="mx-auto w-full max-w-[790px] lg:max-h-[466px] overflow-hidden">
+      <div className="relative bg-[#EEEEEE] rounded-[32px] sm:rounded-[50px] border border-[#2196F3]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-5 sm:p-6 lg:p-10 items-center">
           {/* Left: Greeting + Description + Button */}
           <div className="flex flex-col items-center text-center order-2 lg:order-1">
             <div className="text-heading2 text-2xl sm:text-2xl lg:text-[32px] font-bold leading-snug">
@@ -57,7 +57,7 @@ export default function AIChat() {
               ))}
             </div>
 
-            <p className="mt-4 text-heading2 text-base text-[25px]">
+            <p className="mt-4 text-heading2 text-base sm:text-lg lg:text-[25px]">
               {chatBot.description}
             </p>
 
@@ -72,13 +72,13 @@ export default function AIChat() {
 
           {/* Right: Robot illustration */}
           <div className="order-1 lg:order-2 flex justify-center">
-            <div className="relative w-[260px] sm:w-[320px] lg:w-[360px] aspect-[4/3]">
+            <div className="relative w-[220px] sm:w-[300px] lg:w-[360px] aspect-[4/3]">
               <Image
                 src={ChatBotImage}
-                alt="Lune the AI Companioon"
+                alt="Lune the AI Companion"
                 fill
                 priority
-                sizes="(max-width: 1024px) 320px, 360px"
+                sizes="(max-width: 640px) 220px, (max-width: 1024px) 300px, 360px"
                 className="object-contain"
               />
             </div>

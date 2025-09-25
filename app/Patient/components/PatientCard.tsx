@@ -19,16 +19,16 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
     <>
       <div className="bg-white shadow-md rounded-xl p-3 mb-2 grid grid-cols-1 md:grid-cols-4 items-center gap-2 border">
         {/* Column 1: Name, Age, Gender */}
-        <div className="ml-4">
-          <h2 className="text-lg font-bold text-heading2">{patient.name}</h2>
-          <p className="text-sm font-semibold text-normal mt-1">
+        <div className="ml-0 md:ml-4">
+          <h2 className="text-base sm:text-lg font-bold text-heading2">{patient.name}</h2>
+          <p className="text-xs sm:text-sm font-semibold text-normal mt-1">
             Age: {patient.age ?? "—"} | Gender: {patient.gender || "—"}
           </p>
         </div>
 
         {/* Column 2: Condition */}
-        <div>
-          <p className="text-sm text-normal ml-8">{patient.condition || "—"}</p>
+        <div className="ml-0 md:ml-8">
+          <p className="text-sm text-normal">{patient.condition || "—"}</p>
         </div>
 
         {/* Column 3: View Profile Button */}

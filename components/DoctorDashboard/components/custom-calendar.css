@@ -1,6 +1,6 @@
 .custom-calendar {
   background-color: white;
-  color: #1E3CA7; 
+  color: #1E3CA7;
   font-weight: normal;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .custom-calendar .rbc-header {
-  font-weight: 600; /* Semibold for days (Sun, Mon, etc.) */
+  font-weight: 600;
   color: #1E3CA7;
   text-align: center;
   padding: 0.5rem;
@@ -76,4 +76,33 @@
   border: none;
   font-size: 12px;
   padding: 1px 4px;
+}
+
+/* -------------------- Mobile tweaks (<= 640px) -------------------- */
+@media (max-width: 640px) {
+  .custom-calendar { font-size: 0.9rem; }
+
+  .custom-calendar .rbc-toolbar {
+    padding: 0.4rem;
+  }
+
+  .custom-calendar .rbc-toolbar button {
+    padding: 4px 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+  }
+
+  .custom-calendar .rbc-header {
+    padding: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .custom-calendar .rbc-month-row {
+    height: 46px; /* tighter on phones */
+  }
+
+  .custom-calendar .rbc-event {
+    font-size: 10px;
+    padding: 1px 3px;
+  }
 }

@@ -1,4 +1,3 @@
-// SessionSummary.tsx
 "use client";
 
 import React from "react";
@@ -6,10 +5,10 @@ import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 export interface SessionSummaryData {
-  id: string | number;          // accept number or string
+  id: string | number;
   patient_display_name?: string;
-  patient_name?: string;         // fallback
-  date: string;                  // YYYY-MM-DD
+  patient_name?: string;
+  date: string;   // YYYY-MM-DD
   doctor_summary?: string;
 }
 
@@ -30,10 +29,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
     setError("");
   }, [session]);
 
-  // If closed or no session, render nothing
   if (!open || !session) return null;
-
-  // After the early return, it's safe to treat as non-null
   const current = session as SessionSummaryData;
 
   async function handleSave() {
@@ -48,7 +44,6 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
       }
 
       const sid = encodeURIComponent(String(current.id));
-
       const res = await fetch(`/api/doctors/update-summary/${sid}`, {
         method: "PATCH",
         headers,
@@ -58,10 +53,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
       const text = await res.text();
       if (!res.ok) {
         let msg = "Failed to save summary";
-        try {
-          const j = JSON.parse(text);
-          msg = j?.error || j?.detail || msg;
-        } catch {}
+        try { const j = JSON.parse(text); msg = j?.error || j?.detail || msg; } catch {}
         throw new Error(msg);
       }
 
@@ -98,19 +90,12 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
       }
 
       const sid = encodeURIComponent(String(current.id));
-
-      const res = await fetch(`/api/doctors/delete-session/${sid}`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(`/api/doctors/delete-session/${sid}`, { method: "DELETE", headers });
 
       const text = await res.text();
       if (!res.ok) {
         let msg = "Failed to delete session";
-        try {
-          const j = JSON.parse(text);
-          msg = j?.error || j?.detail || msg;
-        } catch {}
+        try { const j = JSON.parse(text); msg = j?.error || j?.detail || msg; } catch {}
         throw new Error(msg);
       }
 
@@ -132,9 +117,9 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
   const patientLabel = current.patient_display_name || current.patient_name || "Patient";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-[#E6E6FA] border-2 border-[#2196F3] rounded-2xl shadow-xl w-full max-w-lg p-6">
-        <h2 className="text-2xl font-bold text-heading2 text-center mb-4">Session Summary</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-3">
+      <div className="bg-[#E6E6FA] border-2 border-[#2196F3] rounded-2xl shadow-xl w-full max-w-lg p-5 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-heading2 text-center mb-4">Session Summary</h2>
 
         <div className="space-y-3 mb-4">
           <div className="flex items-center justify-between">
@@ -162,23 +147,14 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ open, session, onClose,
         ) : null}
 
         <div className="mt-6 flex items-center justify-between gap-2">
-          {/* Delete on the left for destructive action */}
           <SecondaryButton
             text="Delete"
             className="px-6 py-2 rounded-full font-semibold border-red-600 text-red-600 hover:bg-red-50"
             onClick={submitting ? undefined : handleDelete}
           />
           <div className="flex gap-2">
-            <SecondaryButton
-              text="Cancel"
-              className="px-6 py-2 rounded-full font-semibold"
-              onClick={onClose}
-            />
-            <PrimaryButton
-              text={submitting ? "Saving..." : "Save"}
-              className="px-6 py-2 rounded-full font-semibold"
-              onClick={submitting ? undefined : handleSave}
-            />
+            <SecondaryButton text="Cancel" className="px-6 py-2 rounded-full font-semibold" onClick={onClose} />
+            <PrimaryButton text={submitting ? "Saving..." : "Save"} className="px-6 py-2 rounded-full font-semibold" onClick={submitting ? undefined : handleSave} />
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 import { PatientList } from "./components/PatientList";
 import type { Patient } from "@/src/types";
+import TopRightIcons from "@/components/TopRightIcons";
 
 /* ----------------------------- helpers ----------------------------- */
 const toNum = (v: unknown, fallback = 0): number => {
@@ -137,7 +138,11 @@ export default function PatientsPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg/mypatientsbg.png')" }}
     >
+      {/* Light blur on top of bg so content stands out */}
       <div className="backdrop-blur-sm bg-blue-50/40 min-h-screen">
+        <TopRightIcons />
+        <br />
+        <br />
         <PatientList patients={patients} />
       </div>
     </main>

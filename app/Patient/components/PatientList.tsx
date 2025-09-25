@@ -15,7 +15,7 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
   const [search, setSearch] = useState("");
   const [filtered, setFiltered] = useState<Patient[]>(patients);
 
-  // 🔧 keep local filtered list in sync when parent updates `patients`
+  // keep local filtered list in sync when parent updates `patients`
   useEffect(() => {
     setFiltered(patients);
   }, [patients]);
@@ -47,9 +47,9 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
 
   return (
     <div>
-      <div className="p-6 ml-20 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-heading mb-2 flex items-center gap-2">
-          <Users className="text-heading h-8 w-8" />
+      <div className="px-4 py-4 md:p-6 md:ml-20 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold text-heading mb-2 flex items-center gap-2">
+          <Users className="text-heading h-6 w-6 md:h-8 md:w-8" />
           My Patients
         </h1>
         <p className="text-heading2 mb-6">
@@ -57,14 +57,15 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
           details or start a session.
         </p>
 
-        <div className="flex items-center justify-between mb-6 w-full flex-wrap gap-4">
-          {/* Left: Search bar */}
-          <div className="flex-1 min-w-[250px] max-w-full">
+        {/* Search + Filters */}
+        <div className="flex items-stretch md:items-center justify-between mb-6 w-full flex-wrap gap-4">
+          {/* Search */}
+          <div className="flex-1 min-w-[220px] md:min-w-[250px] max-w-full">
             <SearchInput value={search} onChange={setSearch} />
           </div>
 
-          {/* Right: Filters */}
-          <div className="flex items-center gap-4 flex-wrap">
+          {/* Filters */}
+          <div className="w-full md:w-auto">
             <FilterBar
               onAgeChange={(val) => handleFilters("age", val)}
               onGenderChange={(val) => handleFilters("gender", val)}
@@ -73,7 +74,8 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
           </div>
         </div>
 
-        <div className="max-h-[600px] overflow-y-auto bg-[#D7E2FEC7] border-[#A6B6CC66] border border-3 px-12 py-12 rounded-3xl space-y-4">
+        {/* List */}
+        <div className="max-h-[70vh] md:max-h-[600px] overflow-y-auto bg-[#D7E2FEC7] border-[#A6B6CC66] border px-4 py-4 md:px-12 md:py-12 rounded-3xl space-y-4">
           <div className="flex flex-col gap-4">
             {searched.map((patient) => (
               <PatientCard key={patient.id} patient={patient} />

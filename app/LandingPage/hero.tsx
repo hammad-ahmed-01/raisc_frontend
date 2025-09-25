@@ -58,7 +58,7 @@ export default function HeroSection() {
           <h1 className="text-heading text-6xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
             Welcome to RAISC
           </h1>
-          <h2 className="text-heading2 text-xl max-w-md">
+          <h2 className="text-heading2 text-center text-xl max-w-md">
             Your mental wellness companion.
           </h2>
           <p className="text-normal text-center max-w-md">

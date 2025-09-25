@@ -1,4 +1,3 @@
-// Reschedule.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,11 +12,11 @@ export type TransportType = "video" | "audio" | "in-person";
 export interface Session {
   id: string;
   patient_name: string;
-  patient_user_id?: string | null; // optional now; NOT required for reschedule
-  date: string; // YYYY-MM-DD
-  time: string; // HH:mm (24h) or "3:00 PM" at runtime; we normalize before sending
+  patient_user_id?: string | null;
+  date: string;
+  time: string;
   type?: TransportType;
-  session_type?: string; // "Follow-up" | "Initial" | "Emergency"
+  session_type?: string;
   title?: string;
 }
 
@@ -25,7 +24,7 @@ interface RescheduleProps {
   open: boolean;
   session: Session | null;
   onClose: () => void;
-  onSaved?: () => void; // e.g. refresh calendar
+  onSaved?: () => void;
 }
 
 function to12h(hhmm: string) {
@@ -94,7 +93,6 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
 
       const time24 = /^\d{2}:\d{2}$/.test(time) ? time : to24h(time);
 
-      // Keep time + type hints inside description (since Calendar has no time field)
       const tags = [
         `[time=${time24}]`,
         `[session_type=${sessionType || "Follow-up"}]`,
@@ -108,24 +106,16 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
         if (tok) headers.Authorization = `Token ${tok}`;
       }
 
-      // ✅ PATCH the existing session via our Next.js proxy — no patient_id required
       const res = await fetch(`/api/doctors/reschedule-session/${session.id}`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({
-          title: `${sessionType} Session`,
-          description,
-          date, // YYYY-MM-DD
-        }),
+        body: JSON.stringify({ title: `${sessionType} Session`, description, date }),
       });
 
       const text = await res.text();
       if (!res.ok) {
         let msg = "Failed to reschedule session";
-        try {
-          const j = JSON.parse(text);
-          msg = j?.error || j?.detail || msg;
-        } catch {}
+        try { const j = JSON.parse(text); msg = j?.error || j?.detail || msg; } catch {}
         throw new Error(msg);
       }
 
@@ -142,15 +132,11 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
   if (!open || !session) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl p-6 w-full max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-center text-heading mb-4">
-          Reschedule Session
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-3">
+      <div className="bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl p-5 sm:p-6 w-full max-w-md mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-heading mb-4">Reschedule Session</h2>
 
-        <h3 className="text-md font-semibold text-heading mb-4">
-          {session.patient_name}
-        </h3>
+        <h3 className="text-sm sm:text-md font-semibold text-heading mb-4">{session.patient_name}</h3>
 
         {error ? (
           <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
@@ -158,15 +144,10 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
           </div>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-normal mb-1">Date</label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-white"
-            />
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-white" />
           </div>
           <div>
             <label className="block text-sm text-normal mb-1">Time</label>
@@ -175,9 +156,7 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
               onChange={(e) => setTime(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
             >
-              {time && !["2:00 PM", "3:00 PM", "4:00 PM"].includes(to12h(time)) && (
-                <option>{to12h(time)}</option>
-              )}
+              {time && !["2:00 PM", "3:00 PM", "4:00 PM"].includes(to12h(time)) && <option>{to12h(time)}</option>}
               <option>2:00 PM</option>
               <option>3:00 PM</option>
               <option>4:00 PM</option>
@@ -213,7 +192,6 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
           />
         </div>
 
-        {/* Attachments (UI only) */}
         <div className="mt-4">
           <label className="block text-sm text-normal mb-1">Attachments (optional)</label>
           <div
@@ -224,13 +202,7 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
             Drag and drop files here, or <span className="text-blue-600 font-medium ml-1">Browse</span>
           </div>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            multiple
-          />
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
 
           {attachments.length > 0 && (
             <ul className="mt-2 space-y-1 text-sm text-gray-700">
@@ -251,14 +223,10 @@ export default function Reschedule({ open, session, onClose, onSaved }: Reschedu
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <SecondaryButton
-            text="Cancel"
-            className="px-10 py-2 rounded-full flex items-center text-center font-semibold"
-            onClick={onClose}
-          />
+          <SecondaryButton text="Cancel" className="px-8 sm:px-10 py-2 rounded-full font-semibold" onClick={onClose} />
           <PrimaryButton
             text={saving ? "Saving..." : "Save Changes"}
-            className="px-4 py-2 rounded-full flex items-center text-center font-semibold"
+            className="px-4 py-2 rounded-full font-semibold"
             onClick={saving ? undefined : handleSave}
           />
         </div>

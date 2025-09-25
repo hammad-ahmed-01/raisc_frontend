@@ -7,7 +7,7 @@ interface Session {
   id: string;
   patient_name: string;
   date: string; // YYYY-MM-DD
-  time: string; // HH:mm (24h)
+  time: string; // HH:mm
   type: "video" | "audio" | "in-person";
 }
 
@@ -78,11 +78,11 @@ export const SessionCalendar: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-5 gap-4">
-      <div className="col-span-1">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="md:col-span-1">
         <NextSessionBox nextSession={nextSession || null} />
       </div>
-      <div className="col-span-4">
+      <div className="md:col-span-4">
         <SessionsCalendarBox sessions={sessions} />
       </div>
     </div>

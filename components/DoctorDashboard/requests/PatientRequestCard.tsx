@@ -104,12 +104,12 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
         return;
       }
 
-      // optimistic hide from doctor's list
+      // optimistic hide
       if (intent === "accept") onAccept?.();
       else onReject?.();
       setHidden(true);
 
-      // notify patient UI to refresh
+      // notify other UIs
       try {
         window.dispatchEvent(
           new CustomEvent("doctor-request-updated", { detail: { id: requestId, intent } })
@@ -126,24 +126,25 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
 
   return (
     <div
-      className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-[24px] p-6 shadow-sm"
+      className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-[24px] p-4 sm:p-6 shadow-sm"
       style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
     >
-      <div className="flex flex-col md:flex-row justify-between">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        {/* Left section */}
         <div className="flex-grow">
           <div className="mb-3">
-            <h3 className="text-xl font-bold text-[#1E3CA7]">{patientRequest.name}</h3>
-            <p className="text-[#1E3CA7] py-0 my-0">
+            <h3 className="text-lg sm:text-xl font-bold text-[#1E3CA7]">{patientRequest.name}</h3>
+            <p className="text-[#1E3CA7]">
               <span className="font-bold">Email:</span> {patientRequest.email}
             </p>
-            <p className="text-[#1E3CA7] py-0 my-0">
+            <p className="text-[#1E3CA7]">
               <span className="font-bold">Condition:</span> {patientRequest.condition}
             </p>
           </div>
           {patientRequest.message && (
-            <p className="text-[#444444] mb-8">{patientRequest.message}</p>
+            <p className="text-[#444444] mb-6 sm:mb-8">{patientRequest.message}</p>
           )}
-          <PrimaryButton text="View Profile" className="font-bold px-6 py-2 rounded-full" />
+          <PrimaryButton text="View Profile" className="font-bold px-5 py-2 rounded-full" />
           {error && (
             <p className="text-red-600 text-sm mt-3" role="alert">
               {error}
@@ -151,8 +152,9 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
           )}
         </div>
 
-        <div className="flex flex-col items-end mt-4 md:mt-0">
-          <div className="text-right mb-16">
+        {/* Right section */}
+        <div className="flex flex-col items-center md:items-end mt-2 md:mt-0">
+          <div className="text-center md:text-right mb-4 md:mb-16">
             <p className="text-[#444444] mb-1">
               <span className="text-[#222] font-semibold">Age:</span> {patientRequest.age} |{" "}
               <span className="text-[#222] font-semibold">Gender:</span> {patientRequest.gender}
@@ -163,26 +165,28 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
             </p>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex gap-6 sm:gap-8">
             <button
               onClick={() => callManageViaNext("accept")}
               className={`${
                 busy === "accept" ? "opacity-60 cursor-not-allowed" : "hover:bg-green-600"
-              } bg-green-500 text-white rounded-full w-14 h-14 flex items-center justify-center transition`}
+              } bg-green-500 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition`}
               title="Approve"
               disabled={!!busy}
             >
-              <FiCheck size={24} />
+              <FiCheck size={22} className="md:hidden" />
+              <FiCheck size={24} className="hidden md:block" />
             </button>
             <button
               onClick={() => callManageViaNext("reject")}
               className={`${
                 busy === "reject" ? "opacity-60 cursor-not-allowed" : "hover:bg-red-600"
-              } bg-red-500 text-white rounded-full w-14 h-14 flex items-center justify-center transition`}
+              } bg-red-500 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition`}
               title="Reject"
               disabled={!!busy}
             >
-              <FiX size={24} />
+              <FiX size={22} className="md:hidden" />
+              <FiX size={24} className="hidden md:block" />
             </button>
           </div>
         </div>

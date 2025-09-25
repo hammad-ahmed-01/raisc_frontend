@@ -13,17 +13,17 @@ function CTAButtonCard({ title, subtitle, onClick, gradient }: CardProps) {
   return (
     <button
       onClick={onClick}
-      className={`group text-center rounded-2xl w-full max-w-[342px] h-[120px] sm:h-[150px] p-6 border border-[#2196F3] 
+      className={`group text-center rounded-2xl w-full max-w-[420px] sm:max-w-[342px] h-[110px] sm:h-[150px] p-5 sm:p-6 border border-[#2196F3]
                   hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${gradient}`}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full justify-center">
         {/* Title on top */}
-        <div className="font-bold text-heading text-xl sm:text-[28px] lg:text-[24px]">
+        <div className="font-bold text-heading text-lg sm:text-[28px] lg:text-[24px]">
           {title}
         </div>
 
-        {/* Subtitle right under title */}
-        <div className="mt-2 text-heading2 align-middle sm:text-[24px] lg:text-[24px] leading-snug">
+        {/* Subtitle */}
+        <div className="mt-1 sm:mt-2 text-heading2 text-sm sm:text-[24px] lg:text-[24px] leading-snug">
           {subtitle}
         </div>
       </div>

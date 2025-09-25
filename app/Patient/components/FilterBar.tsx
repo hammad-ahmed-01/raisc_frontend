@@ -40,7 +40,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onConditionChange,
 }) => {
   return (
-    <div className="flex flex-col md:flex-row gap-4 w-full max-w-4xl">
+    <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full md:w-auto">
       <FilterSelect
         placeholder="Age"
         onChange={onAgeChange}

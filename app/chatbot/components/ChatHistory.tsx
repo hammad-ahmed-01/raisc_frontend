@@ -108,7 +108,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
         {/* Sidebar card: fixed size, left edge square, right rounded */}
         <div
           ref={cardRef}
-          className="absolute left-0 top-0 w-[350px] h-[400px] overflow-hidden rounded-none rounded-r-[28px] border bg-[#EAF4FF] border-[#6AA8F3] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
+          className="absolute left-0 top-0 w-[320px] h-[400px] overflow-hidden rounded-none rounded-r-[28px] border bg-[#EAF4FF] border-[#6AA8F3] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
         >
           {/* Robot fixed at the back & bottom */}
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-0 flex flex-col items-center">
@@ -120,7 +120,6 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
               className="w-[180px] h-auto drop-shadow-md"
               priority
             />
-            <div className="mt-2 h-3 w-28 rounded-full bg-black/15" />
           </div>
 
           {/* Foreground content (scrolls; extra bottom pad to avoid robot overlap) */}

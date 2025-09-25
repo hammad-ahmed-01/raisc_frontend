@@ -24,8 +24,8 @@ type PatientRow = {
 
 export default function CreateSessionForm({ onCancel, initialPatientName }: CreateSessionFormProps) {
   const [sessionType, setSessionType] = useState("Follow-up");
-  const [time, setTime] = useState("");   // no default; acts like placeholder
-  const [date, setDate] = useState("");   // no default; acts like placeholder
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
   const [patientName, setPatientName] = useState(initialPatientName || "");
   const [notes, setNotes] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -85,7 +85,6 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // "2:00 PM" -> "14:00"
   function to24h(human: string): string {
     let hours = 0, minutes = 0;
     const trimmed = human.trim().toUpperCase();
@@ -117,8 +116,7 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         throw new Error("Patient not found. Please type their exact display name as shown in My Patients.");
       }
 
-      // Carry both time and session_type as tags so the calendar API can read them reliably
-      const time24 = to24h(time); // "HH:mm"
+      const time24 = to24h(time);
       const tags = [`[time=${time24}]`, `[session_type=${sessionType}]`];
       const description = `${notes.trim()}${notes.trim() ? "\n" : ""}${tags.join(" ")}`;
 
@@ -134,18 +132,15 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         body: JSON.stringify({
           patient_id: match.id,
           title: `${sessionType} Session`,
-          description, // includes [time=HH:mm] and [session_type=...]
-          date,        // YYYY-MM-DD only
+          description,
+          date,
         }),
       });
 
       const text = await res.text();
       if (!res.ok) {
         let msg = "Failed to create session";
-        try {
-          const j = JSON.parse(text);
-          msg = j?.error || j?.detail || msg;
-        } catch {}
+        try { const j = JSON.parse(text); msg = j?.error || j?.detail || msg; } catch {}
         throw new Error(msg);
       }
 
@@ -162,12 +157,12 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
   }
 
   return (
-    <div className="bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl p-6 w-full max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-center text-heading mb-4">
+    <div className="bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl p-5 sm:p-6 w-full max-w-md mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold text-center text-heading mb-4">
         Create New session
       </h2>
 
-      <h3 className="text-md font-semibold text-heading mb-4">
+      <h3 className="text-sm sm:text-md font-semibold text-heading mb-4">
         Session Information
       </h3>
 
@@ -177,7 +172,8 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* Mobile 1-col, ≥sm 2-col */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-normal mb-1">Patient</label>
           <Input
@@ -191,7 +187,7 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
           <label className="block text-sm text-normal mb-1">Session Type</label>
           <select
             value={sessionType}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionType(e.target.value)}  
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionType(e.target.value)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
           >
             <option>Follow-up</option>
@@ -217,11 +213,7 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
             onChange={(e) => setTime(e.target.value)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
           >
-            {time === "" && (
-              <option value="" disabled>
-                Select a time
-              </option>
-            )}
+            {time === "" && <option value="" disabled>Select a time</option>}
             <option>2:00 PM</option>
             <option>3:00 PM</option>
             <option>4:00 PM</option>
@@ -247,17 +239,10 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
           className="cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-4 bg-white text-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"
         >
           <UploadCloud className="w-5 h-5 mr-2" />
-          Drag and drop files here, or{" "}
-          <span className="text-blue-600 font-medium ml-1">Browse</span>
+          Drag and drop files here, or <span className="text-blue-600 font-medium ml-1">Browse</span>
         </div>
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          multiple
-        />
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
 
         {attachments.length > 0 && (
           <ul className="mt-2 space-y-1 text-sm text-gray-700">
@@ -280,13 +265,12 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
       <div className="flex justify-end gap-2 mt-6">
         <SecondaryButton
           text="Cancel"
-          className="px-10 py-2 rounded-full flex items-center text-center font-semibold"
+          className="px-8 sm:px-10 py-2 rounded-full font-semibold"
           onClick={onCancel}
         />
-
         <PrimaryButton
           text={submitting ? "Creating..." : "Create Session"}
-          className="px-4 py-2 rounded-full flex items-center text-center font-semibold"
+          className="px-4 py-2 rounded-full font-semibold"
           onClick={submitting ? undefined : handleCreate}
         />
       </div>
