@@ -34,7 +34,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
         {/* Column 3: View Profile Button */}
         <div className="flex justify-start md:justify-end">
           <PrimaryButton
-            text="View Profile"
+            text="Chat Threads"
             className="rounded-full font-semibold px-4 py-1.5 whitespace-nowrap text-sm"
             onClick={() => router.push(`/chatbot-insights`)}
           />

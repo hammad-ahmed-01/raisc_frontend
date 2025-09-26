@@ -6,28 +6,28 @@ import ChatPopup from './ChatThread/ChatPopup';
 import moment from 'moment';
 
 interface ChatbotProfile {
-    id: number;
-    collected_data: any;
-    session_summary: string;
-    important_messages?: string;
-    date: string;
-    session_key: string;
-    session_start_msg: number;
-    session_end_msg: number;
-    topic?: string;
-    important_check?: boolean;
+  id: number;
+  collected_data: any;
+  session_summary: string;
+  important_messages?: string;
+  date: string;
+  session_key: string;
+  session_start_msg: number;
+  session_end_msg: number;
+  topic?: string;
+  important_check?: boolean;
 }
 
 interface ChatMessage {
-    role: string;
-    content: string;
+  role: string;
+  content: string;
 }
 
-const ChatEntryCard = ({ 
-  entry, 
-  patientId, 
-  sessionKey 
-}: { 
+const ChatEntryCard = ({
+  entry,
+  patientId,
+  sessionKey
+}: {
   entry: ChatbotProfile;
   patientId: string;
   sessionKey: string;
@@ -44,21 +44,18 @@ const ChatEntryCard = ({
 
   const fetchChatThread = async () => {
     setIsLoadingChat(true);
-    console.log(sessionKey);
-    console.log(entry.session_start_msg);
-    console.log(entry.session_end_msg);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${sessionKey}/${entry.session_start_msg}/${entry.session_end_msg}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FASTAPI_BASE_URL}/api/history/${sessionKey}/${entry.session_start_msg}/${entry.session_end_msg}`
+      );
       if (response.ok) {
         const data = await response.json();
         setChatMessages(data.chat_history || []);
       } else {
-        // Fallback to sample chat messages if API fails
         setChatMessages(getFallbackChatMessages());
       }
     } catch (error) {
       console.error("Error fetching chat thread:", error);
-      // Fallback to sample chat messages on error
       setChatMessages(getFallbackChatMessages());
     } finally {
       setIsLoadingChat(false);
@@ -66,39 +63,16 @@ const ChatEntryCard = ({
     }
   };
 
-  const getFallbackChatMessages = (): ChatMessage[] => {
-    return [
-      {
-        role: "user",
-        content: "I am having trouble managing my stress lately."
-      },
-      {
-        role: "assistant",
-        content: "It's okay to feel overwhelmed. Want to talk about what's causing it?"
-      },
-      {
-        role: "user",
-        content: "Mostly schoolwork and deadlines."
-      },
-      {
-        role: "assistant",
-        content: "Let's try breaking it down. How about we list tasks together?"
-      },
-      {
-        role: "user",
-        content: "That might help. I feel like everything is piling up."
-      },
-      {
-        role: "assistant",
-        content: "I understand that feeling. Let's start with just one thing. What's the most urgent task right now?"
-      }
-    ];
-  };
+  const getFallbackChatMessages = (): ChatMessage[] => ([
+    { role: "user", content: "I am having trouble managing my stress lately." },
+    { role: "assistant", content: "It's okay to feel overwhelmed. Want to talk about what's causing it?" },
+    { role: "user", content: "Mostly schoolwork and deadlines." },
+    { role: "assistant", content: "Let's try breaking it down. How about we list tasks together?" },
+    { role: "user", content: "That might help. I feel like everything is piling up." },
+    { role: "assistant", content: "I understand that feeling. Let's start with just one thing. What's the most urgent task right now?" }
+  ]);
 
-  const formatDate = (dateString: string) => {
-    return moment(dateString).format("MMM DD, YYYY");
-  };
-
+  const formatDate = (dateString: string) => moment(dateString).format("MMM DD, YYYY");
   const formatTopics = (topics: string | undefined) => {
     if (!topics) return "General";
     return topics.split(',').map(topic => topic.trim()).join(' | ');
@@ -106,7 +80,8 @@ const ChatEntryCard = ({
 
   return (
     <div className="relative">
-      <div className="absolute -top-7 bg-[#D0E3FFC7] py-1 text-sm font-semibold text-heading2 flex items-center">
+      {/* Desktop: floating date badge (unchanged) */}
+      <div className="hidden md:flex absolute -top-7 bg-[#D0E3FFC7] py-1 px-2 text-sm font-semibold text-heading2 items-center">
         {isImportant ? (
           <Star fill="currentColor" className="mr-2 h-4 w-4 text-yellow-500" />
         ) : (
@@ -115,9 +90,22 @@ const ChatEntryCard = ({
         {formatDate(entry.date)}
       </div>
 
-      <Card key={entry.id} className="border border-[#2196F3] pt-4">
+      <Card className="border border-[#2196F3]">
         <CardContent className="p-4 relative">
-          <div className="absolute top-4 right-4">
+          {/* Mobile: date badge INSIDE the card so it doesn’t bleed out */}
+          <div className="md:hidden mb-2 inline-flex items-center bg-[#D0E3FFC7] py-1 px-2 rounded">
+            {isImportant ? (
+              <Star fill="currentColor" className="mr-2 h-4 w-4 text-yellow-500" />
+            ) : (
+              <Star className="mr-2 h-4 w-4 text-yellow-500" />
+            )}
+            <span className="text-sm font-semibold text-heading2">
+              {formatDate(entry.date)}
+            </span>
+          </div>
+
+          {/* Desktop: absolute action button (unchanged). Mobile: inline row above content. */}
+          <div className="md:absolute md:top-4 md:right-4 md:mb-0 mb-2 flex justify-end">
             <Button
               variant="ghost"
               onClick={handleImportantToggle}
@@ -137,20 +125,21 @@ const ChatEntryCard = ({
             </Button>
           </div>
 
-          <div className="mt-2 text-lg">
+          {/* Content */}
+          <div className="mt-1 md:mt-2 text-base sm:text-lg">
             <p className="font-bold text-heading2">
               Topics:{' '}
               <span className="font-normal text-black">
                 {formatTopics(entry.topic)}
               </span>
             </p>
-            <p className="font-bold text-heading2 mt-1">
+            <p className="font-bold text-heading2 mt-2">
               Summary:{' '}
               <span className="font-normal text-black">{entry.session_summary}</span>
             </p>
 
             {entry.important_messages && (
-              <p className="font-bold text-red-600 mt-1">
+              <p className="font-bold text-red-600 mt-2">
                 ⚠ Important: {entry.important_messages}
               </p>
             )}
@@ -169,8 +158,8 @@ const ChatEntryCard = ({
       </Card>
 
       {showPopup && (
-        <ChatPopup 
-          date={formatDate(entry.date)} 
+        <ChatPopup
+          date={formatDate(entry.date)}
           onClose={() => setShowPopup(false)}
           chatMessages={chatMessages}
           isLoading={isLoadingChat}

@@ -7,16 +7,8 @@ import FiltersGroup from './FiltersGroup';
 import { useRouter } from "next/navigation";
 
 interface FiltersSidebarProps {
-  filters: {
-    topic: string;
-    date: string;
-    message: string;
-  };
-  onFilterChange: (filters: {
-    topic: string;
-    date: string;
-    message: string;
-  }) => void;
+  filters: { topic: string; date: string; message: string };
+  onFilterChange: (filters: { topic: string; date: string; message: string }) => void;
   availableTopics: string[];
 }
 
@@ -27,45 +19,31 @@ const options = {
 
 const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSidebarProps) => {
   const router = useRouter();
-  const [openDropdowns, setOpenDropdowns] = useState({
-    topic: true,
-    date: true,
-    message: true,
-  });
+  const [openDropdowns, setOpenDropdowns] = useState({ topic: true, date: true, message: true });
 
-  const toggleDropdown = (key: keyof typeof openDropdowns) => {
-    setOpenDropdowns((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  const toggleDropdown = (key: keyof typeof openDropdowns) =>
+    setOpenDropdowns(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSelect = (group: keyof typeof filters, value: string) => {
-    const newFilters = { ...filters, [group]: value };
-    onFilterChange(newFilters);
-  };
+  const handleSelect = (group: keyof typeof filters, value: string) =>
+    onFilterChange({ ...filters, [group]: value });
 
-  const clearFilters = () => {
-    const clearedFilters = {
-      topic: '',
-      date: '',
-      message: '',
-    };
-    onFilterChange(clearedFilters);
-  };
+  const clearFilters = () => onFilterChange({ topic: '', date: '', message: '' });
 
   return (
-    <aside className="w-80 min-w-[320px] min-h-full p-4 bg-white border border-[#2196F3] rounded-[28px] shadow-sm">
-      <Button onClick={() => router.push('/Patient')} className="mb-6 w-full justify-start text-lg font-bold text-[#1A237E] bg-[#D0E3FFC7] hover:bg-[#D0E3FFFF] rounded-full">
+    <aside className="w-full md:w-80 md:min-w-[320px] min-h-full p-4 bg-white border border-[#2196F3] rounded-[28px] shadow-sm">
+      {/* Back button hidden on mobile to avoid duplication; desktop remains unchanged */}
+      <Button
+        onClick={() => router.push('/Patient')}
+        className="hidden md:inline-flex mb-6 w-full justify-start text-lg font-bold text-[#1A237E] bg-[#D0E3FFC7] hover:bg-[#D0E3FFFF] rounded-full"
+      >
         <ChevronLeft className="mr-2 h-5 w-5" />
         Back to Patients List
       </Button>
 
       <h1 className="text-lg font-bold mb-4 text-[#1A237E] text-left">Filter By</h1>
 
-      <div className="space-y-6 ml-4">
-        <FiltersGroup
-          label="Topic-Wise"
-          open={openDropdowns.topic}
-          onToggle={() => toggleDropdown('topic')}
-        >
+      <div className="space-y-6 md:ml-4">
+        <FiltersGroup label="Topic-Wise" open={openDropdowns.topic} onToggle={() => toggleDropdown('topic')}>
           <table className="w-full border-[#2196F3] border-separate border-2 rounded-md overflow-hidden">
             <tbody>
               {availableTopics.length > 0 ? (
@@ -82,7 +60,7 @@ const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSid
                         className={`w-2 h-2 rounded-full border border-[#1A237E] ${
                           filters.topic === topic ? 'bg-[#1A237E]' : 'bg-transparent'
                         }`}
-                      ></span>
+                      />
                       {topic}
                     </td>
                   </tr>
@@ -96,11 +74,7 @@ const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSid
           </table>
         </FiltersGroup>
 
-        <FiltersGroup
-          label="Date Range"
-          open={openDropdowns.date}
-          onToggle={() => toggleDropdown('date')}
-        >
+        <FiltersGroup label="Date Range" open={openDropdowns.date} onToggle={() => toggleDropdown('date')}>
           <table className="w-full border-[#2196F3] border-separate border-2 rounded-md overflow-hidden">
             <tbody>
               {options.date.map((val) => (
@@ -116,7 +90,7 @@ const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSid
                       className={`w-2 h-2 rounded-full border border-[#1A237E] ${
                         filters.date === val ? 'bg-[#1A237E]' : 'bg-transparent'
                       }`}
-                    ></span>
+                    />
                     {val}
                   </td>
                 </tr>
@@ -125,11 +99,7 @@ const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSid
           </table>
         </FiltersGroup>
 
-        <FiltersGroup
-          label="Message Type"
-          open={openDropdowns.message}
-          onToggle={() => toggleDropdown('message')}
-        >
+        <FiltersGroup label="Message Type" open={openDropdowns.message} onToggle={() => toggleDropdown('message')}>
           <table className="w-full border-[#2196F3] border-separate border-2 rounded-md overflow-hidden">
             <tbody>
               {options.message.map((val) => (
@@ -145,7 +115,7 @@ const FiltersSidebar = ({ filters, onFilterChange, availableTopics }: FiltersSid
                       className={`w-2 h-2 rounded-full border border-[#1A237E] ${
                         filters.message === val ? 'bg-[#1A237E]' : 'bg-transparent'
                       }`}
-                    ></span>
+                    />
                     {val}
                   </td>
                 </tr>
