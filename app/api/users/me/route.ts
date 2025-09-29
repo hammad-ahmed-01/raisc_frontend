@@ -1,4 +1,3 @@
-// app/api/users/me/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -33,8 +32,7 @@ const ensureAuthHeader = (req: Request): string | null => {
 export async function GET(req: Request) {
   try {
     if (!isBackendConnected) {
-      // Demo payload (only if you truly want a fallback when backend is off)
-      // Keep minimal but sufficient for your UI to render.
+      // Demo payload (keep minimal)
       const demo = {
         id: 101,
         username: "demo_doctor",
@@ -50,6 +48,7 @@ export async function GET(req: Request) {
             location: "Lahore",
             education: "MSc Clinical Psychology – University of Demo (2020)",
             rating: 4.6,
+            phone: "+92 300 1111111",
           },
           patients_assigned: 23,
         },
@@ -89,7 +88,6 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     if (!isBackendConnected) {
-      // In demo mode, pretend success and echo back the payload
       const payload = await req.json().catch(() => ({}));
       return textJson({ success: true, demo: true, updated: payload }, 200);
     }

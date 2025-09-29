@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from "react";
+import { MapPin } from "lucide-react";
 import Image from "next/image";
 
 interface DoctorProfileCardProps {
   doctor: {
     name: string;
     specialization: string;
-    rating: number;
+    rating?: number;     // now optional; we’ll also use stats/backend
     experience: string;
     rates: string;
     organization: string;
-    location: string;
+    location?: string;   // can come from backend
+    imageUrl?: string;   // NEW: uniform avatar from backend
   };
 }
 
@@ -23,43 +24,88 @@ interface DoctorStats {
   reviews_count: number;
 }
 
+const isBackendConnected =
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
+const DJANGO_BASE =
+  (typeof process !== "undefined"
+    ? process.env.NEXT_PUBLIC_DJANGO_BASE_URL
+    : ""
+  )?.replace(/\/+$/, "") || "";
+
+// Shared auth header builder used across the app
+const buildAuthHeader = (): HeadersInit => {
+  const raw =
+    localStorage.getItem("session_key") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("access_token") ||
+    "";
+  const v = raw.trim();
+  if (!v) return {};
+  // Your backend expects "Token <key>"
+  return { Authorization: /^token\s+/i.test(v) ? v : `Token ${v}` };
+};
+
 export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) => {
   const [stats, setStats] = useState<DoctorStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+  // Prefer stats.rating if present, else doctor.rating
+  const effectiveRating = useMemo(() => {
+    if (stats?.rating && stats.rating > 0) return stats.rating;
+    if (typeof doctor.rating === "number") return doctor.rating;
+    return undefined;
+  }, [stats?.rating, doctor.rating]);
 
-  useEffect(() => { fetchDoctorStats(); }, []);
+  useEffect(() => {
+    fetchDoctorStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchDoctorStats = async () => {
     setIsLoading(true);
 
-    if (!isBackendConnected) {
-      setStats({ total_patients: 45, total_sessions: 120, rating: 4.7, reviews_count: 28 });
+    if (!isBackendConnected || !DJANGO_BASE) {
+      setStats({
+        total_patients: 45,
+        total_sessions: 120,
+        rating: doctor.rating ?? 4.7,
+        reviews_count: 28,
+      });
       setIsLoading(false);
       return;
     }
 
     try {
-      const sessionKey = localStorage.getItem("session_key");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/doctor/stats/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${sessionKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${DJANGO_BASE}/doctor/stats/`, {
+        headers: {
+          ...buildAuthHeader(),
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
 
       if (response.ok) {
         const data = await response.json();
-        setStats(data.stats);
+        // Expecting { stats: { total_patients, total_sessions, rating, reviews_count } }
+        setStats(data.stats ?? null);
       } else {
-        setStats({ total_patients: 0, total_sessions: 0, rating: doctor.rating, reviews_count: 0 });
+        setStats({
+          total_patients: 0,
+          total_sessions: 0,
+          rating: doctor.rating ?? 0,
+          reviews_count: 0,
+        });
       }
     } catch {
-      setStats({ total_patients: 0, total_sessions: 0, rating: doctor.rating, reviews_count: 0 });
+      setStats({
+        total_patients: 0,
+        total_sessions: 0,
+        rating: doctor.rating ?? 0,
+        reviews_count: 0,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +114,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
   const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <div
       className="bg-white border border-[#2196F3] rounded-[24px] p-4 sm:p-6"
-      style={{ boxShadow: '0px 4px 4px 0px #00000040' }}
+      style={{ boxShadow: "0px 4px 4px 0px #00000040" }}
     >
       {children}
     </div>
@@ -103,13 +149,13 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
     <Shell>
       {/* Desktop: equal columns. Mobile: stacked with avatar on top and centered text. */}
       <div className="flex flex-col md:flex-row md:items-start">
-        {/* LEFT COLUMN (50%) */}
+        {/* LEFT COLUMN (50%)) */}
         <div className="md:basis-1/2 md:pr-6 flex flex-col md:flex-row items-center md:items-center gap-6">
           {/* Avatar (TOP on mobile) */}
           <div className="shrink-0">
             <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-[#2196F3] overflow-hidden flex items-center justify-center">
               <Image
-                src="/doctordashboard/doctor.png"
+                src={doctor.imageUrl?.trim() || "/doctordashboard/doctor.png"}
                 width={144}
                 height={144}
                 alt="Doctor Avatar"
@@ -131,7 +177,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
             <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
               <span className="text-xl md:text-2xl text-yellow-400">⭐</span>
               <span className="text-lg md:text-xl text-[#1E3CA7]">
-                {stats?.rating || doctor.rating} Rating
+                {(effectiveRating ?? "—").toString()} Rating
               </span>
             </div>
 
@@ -163,7 +209,7 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
           <div className="flex items-center justify-center gap-1 mb-4">
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-[#1E3CA7]" />
             <span className="text-base md:text-lg text-[#1E3CA7]">
-              {doctor.location}
+              {doctor.location || "—"}
             </span>
           </div>
 

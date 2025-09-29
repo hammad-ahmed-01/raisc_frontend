@@ -1,11 +1,16 @@
+"use client";
+
 import { Patient } from "@/app/settings/account/page";
 import Image from "next/image";
+import Link from "next/link";
 
 interface PatientProps {
   patient: Patient;
 }
 
 export default function MyAccount({ patient }: PatientProps) {
+  const phone = patient.phone?.trim();
+
   return (
     <div className="h-full overflow-hidden p-4">
       <div className="max-w-5xl mx-auto h-full flex flex-col">
@@ -27,7 +32,7 @@ export default function MyAccount({ patient }: PatientProps) {
               >
                 <Image
                   src="/patient.png"
-                  alt="Doctor"
+                  alt="Patient"
                   className="w-full h-full object-cover"
                   width={56}
                   height={56}
@@ -42,7 +47,7 @@ export default function MyAccount({ patient }: PatientProps) {
 
             <div className="text-right">
               <span className="text-sm font-normal text-[#444444]">
-                Last Login: {patient.lastLogin || "17 July,2025"}
+                Last Login: {patient.lastLogin || "—"}
               </span>
             </div>
           </div>
@@ -87,21 +92,53 @@ export default function MyAccount({ patient }: PatientProps) {
                 </span>
                 <div className="flex items-center space-x-2">
                   <span className="text-base font-normal text-[#444444]">
-                    {patient.email || "Ayesha123@gmail.com"}
+                    {patient.email || "ayesha@example.com"}
                   </span>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
-                    <span className="text-green-600 mr-1">✓</span>
-                    Verified
-                  </span>
+                  {patient.emailVerified ? (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                      <span className="text-green-600 mr-1">✓</span>
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-semibold">
+                      Unverified
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {/* Phone */}
+              <div className="flex justify-between items-center py-1">
+                <span className="text-base font-semibold text-[#000000]">
+                  Phone
+                </span>
+                {phone ? (
+                  <span className="text-base font-normal text-[#444444]">
+                    {phone}
+                  </span>
+                ) : (
+                  <Link
+                    href="/dashboard/settings/profile"
+                    data-action="add-phone"
+                    className="text-[#1E3CA7] text-base font-semibold hover:underline"
+                  >
+                    Add a phone number
+                  </Link>
+                )}
               </div>
             </div>
 
-            <div className="pt-2">
-              <button className="text-[#1E3CA7] px-4 bg-transparent text-base font-semibold hover:underline">
-                Add a phone number
-              </button>
-            </div>
+            {/* Secondary CTA (kept for UX; optional) */}
+            {!phone && (
+              <div className="pt-2 px-4">
+                <Link
+                  href="/settings/edit-profile"
+                  className="text-[#1E3CA7] bg-transparent text-base font-semibold hover:underline"
+                >
+                  Add a phone number
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Bottom Section with Therapy Focus and Sessions */}
@@ -123,24 +160,24 @@ export default function MyAccount({ patient }: PatientProps) {
               style={{ border: "1px solid #87CEEB" }}
             >
               <h4 className="text-base font-bold text-[#000000] mb-2">
-                Sessions Completed: {patient.sessionsCompleted || "4"}
+                Sessions Completed: {patient.sessionsCompleted ?? "—"}
               </h4>
               <p className="text-sm font-normal text-[#444444]">
-                Last Session: {patient.lastSession || "17 July,2025"}
+                Last Session: {patient.lastSession || "—"}
               </p>
             </div>
           </div>
 
-          {/* Footer — pinned to the bottom of the blue container without overlap */}
+          {/* Footer — pinned to the bottom of the blue container */}
           <div className="mt-auto pt-2 text-center">
             <p className="text-base font-normal text-[#1E3CA7]">
               Want to update your details?{" "}
-              <a
+              <Link
                 href="/settings/edit-profile"
                 className="underline font-semibold hover:text-[#3A59AD]"
               >
                 Go to Edit Profile
-              </a>
+              </Link>
             </p>
           </div>
         </div>

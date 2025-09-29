@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { Header } from "./components/Header";
 import { DoctorProfileCard } from "./components/DoctorProfileCard";
 import { QuoteSection } from "./components/QuoteSection";
@@ -8,11 +9,18 @@ import TopRightIcons from "@/components/TopRightIcons";
 
 interface User {
   username: string;
+  profile_image?: string; // sometimes on top-level
+  avatar?: string;
   doctor_profile?: {
+    profile_image?: string; // some serializers put it here
+    location?: string;
     professional_information?: {
-      specialization: string;
-      experience: string;
-      qualifications: string;
+      specialization?: string;
+      experience?: string;
+      qualifications?: string;
+      profile_image?: string; // most common place
+      location?: string;
+      rating?: number;
     };
     rates?: string;
   };
@@ -34,11 +42,42 @@ const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
     }
   }, [user]);
 
-  const name = currentUser?.username || "Dr. Ali Hamza";
+  const name =
+    currentUser?.username
+      ? `Dr. ${currentUser.username}`
+      : "Dr. Ali Hamza";
+
   const specialization =
-    currentUser?.doctor_profile?.professional_information?.specialization || "Cognitive Therapy";
-  const experience = currentUser?.doctor_profile?.professional_information?.experience || "5 years";
-  const rates = currentUser?.doctor_profile?.rates || "$100/hr/session";
+    currentUser?.doctor_profile?.professional_information?.specialization ||
+    "Cognitive Therapy";
+
+  const experience =
+    currentUser?.doctor_profile?.professional_information?.experience ||
+    "5 years";
+
+  const rates =
+    currentUser?.doctor_profile?.rates || "$100/hr/session";
+
+  // Uniform image (same as Account/Edit-Profile mapping)
+  const imageUrl = useMemo(() => {
+    return (
+      currentUser?.doctor_profile?.professional_information?.profile_image ||
+      currentUser?.doctor_profile?.profile_image ||
+      currentUser?.profile_image ||
+      currentUser?.avatar ||
+      ""
+    );
+  }, [currentUser]);
+
+  // Location from backend (prefer professional_information → doctor_profile)
+  const locationText =
+    currentUser?.doctor_profile?.professional_information?.location ||
+    currentUser?.doctor_profile?.location ||
+    "—";
+
+  // Backend rating on profile, fallback to null (stats will refine in the card)
+  const backendRating =
+    currentUser?.doctor_profile?.professional_information?.rating;
 
   return (
     <div className="relative min-h-screen">
@@ -65,11 +104,12 @@ const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
               doctor={{
                 name,
                 specialization,
-                rating: 4.7,
+                rating: backendRating, // stats in card may override with fresher value
                 experience,
                 rates,
                 organization: "Pakistan Institute of Mental Health(PIMH)",
-                location: "Rawalpindi, Pakistan",
+                location: locationText,
+                imageUrl, // NEW: uniform image from backend
               }}
             />
           </section>

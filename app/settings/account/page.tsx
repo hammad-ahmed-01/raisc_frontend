@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DoctorMyAccount from "@/components/DoctorSettings/Account/MyAccount";
 import PatientMyAccount from "@/components/PatientSettings/Account/MyAccount";
 import OrganizationMyAccount from "@/components/OrganizationSettings/Account/MyAccount";
@@ -23,7 +24,9 @@ export interface Doctor {
   qualifications?: string[];
   university?: string;
   graduation_year?: string;
+  specialization?: string;
   emailVerified?: string; // "✓ Verified" or "Unverified"
+  imageUrl?: string;      // NEW: shared between Account & Edit Profile
 }
 
 export interface Patient {
@@ -35,6 +38,8 @@ export interface Patient {
   therapyFocus: string;
   sessionsCompleted: number;
   lastSession: string;
+  phone?: string;
+  imageUrl?: string;      // NEW: shared between Account & Edit Profile
 }
 
 export interface Organization {
@@ -52,6 +57,10 @@ export interface Organization {
 const isBackendConnected =
   typeof process !== "undefined" &&
   process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
+const DJANGO_BASE = (typeof process !== "undefined"
+  ? process.env.NEXT_PUBLIC_DJANGO_BASE_URL
+  : "")?.replace(/\/+$/, "") || "";
 
 const safe = (v: unknown) => (v == null ? "" : String(v));
 const toDate = (d: unknown) => {
@@ -127,34 +136,57 @@ function mapMeToDoctor(me: any): Doctor {
   const university = guessUniversity(education) || "";
   const graduation_year = safe(pi?.graduation_year || guessGradYear(education));
 
+  // Try common places a profile image might live
+  const imageUrl =
+    safe(
+      pi?.profile_image ||
+      dp?.profile_image ||
+      me?.profile_image ||
+      me?.avatar ||
+      ""
+    ) || "";
+
   return {
     id: Number(me?.id ?? 0),
     username,
     email,
     user_type: "doctor",
     display_name,
-    phone: safe(me?.phone || me?.doctor_profile?.phone),
+    phone: safe(pi?.phone || me?.phone || me?.doctor_profile?.phone),
     last_login: fmtDateTime(me?.last_login),
     member_since: fmtDate(me?.date_joined || me?.joined_at),
     rating: Number(pi?.rating ?? dp?.rating ?? 0),
-    organization: safe(me?.organization_profile?.name || me?.organization?.name),
+    organization: safe(pi?.organization || me?.organization_profile?.name || me?.organization?.name),
     location: safe(pi?.location),
     patients_assigned:
       Number(dp?.patients_assigned ?? dp?.stats?.patients_assigned ?? 0) || 0,
     qualifications,
     university,
     graduation_year,
+    specialization: safe(pi?.specialization),
     emailVerified,
+    imageUrl, // NEW
   };
 }
 
 function mapMeToPatient(me: any): Patient {
   const pp = me?.patient_profile || {};
   const pd = (pp?.profile_data ?? {}) as Record<string, unknown>;
+
   const displayName =
     (pd?.display_name as string) ||
     safe(me?.display_name || me?.name) ||
     safe(me?.username);
+
+  // Try common places a profile image might live
+  const imageUrl =
+    safe(
+      (pd as any)?.profile_image ||
+      pp?.profile_image ||
+      me?.profile_image ||
+      me?.avatar ||
+      ""
+    ) || "";
 
   return {
     displayName,
@@ -162,9 +194,11 @@ function mapMeToPatient(me: any): Patient {
     email: safe(me?.email),
     emailVerified: !!(me?.email_verified === true || me?.is_email_verified === true),
     lastLogin: fmtDateTime(me?.last_login),
-    therapyFocus: safe(pd?.therapy_focus || "General Wellbeing"),
+    therapyFocus: safe((pd as any)?.therapyFocus || (pd as any)?.therapy_focus || "General Wellbeing"),
     sessionsCompleted: Number(pp?.sessions_completed ?? 0),
     lastSession: fmtDate(pp?.last_session),
+    phone: safe((pd as any)?.phone || me?.phone || ""),
+    imageUrl, // NEW
   };
 }
 
@@ -194,6 +228,8 @@ const getDummyPatient = (): Patient => ({
   therapyFocus: "Anxiety & Stress Management",
   sessionsCompleted: 12,
   lastSession: "15 July, 2025",
+  phone: "+92 300 5555555",
+  imageUrl: "/patient.png",
 });
 
 const getDummyDoctor = (): Doctor => ({
@@ -213,6 +249,8 @@ const getDummyDoctor = (): Doctor => ({
   qualifications: ["MSc in Clinical Psychology", "Certified CBT Therapist"],
   university: "University of XYZ",
   graduation_year: "2021-2023",
+  specialization: "Cognitive Therapy",
+  imageUrl: "/doc.png",
 });
 
 const getDummyOrganization = (): Organization => ({
@@ -228,6 +266,8 @@ const getDummyOrganization = (): Organization => ({
 /* ------------------------------ component ---------------------------- */
 
 export default function AccountPage() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [authVerified, setAuthVerified] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -236,7 +276,28 @@ export default function AccountPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
 
-  // Step 1: verify auth (unchanged)
+  // Delegate "Add phone number" → Edit Profile
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      const match =
+        t.closest("[data-action='add-phone']") ||
+        t.closest("#add-phone-number") ||
+        (t instanceof HTMLButtonElement &&
+          /add\s*phone/i.test(t.textContent || "")) ||
+        (t instanceof HTMLAnchorElement &&
+          /add\s*phone/i.test(t.textContent || ""));
+      if (match) {
+        e.preventDefault();
+        router.push("/dashboard/settings/profile");
+      }
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [router]);
+
+  // Step 1: verify auth
   useEffect(() => {
     (async () => {
       const authResult = await checkAuth();
@@ -249,6 +310,25 @@ export default function AccountPage() {
     })();
   }, []);
 
+  // Ensure real doctor patients count from backend (already working)
+  const hydrateDoctorPatientsCount = async (d: Doctor) => {
+    if (!isBackendConnected || !DJANGO_BASE) return d;
+    try {
+      const res = await fetch(`${DJANGO_BASE}/users/doctor/patients/`, {
+        headers: { "Content-Type": "application/json", ...buildAuthHeader() },
+        cache: "no-store",
+      });
+      if (!res.ok) return d;
+      const arr = await res.json();
+      const realCount = Array.isArray(arr)
+        ? arr.length
+        : Number(arr?.count ?? 0) || d.patients_assigned || 0;
+      return { ...d, patients_assigned: realCount };
+    } catch {
+      return d;
+    }
+  };
+
   // Step 2: fetch current user via Next proxy: /api/users/me
   useEffect(() => {
     if (!authVerified) return;
@@ -256,7 +336,6 @@ export default function AccountPage() {
     const fetchUserData = async () => {
       setLoading(true);
 
-      // default to localStorage user_type (keeps UI consistent if backend fails)
       const userDataRaw = localStorage.getItem("user_data");
       const userData = userDataRaw ? JSON.parse(userDataRaw) : {};
       const localUserType = userData ? userData.user_type : undefined;
@@ -275,16 +354,16 @@ export default function AccountPage() {
           const text = await res.text();
           const me = text ? JSON.parse(text) : null;
 
-          if (!res.ok || !me) {
-            throw new Error(`Upstream failed (${res.status})`);
-          }
+          if (!res.ok || !me) throw new Error(`Upstream failed (${res.status})`);
 
           const serverType = safe(me?.user_type).toLowerCase();
           const type = serverType || localUserType || "doctor";
           setUserTypeS(type);
 
           if (type === "doctor") {
-            setDoctor(mapMeToDoctor(me));
+            let d = mapMeToDoctor(me);
+            d = await hydrateDoctorPatientsCount(d);
+            setDoctor(d);
             setPatient(null);
             setOrganization(null);
           } else if (type === "patient") {
@@ -296,8 +375,9 @@ export default function AccountPage() {
             setDoctor(null);
             setPatient(null);
           } else {
-            // fallback to doctor card if unknown
-            setDoctor(mapMeToDoctor(me));
+            let d = mapMeToDoctor(me);
+            d = await hydrateDoctorPatientsCount(d);
+            setDoctor(d);
             setPatient(null);
             setOrganization(null);
             setUserTypeS("doctor");
@@ -311,7 +391,6 @@ export default function AccountPage() {
           if (type === "organization") setOrganization(getDummyOrganization());
         }
       } else {
-        // demo path
         const type = localUserType || "doctor";
         setUserTypeS(type);
         if (type === "doctor") setDoctor(getDummyDoctor());

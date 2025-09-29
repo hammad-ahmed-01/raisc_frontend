@@ -1,13 +1,19 @@
+"use client";
+
 import { Doctor } from "@/app/settings/account/page";
 import Image from "next/image";
+import Link from "next/link";
 
 interface DoctorProps {
   doctor: Doctor;
 }
 
-export default function MyAccount({doctor}:DoctorProps) {
+export default function MyAccount({ doctor }: DoctorProps) {
+  const phone = doctor.phone?.trim();
+  const specialization = doctor.specialization?.trim();
+  const img = doctor.imageUrl?.trim() || "/doc.png";
 
-return (
+  return (
     <div className="h-full overflow-hidden p-5">
       <div className="max-w-6xl mx-auto h-full flex flex-col">
         <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-16">
@@ -31,7 +37,7 @@ return (
                   style={{ border: "2px solid #1E3CA7" }}
                 >
                   <Image
-                    src="/doc.png"
+                    src={img}
                     alt="Doctor"
                     className="w-full h-full object-cover"
                     width={56}
@@ -43,7 +49,7 @@ return (
                     {doctor.display_name || doctor.username}
                   </h2>
                   <p className="text-base text-[#1E3CA7] font-normal">
-                    Cognitive Therapy
+                    {specialization || "—"}
                   </p>
                 </div>
               </div>
@@ -52,11 +58,11 @@ return (
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="text-xl">⭐</span>
                   <span className="text-base font-bold text-[#1E3CA7]">
-                    {doctor.rating} Rating
+                    {doctor.rating ?? "—"} Rating
                   </span>
                 </div>
                 <p className="text-md font-normal text-[#444444]">
-                  Member Since {doctor.member_since}
+                  Member Since {doctor.member_since || "—"}
                 </p>
               </div>
             </div>
@@ -66,12 +72,12 @@ return (
           <div className="flex items-center justify-between pt-10 mb-4">
             <h3 className="text-xl font-bold text-[#1E3CA7]">Account Detail</h3>
             <span className="text-md font-normal text-[#444444]">
-              Last Login: {doctor.last_login}
+              Last Login: {doctor.last_login || "—"}
             </span>
           </div>
 
           <div className="flex gap-5 mb-5">
-            {/* Left Column - Takes 60% width with all fields */}
+            {/* Left Column - 60% */}
             <div
               className="w-[60%] bg-white rounded-xl p-4 space-y-4"
               style={{ border: "1px solid #2196F3" }}
@@ -102,21 +108,33 @@ return (
                   <p className="text-base font-normal mb-0 text-[#444444]">
                     {doctor.email}
                   </p>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    {doctor.emailVerified}
-                  </span>
+                  {!!doctor.emailVerified && (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                      {doctor.emailVerified}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Add Phone Number */}
-              <div className="flex justify-start">
-                <button className="text-[#1E3CA7] p-0 text-md bg-transparent text-left font-semibold hover:underline">
-                  Add a phone number
-                </button>
+              {/* Phone */}
+              <div className="flex justify-between items-center">
+                <label className="text-md font-bold text-[#444444]">
+                  Phone
+                </label>
+                {phone ? (
+                  <p className="text-base font-normal text-[#444444]">{phone}</p>
+                ) : (
+                  <Link
+                    href="/settings/edit-profile"
+                    className="text-[#1E3CA7] text-md bg-transparent text-left font-semibold hover:underline"
+                  >
+                    Add a phone number
+                  </Link>
+                )}
               </div>
             </div>
 
-            {/* Right Column - Takes 40% width and matches left column height */}
+            {/* Right Column - 40% */}
             <div className="w-[40%] flex flex-col gap-4">
               <div
                 className="bg-white rounded-xl p-4 flex-1 flex flex-col justify-center"
@@ -127,10 +145,10 @@ return (
                 </label>
                 <div className="text-center">
                   <p className="text-base font-normal text-[#444444] mb-1">
-                    {doctor.organization}
+                    {doctor.organization || "—"}
                   </p>
                   <p className="text-md font-normal text-[#444444]">
-                    {doctor.location}
+                    {doctor.location || "—"}
                   </p>
                 </div>
               </div>
@@ -140,7 +158,7 @@ return (
                 style={{ border: "1px solid #2196F3" }}
               >
                 <label className="text-md font-semibold text-[#444444] text-center">
-                  Patients Assigned: {doctor.patients_assigned}
+                  Patients Assigned: {doctor.patients_assigned ?? "—"}
                 </label>
               </div>
             </div>
@@ -157,19 +175,21 @@ return (
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div className="space-y-2">
-                {doctor.qualifications?.map((qual, index) => (
-                  <p key={index} className="text-base font-normal text-[#444444]">
-                    {qual}
-                  </p>
-                ))}
+                {doctor.qualifications?.length ? (
+                  doctor.qualifications.map((qual, index) => (
+                    <p key={index} className="text-base font-normal text-[#444444]">
+                      {qual}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-base font-normal text-[#444444]">—</p>
+                )}
               </div>
 
               <div className="text-right space-y-1">
                 <p className="text-base font-semibold text-[#444444]">
-                  {doctor.university}: {doctor.graduation_year}
-                </p>
-                <p className="text-base font-semibold text-[#444444]">
-                  {doctor.university}: 2024
+                  {doctor.university || "—"}
+                  {doctor.graduation_year ? `: ${doctor.graduation_year}` : ""}
                 </p>
               </div>
             </div>
@@ -179,12 +199,12 @@ return (
           <div className="text-center">
             <p className="text-md font-normal text-[#1E3CA7]">
               Want to update your details?{" "}
-              <a
+              <Link
                 href="/settings/edit-profile"
                 className="underline font-semibold"
               >
                 Go to Edit Profile
-              </a>
+              </Link>
             </p>
           </div>
         </div>
