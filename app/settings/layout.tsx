@@ -33,7 +33,7 @@ export default function SettingsLayout({
           <h2 className="text-2xl font-bold text-red-600 mb-4">
             Unauthorized Access
           </h2>
-          <p className="text-gray-700 mb-4">{authError}</p>
+        <p className="text-gray-700 mb-4">{authError}</p>
           <p className="text-sm text-gray-500">Redirecting to login page...</p>
         </div>
       </div>
@@ -48,11 +48,11 @@ export default function SettingsLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* Sidebar stays on left with its own background */}
+      {/* Sidebar component (handles mobile vs desktop itself) */}
       <SettingsSidebar />
 
-      {/* Main content area only has the blue background */}
-      <main className="flex-1 ml-80 min-h-screen overflow-y-auto bg-blue-50">
+      {/* IMPORTANT: Only offset content on desktop */}
+      <main className="flex-1 md:ml-80 min-h-screen overflow-y-auto bg-blue-50">
         <div className="h-full w-full p-6">{children}</div>
       </main>
     </div>

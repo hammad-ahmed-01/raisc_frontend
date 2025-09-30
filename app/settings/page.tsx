@@ -41,9 +41,6 @@ export default function SettingsPage() {
     );
   }
 
-  if (!authVerified) {
-    return null;
-  }
-
+  if (!authVerified) return null;
   return null;
 }
