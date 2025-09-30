@@ -142,10 +142,10 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
               <button
                 onClick={onBackToDashboard}
                 aria-label="Back to dashboard"
-                className="flex items-center gap-1 text-heading2 font-bold bg-transparent"
+                className="flex items-center gap-1 text-heading2 font-bold px-3 py-2 bg-[#CDD2F480] rounded-full"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="text-lg">Dashboard</span>
+                <span className="text-md">Dashboard</span>
               </button>
             </div>
 

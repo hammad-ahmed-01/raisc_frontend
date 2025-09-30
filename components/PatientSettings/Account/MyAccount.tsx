@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Patient } from "@/app/settings/account/page";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,8 +9,100 @@ interface PatientProps {
   patient: Patient;
 }
 
+type LatestSession =
+  | { date?: string; datetime?: string; created_at?: string }
+  | Record<string, any>;
+
+function buildAuthHeader(): HeadersInit {
+  // Pull token from localStorage (your app already stores it there)
+  const raw =
+    (typeof window !== "undefined" && (
+      localStorage.getItem("session_key") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("access_token")
+    )) || "";
+  const v = raw.trim();
+  if (!v) return {};
+  const normalized = /^(token|bearer)\s+/i.test(v) ? v : `Token ${v}`;
+  return { Authorization: normalized, "X-RaIsc-Auth": normalized };
+}
+
 export default function MyAccount({ patient }: PatientProps) {
   const phone = patient.phone?.trim();
+
+  const [sessionsCompleted, setSessionsCompleted] = useState<number | null>(
+    patient.sessionsCompleted ?? null
+  );
+  const [lastSession, setLastSession] = useState<string | null>(
+    patient.lastSession ?? null
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fmtDate = (raw?: string) => {
+      if (!raw) return null;
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return raw; // already pretty
+      return d.toLocaleDateString();
+    };
+
+    const headers = buildAuthHeader();
+
+    const loadLatest = async () => {
+      try {
+        const res = await fetch("/api/sessions/latest", {
+          method: "GET",
+          headers,
+          credentials: "include", // include cookies if any
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data: LatestSession = await res.json();
+        const d =
+          (data?.datetime as string) ||
+          (data?.date as string) ||
+          (data?.created_at as string) ||
+          "";
+        const pretty = fmtDate(d);
+        if (!cancelled && pretty) setLastSession(pretty);
+      } catch {}
+    };
+
+    const loadPrevious = async () => {
+      try {
+        const res = await fetch("/api/sessions/previous", {
+          method: "GET",
+          headers,
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        let count: number | null = null;
+        if (Array.isArray(data)) count = data.length;
+        else if (typeof data === "object" && data) {
+          const c =
+            (data.count as number) ??
+            (data.total as number) ??
+            (data.sessionsCompleted as number);
+          if (typeof c === "number") count = c;
+          if (count == null && Array.isArray((data as any).results)) {
+            count = (data as any).results.length;
+          }
+        }
+        if (!cancelled && typeof count === "number") setSessionsCompleted(count);
+      } catch {}
+    };
+
+    loadLatest();
+    loadPrevious();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="h-full overflow-hidden p-4">
@@ -114,7 +207,7 @@ export default function MyAccount({ patient }: PatientProps) {
                   <span className="text-base font-normal text-[#444444]">{phone}</span>
                 ) : (
                   <Link
-                    href="/settings/profile"
+                    href="/settings/edit-profile"
                     className="text-[#1E3CA7] text-base font-semibold hover:underline"
                   >
                     Add a phone number
@@ -143,10 +236,10 @@ export default function MyAccount({ patient }: PatientProps) {
               style={{ border: "1px solid #87CEEB" }}
             >
               <h4 className="text-base font-bold text-[#000000] mb-2">
-                Sessions Completed: {patient.sessionsCompleted ?? "—"}
+                Sessions Completed: {sessionsCompleted ?? "—"}
               </h4>
               <p className="text-sm font-normal text-[#444444]">
-                Last Session: {patient.lastSession || "—"}
+                Last Session: {lastSession ?? "—"}
               </p>
             </div>
           </div>
