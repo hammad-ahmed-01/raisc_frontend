@@ -14,7 +14,7 @@ export default function MyAccount({ patient }: PatientProps) {
   return (
     <div className="h-full overflow-hidden p-4">
       <div className="max-w-5xl mx-auto h-full flex flex-col">
-        <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-4">
+        <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-4">
           My Account
         </h1>
 
@@ -24,10 +24,10 @@ export default function MyAccount({ patient }: PatientProps) {
           style={{ border: "1px solid #87CEEB" }}
         >
           {/* Patient Profile Header */}
-          <div className="flex items-center justify-between mb-4 p-4 rounded-2xl">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 p-4 rounded-2xl">
+            <div className="flex items-center gap-3">
               <div
-                className="w-14 h-14 rounded-full overflow-hidden"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden"
                 style={{ border: "2px solid #1E3CA7" }}
               >
                 <Image
@@ -39,13 +39,13 @@ export default function MyAccount({ patient }: PatientProps) {
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#1E3CA7]">
+                <h2 className="text-lg md:text-xl font-bold text-[#1E3CA7]">
                   {patient.displayName || "Ayesha Khan"}
                 </h2>
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="text-left md:text-right">
               <span className="text-sm font-normal text-[#444444]">
                 Last Login: {patient.lastLogin || "—"}
               </span>
@@ -68,39 +68,37 @@ export default function MyAccount({ patient }: PatientProps) {
                 borderBottom: "1px solid #2196F3",
               }}
             >
-              <div className="flex justify-between items-center py-1">
-                <span className="text-base font-semibold text-[#000000]">
-                  Display Name
-                </span>
-                <span className="text-base font-normal text-[#444444]">
-                  {patient.displayName || "Ayesha"}
-                </span>
-              </div>
+              {[
+                ["Display Name", patient.displayName || "Ayesha"],
+                ["Username", patient.username || "Ayesha_123"],
+              ].map(([label, val]) => (
+                <div
+                  key={label}
+                  className="flex flex-col md:flex-row md:justify-between md:items-center py-1 gap-1"
+                >
+                  <span className="text-base font-semibold text-[#000000]">
+                    {label}
+                  </span>
+                  <span className="text-base font-normal text-[#444444] break-words">
+                    {val}
+                  </span>
+                </div>
+              ))}
 
-              <div className="flex justify-between items-center py-1">
-                <span className="text-base font-semibold text-[#000000]">
-                  Username
-                </span>
-                <span className="text-base font-normal text-[#444444]">
-                  {patient.username || "Ayesha_123"}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center py-1">
-                <span className="text-base font-semibold text-[#000000]">
-                  Email
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-base font-normal text-[#444444]">
+              {/* Email */}
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center py-1 gap-2">
+                <span className="text-base font-semibold text-[#000000]">Email</span>
+                <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
+                  <span className="text-base font-normal text-[#444444] break-words">
                     {patient.email || "ayesha@example.com"}
                   </span>
                   {patient.emailVerified ? (
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                    <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold flex items-center">
                       <span className="text-green-600 mr-1">✓</span>
                       Verified
                     </span>
                   ) : (
-                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold">
                       Unverified
                     </span>
                   )}
@@ -108,18 +106,15 @@ export default function MyAccount({ patient }: PatientProps) {
               </div>
 
               {/* Phone */}
-              <div className="flex justify-between items-center py-1">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center py-1 gap-1">
                 <span className="text-base font-semibold text-[#000000]">
                   Phone
                 </span>
                 {phone ? (
-                  <span className="text-base font-normal text-[#444444]">
-                    {phone}
-                  </span>
+                  <span className="text-base font-normal text-[#444444]">{phone}</span>
                 ) : (
                   <Link
-                    href="/dashboard/settings/profile"
-                    data-action="add-phone"
+                    href="/settings/profile"
                     className="text-[#1E3CA7] text-base font-semibold hover:underline"
                   >
                     Add a phone number
@@ -127,18 +122,6 @@ export default function MyAccount({ patient }: PatientProps) {
                 )}
               </div>
             </div>
-
-            {/* Secondary CTA (kept for UX; optional) */}
-            {!phone && (
-              <div className="pt-2 px-4">
-                <Link
-                  href="/settings/edit-profile"
-                  className="text-[#1E3CA7] bg-transparent text-base font-semibold hover:underline"
-                >
-                  Add a phone number
-                </Link>
-              </div>
-            )}
           </div>
 
           {/* Bottom Section with Therapy Focus and Sessions */}
@@ -168,13 +151,12 @@ export default function MyAccount({ patient }: PatientProps) {
             </div>
           </div>
 
-          {/* Footer — pinned to the bottom of the blue container */}
           <div className="mt-auto pt-2 text-center">
-            <p className="text-base font-normal text-[#1E3CA7]">
+            <p className="text-sm md:text-md font-normal text-[#1E3CA7]">
               Want to update your details?{" "}
               <Link
                 href="/settings/edit-profile"
-                className="underline font-semibold hover:text-[#3A59AD]"
+                className="underline font-semibold"
               >
                 Go to Edit Profile
               </Link>

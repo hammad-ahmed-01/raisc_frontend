@@ -136,7 +136,6 @@ function mapMeToDoctor(me: any): Doctor {
   const university = guessUniversity(education) || "";
   const graduation_year = safe(pi?.graduation_year || guessGradYear(education));
 
-  // Try common places a profile image might live
   const imageUrl =
     safe(
       pi?.profile_image ||
@@ -165,7 +164,7 @@ function mapMeToDoctor(me: any): Doctor {
     graduation_year,
     specialization: safe(pi?.specialization),
     emailVerified,
-    imageUrl, // NEW
+    imageUrl,
   };
 }
 
@@ -178,7 +177,6 @@ function mapMeToPatient(me: any): Patient {
     safe(me?.display_name || me?.name) ||
     safe(me?.username);
 
-  // Try common places a profile image might live
   const imageUrl =
     safe(
       (pd as any)?.profile_image ||
@@ -198,7 +196,7 @@ function mapMeToPatient(me: any): Patient {
     sessionsCompleted: Number(pp?.sessions_completed ?? 0),
     lastSession: fmtDate(pp?.last_session),
     phone: safe((pd as any)?.phone || me?.phone || ""),
-    imageUrl, // NEW
+    imageUrl,
   };
 }
 
@@ -408,15 +406,15 @@ export default function AccountPage() {
 
   if (authError) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-xl text-red-600">{authError}</div>
+      <div className="flex items-center justify-center h-full px-4 md:px-0">
+        <div className="text-xl text-red-600"> {authError} </div>
       </div>
     );
   }
 
   if (!authVerified || loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full px-4 md:px-0">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -424,7 +422,7 @@ export default function AccountPage() {
 
   if (!doctor && !patient && !organization) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full px-4 md:px-0">
         <div className="text-xl text-red-600">Error loading user data</div>
       </div>
     );
@@ -443,7 +441,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center h-full px-4 md:px-0">
       <div className="text-xl text-red-600">Error loading user data</div>
     </div>
   );

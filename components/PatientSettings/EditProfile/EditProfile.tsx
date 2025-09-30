@@ -1,3 +1,5 @@
+"use client";
+
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import Image from "next/image";
 
@@ -34,261 +36,242 @@ export default function EditPatientProfile({
   handleCancel,
   setTempValue
 }: EditPatientProfileProps) {
-    return (
-      <div className="max-h-[1200px] overflow-y-auto p-3">
-        <div className="max-w-5xl mx-auto h-full flex flex-col">
-          <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-16">
-            Edit Profile
-          </h1>
+  return (
+    <div className="max-h-[1200px] overflow-y-auto p-3">
+      <div className="max-w-5xl mx-auto h-full flex flex-col">
+        <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-6 md:mb-16">
+          Edit Profile
+        </h1>
 
-          {/* Main Container */}
+        {/* Main Container */}
+        <div
+          className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1"
+          style={{ border: "1px solid #2196F3" }}
+        >
+          {/* Patient Profile Picture Section */}
           <div
-            className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1"
+            className="
+              w-full md:w-[calc(100%-2rem)] bg-white rounded-2xl p-4
+              static md:absolute md:top-0 md:-translate-y-1/2
+            "
             style={{ border: "1px solid #2196F3" }}
           >
-            {/* Patient Profile Picture Section */}
-            <div
-              className="absolute top-0 -translate-y-1/2 w-[calc(100%-2rem)] bg-white rounded-2xl p-4"
-              style={{ border: "1px solid #2196F3" }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div
-                    className="w-12 h-12 rounded-full overflow-hidden"
-                    style={{ border: "2px solid #1E3CA7" }}
-                  >
-                    <Image
-                      src="/patient.png"
-                      alt="Patient"
-                      className="w-full h-full object-cover"
-                      width={90}
-                      height={90}
-                    />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">
-                      {profile.display_name}
-                    </h2>
-                  </div>
-                </div>
-                <PrimaryButton
-                  text="Edit Profile Picture"
-                  className="px-6 py-1.5 rounded-full text-md font-semibold"
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full overflow-hidden"
+                  style={{ border: "2px solid #1E3CA7" }}
+                >
+                  <Image
+                    src="/patient.png"
+                    alt="Patient"
+                    className="w-full h-full object-cover"
+                    width={90}
+                    height={90}
                   />
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-lg font-bold text-[#1E3CA7] mb-0.5">
+                    {profile.display_name}
+                  </h2>
+                </div>
               </div>
+              <PrimaryButton
+                text="Edit Profile Picture"
+                className="px-4 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold self-start md:self-auto"
+              />
+            </div>
+          </div>
+
+          {/* Patient Profile Fields */}
+          <div
+            className="bg-white rounded-2xl mt-4 md:mt-10 px-4 py-2 mb-2"
+            style={{ border: "1px solid #2196F3" }}
+          >
+            {/* Display Name */}
+            <Row
+              label="Display Name"
+              field="display_name"
+              value={profile.display_name}
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+            />
+
+            {/* Age */}
+            <Row
+              label="Age"
+              field="age"
+              value={`${profile.age ?? ""}`}
+              type="number"
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              suffix=" years"
+            />
+
+            {/* Email */}
+            <Row
+              label="Email"
+              field="email"
+              value={profile.email}
+              type="email"
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+            />
+
+            {/* Phone Number */}
+            <Row
+              label="Phone Number"
+              field="phone"
+              value={profile.phone}
+              type="tel"
+              placeholder="Add a phone number"
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+            />
+          </div>
+
+          {/* Therapy Focus Section */}
+          <div
+            className="bg-white rounded-2xl p-4"
+            style={{ border: "1px solid #2196F3" }}
+          >
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-3 gap-2">
+              <h3 className="text-lg font-bold text-[#444444]">Therapy Focus</h3>
+              {editingField !== "therapyFocus" && (
+                <button
+                  onClick={() => handleEdit("therapyFocus", profile.therapyFocus || "")}
+                  className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
+                >
+                  Edit
+                </button>
+              )}
             </div>
 
-            {/* Patient Profile Fields */}
-            <div
-              className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2"
-              style={{ border: "1px solid #2196F3" }}
-            >
-              {/* Display Name */}
-              <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-                <div>
-                  <label className="text-base font-bold text-[#444444]">Display Name</label>
-                  {editingField === 'display_name' ? (
-                    <div className="flex items-center space-x-2 mt-1">
-                      <input
-                        type="text"
-                        value={tempValue}
-                        onChange={(e) => setTempValue(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-md"
-                      />
-                      <button
-                        onClick={() => handleSave('display_name')}
-                        className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-md text-[#444444] mt-1">{profile.display_name}</p>
-                  )}
-                </div>
-                {editingField !== 'display_name' && (
+            {editingField === "therapyFocus" ? (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  className="px-2 py-1 border border-gray-300 rounded text-md w-full"
+                />
+                <div className="flex gap-2">
                   <button
-                    onClick={() => handleEdit('display_name', profile.display_name)}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-
-              {/* Age */}
-              <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-                <div>
-                  <label className="text-base font-bold text-[#444444]">Age</label>
-                  {editingField === 'age' ? (
-                    <div className="flex items-center space-x-2 mt-1">
-                      <input
-                        type="number"
-                        value={tempValue}
-                        onChange={(e) => setTempValue(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-md"
-                      />
-                      <button
-                        onClick={() => handleSave('age')}
-                        className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-md text-[#444444] mt-1">{profile.age} years</p>
-                  )}
-                </div>
-                {editingField !== 'age' && (
-                  <button
-                    onClick={() => handleEdit('age', profile.age || '')}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-                <div>
-                  <label className="text-base font-bold text-[#444444]">Email</label>
-                  {editingField === 'email' ? (
-                    <div className="flex items-center space-x-2 mt-1">
-                      <input
-                        type="email"
-                        value={tempValue}
-                        onChange={(e) => setTempValue(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-md"
-                      />
-                      <button
-                        onClick={() => handleSave('email')}
-                        className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-md text-[#444444] mt-1">{profile.email}</p>
-                  )}
-                </div>
-                {editingField !== 'email' && (
-                  <button
-                    onClick={() => handleEdit('email', profile.email)}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-
-              {/* Phone Number */}
-              <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-                <div>
-                  <label className="text-base font-bold text-[#444444]">Phone Number</label>
-                  {editingField === 'phone' ? (
-                    <div className="flex items-center space-x-2 mt-1">
-                      <input
-                        type="tel"
-                        value={tempValue}
-                        onChange={(e) => setTempValue(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-md"
-                        placeholder="Add a phone number"
-                      />
-                      <button
-                        onClick={() => handleSave('phone')}
-                        className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-md text-gray-500 mt-1">
-                      {profile.phone || "You haven't added a phone number yet."}
-                    </p>
-                  )}
-                </div>
-                {editingField !== 'phone' && (
-                  <button
-                    onClick={() => handleEdit('phone', profile.phone)}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Condition Section */}
-            <div
-              className="bg-white rounded-2xl p-4"
-              style={{ border: "1px solid #2196F3" }}
-            >
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold text-[#444444]">Therapy Focus</h3>
-                {editingField !== 'therapyFocus' && (
-                  <button
-                    onClick={() => handleEdit('therapyFocus', profile.therapyFocus || '')}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-
-              {editingField === 'therapyFocus' ? (
-                <div className="flex items-center space-x-2 mt-1">
-                  <input
-                    type="text"
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    className="px-2 py-1 border border-gray-300 rounded text-md w-full"
-                  />
-                  <button
-                    onClick={() => handleSave('therapyFocus')}
-                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => handleSave("therapyFocus")}
+                    className="bg-green-600 text-white px-3 py-1 rounded text-xs"
                   >
                     Save
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                    className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
                   >
                     Cancel
                   </button>
                 </div>
-              ) : (
-                <p className="text-md text-[#444444]">
-                  {profile.therapyFocus || "No therapy focus specified"}
-                </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-md text-[#444444]">
+                {profile.therapyFocus || "No therapy focus specified"}
+              </p>
+            )}
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+}
+
+function Row(props: {
+  label: string;
+  field: string;
+  value: string;
+  type?: string;
+  placeholder?: string;
+  suffix?: string;
+  editingField: string | null;
+  tempValue: string;
+  setTempValue: (v: string) => void;
+  handleEdit: (field: string, currentValue: string) => void;
+  handleSave: (field: string) => Promise<void>;
+  handleCancel: () => void;
+}) {
+  const {
+    label,
+    field,
+    value,
+    type,
+    placeholder,
+    suffix,
+    editingField,
+    tempValue,
+    setTempValue,
+    handleEdit,
+    handleSave,
+    handleCancel,
+  } = props;
+
+  const isEditing = editingField === field;
+
+  return (
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 border-b-[3px] border-[#A6B6CC66] gap-2">
+      <div>
+        <label className="text-base font-bold text-[#444444]">{label}</label>
+        {isEditing ? (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
+            <input
+              type={type || "text"}
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              className="px-2 py-1 border border-gray-300 rounded text-md w-full sm:w-[300px] max-w-full"
+              placeholder={placeholder}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSave(field)}
+                className="bg-green-600 text-white px-3 py-1 rounded text-xs"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCancel}
+                className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-md text-[#444444] mt-1 break-words">
+            {value || "—"} {suffix ?? ""}
+          </p>
+        )}
+      </div>
+
+      {!isEditing && (
+        <button
+          onClick={() => handleEdit(field, value)}
+          className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
+        >
+          Edit
+        </button>
+      )}
+    </div>
+  );
 }

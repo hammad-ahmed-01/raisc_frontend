@@ -1,4 +1,6 @@
 // components/DoctorSettings/EditProfile/EditProfile.tsx
+"use client";
+
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import Image from "next/image";
 import { useMemo } from "react";
@@ -8,18 +10,12 @@ interface ProfileData {
   display_name: string;
   email: string;
   phone: string;
-
   specialization?: string;
   experience?: string | number;
-
-  // UPDATED: use expertise + description, remove qualifications/bio
   expertise?: string[] | string;
   description?: string;
-
   organization?: string;
   location: string;
-
-  // NEW/kept
   education?: string;
   profile_image?: string;
   rates?: string | number;
@@ -46,7 +42,6 @@ export default function EditDoctorProfile({
   handleCancel,
   setTempValue,
 }: EditDoctorProfileProps) {
-  // Normalize expertise for display: accept array OR string (split by commas/pipes/newlines)
   const expertiseList = useMemo(() => {
     const e = profile.expertise;
     if (!e) return [];
@@ -74,22 +69,27 @@ export default function EditDoctorProfile({
   return (
     <div className="max-h-[1200px] overflow-y-auto p-3">
       <div className="max-w-5xl mx-auto h-full flex flex-col">
-        <h1 className="text-xl font-bold text-left text-[#1E3CA7] mb-16">Edit Profile</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-6 md:mb-16">
+          Edit Profile
+        </h1>
 
         {/* Main Container */}
         <div
-          className="relative bg-[#E9F5FE] rounded-3xl p-4 flex-1"
+          className="relative bg-[#E9F5FE] rounded-3xl p-4 md:p-4 flex-1"
           style={{ border: "1px solid #2196F3" }}
         >
           {/* Profile Picture Section */}
           <div
-            className="absolute top-0 -translate-y-1/2 w-[calc(100%-2rem)] bg-white rounded-2xl p-4"
+            className="
+              w-full md:w-[calc(100%-2rem)] bg-white rounded-2xl p-4
+              static md:absolute md:top-0 md:-translate-y-1/2
+            "
             style={{ border: "1px solid #2196F3" }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <div
-                  className="w-12 h-12 rounded-full overflow-hidden"
+                  className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden"
                   style={{ border: "2px solid #1E3CA7" }}
                 >
                   <Image
@@ -101,26 +101,27 @@ export default function EditDoctorProfile({
                   />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[#1E3CA7] mb-1">
+                  <h2 className="text-lg md:text-lg font-bold text-[#1E3CA7] mb-0.5">
                     {profile.display_name}
                   </h2>
-                  <p className="text-md text-[#1E3CA7]">{profile.specialization}</p>
+                  <p className="text-sm md:text-md text-[#1E3CA7]">
+                    {profile.specialization}
+                  </p>
                 </div>
               </div>
               <PrimaryButton
                 text="Edit Profile Picture"
                 onClick={() => handleEdit("profile_image", profile.profile_image || "")}
-                className="px-6 py-1.5 rounded-full text-md font-semibold flex items-center gap-2"
-              ></PrimaryButton>
+                className="px-4 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold flex items-center gap-2 self-start md:self-auto"
+              />
             </div>
           </div>
 
           {/* Profile Fields */}
           <div
-            className="bg-white rounded-2xl mt-10 px-4 py-2 mb-2"
+            className="bg-white rounded-2xl mt-4 md:mt-10 px-3 md:px-4 py-2 mb-2"
             style={{ border: "1px solid #2196F3" }}
           >
-            {/* Display Name */}
             <EditableRow
               label="Display Name"
               field="display_name"
@@ -134,20 +135,19 @@ export default function EditDoctorProfile({
             />
 
             {/* Email */}
-            <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 border-b-[3px] border-[#A6B6CC66] gap-2">
               <div>
                 <label className="text-base font-bold text-[#444444]">Email</label>
-                <p className="text-md text-[#444444] mt-1">{profile.email}</p>
+                <p className="text-md text-[#444444] mt-1 break-words">{profile.email}</p>
               </div>
               <button
                 onClick={() => handleEdit("email", profile.email)}
-                className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
               >
                 Edit
               </button>
             </div>
 
-            {/* Phone */}
             <EditableRow
               label="Phone Number"
               field="phone"
@@ -160,7 +160,6 @@ export default function EditDoctorProfile({
               handleCancel={handleCancel}
             />
 
-            {/* Specialization */}
             <EditableRow
               label="Specialization"
               field="specialization"
@@ -173,7 +172,6 @@ export default function EditDoctorProfile({
               handleCancel={handleCancel}
             />
 
-            {/* Experience */}
             <EditableRow
               label="Experience"
               field="experience"
@@ -187,7 +185,6 @@ export default function EditDoctorProfile({
               placeholder='e.g., "10 yrs"'
             />
 
-            {/* Education */}
             <EditableRow
               label="Education"
               field="education"
@@ -200,7 +197,6 @@ export default function EditDoctorProfile({
               handleCancel={handleCancel}
             />
 
-            {/* Location */}
             <EditableRow
               label="Location"
               field="location"
@@ -213,7 +209,6 @@ export default function EditDoctorProfile({
               handleCancel={handleCancel}
             />
 
-            {/* Profile Image URL */}
             <EditableRow
               label="Profile Image URL"
               field="profile_image"
@@ -227,7 +222,6 @@ export default function EditDoctorProfile({
               placeholder="https://…/image.jpg"
             />
 
-            {/* Rates */}
             <EditableRow
               label="Rates"
               field="rates"
@@ -249,12 +243,12 @@ export default function EditDoctorProfile({
           >
             {/* Expertise */}
             <div className="mb-6">
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-3 gap-2">
                 <h3 className="text-lg font-bold text-[#444444]">Expertise</h3>
                 {editingField !== "expertise" && (
                   <button
                     onClick={handleEditExpertise}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                    className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
                   >
                     Edit
                   </button>
@@ -304,12 +298,12 @@ export default function EditDoctorProfile({
 
             {/* About me */}
             <div className="mt-2">
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-3 gap-2">
                 <h3 className="text-lg font-bold text-[#444444]">About me</h3>
                 {editingField !== "description" && (
                   <button
                     onClick={handleEditDescription}
-                    className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+                    className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
                   >
                     Edit
                   </button>
@@ -385,39 +379,41 @@ function EditableRow(props: {
   } = props;
   const isEditing = editingField === field;
   return (
-    <div className="flex justify-between items-center py-2 border-b-[3px] border-[#A6B6CC66]">
-      <div>
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 border-b-[3px] border-[#A6B6CC66] gap-2">
+      <div className="w-full">
         <label className="text-base font-bold text-[#444444]">{label}</label>
         {isEditing ? (
-          <div className="flex items-center space-x-2 mt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
             <input
               type="text"
               value={tempValue}
               onChange={(e) => setTempValue(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-md w-[300px] max-w-full"
+              className="px-2 py-1 border border-gray-300 rounded text-md w-full sm:w-[300px] max-w-full"
               placeholder={placeholder}
             />
-            <button
-              onClick={() => handleSave(field)}
-              className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-            >
-              Save
-            </button>
-            <button
-              onClick={handleCancel}
-              className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSave(field)}
+                className="bg-green-600 text-white px-3 py-1 rounded text-xs"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCancel}
+                className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         ) : (
-          <p className="text-md text-[#444444] mt-1">{value || "—"}</p>
+          <p className="text-md text-[#444444] mt-1 break-words">{value || "—"}</p>
         )}
       </div>
       {!isEditing && (
         <button
           onClick={() => handleEdit(field, value)}
-          className="bg-[#1E3CA7] text-white px-6 py-1.5 rounded-full text-md font-semibold hover:opacity-70"
+          className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
         >
           Edit
         </button>

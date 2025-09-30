@@ -14,26 +14,30 @@ export default function MyAccount({ doctor }: DoctorProps) {
   const img = doctor.imageUrl?.trim() || "/doc.png";
 
   return (
-    <div className="h-full overflow-hidden p-5">
+    <div className="h-full overflow-hidden p-4 md:p-5">
       <div className="max-w-6xl mx-auto h-full flex flex-col">
-        <h1 className="text-2xl font-bold text-left text-[#1E3CA7] mb-16">
+        <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-6 md:mb-16">
           My Account
         </h1>
 
         {/* Account Detail Section - Single container */}
         <div
-          className="bg-[#E9F5FE] rounded-3xl p-5 relative flex-1"
+          className="bg-[#E9F5FE] rounded-3xl p-4 md:p-5 relative flex-1"
           style={{ border: "1px solid #2196F3" }}
         >
           {/* Doctor Profile Header - Inside Account Detail */}
           <div
-            className="bg-white rounded-2xl p-5 mb-5 absolute top-0 -translate-y-1/2 w-[calc(100%-2.5rem)]"
+            className="
+              bg-white rounded-2xl p-4 md:p-5 mb-4 md:mb-5
+              w-full md:w-[calc(100%-2.5rem)]
+              static md:absolute md:top-0 md:-translate-y-1/2
+            "
             style={{ border: "1px solid #2196F3" }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-center gap-3 md:gap-4">
                 <div
-                  className="w-14 h-14 rounded-full overflow-hidden"
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden"
                   style={{ border: "2px solid #1E3CA7" }}
                 >
                   <Image
@@ -45,23 +49,23 @@ export default function MyAccount({ doctor }: DoctorProps) {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-[#1E3CA7] mb-1">
+                  <h2 className="text-lg md:text-xl font-bold text-[#1E3CA7] mb-0.5">
                     {doctor.display_name || doctor.username}
                   </h2>
-                  <p className="text-base text-[#1E3CA7] font-normal">
+                  <p className="text-sm md:text-base text-[#1E3CA7] font-normal">
                     {specialization || "—"}
                   </p>
                 </div>
               </div>
 
-              <div className="text-right">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="text-xl">⭐</span>
-                  <span className="text-base font-bold text-[#1E3CA7]">
+              <div className="text-left md:text-right">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg md:text-xl">⭐</span>
+                  <span className="text-sm md:text-base font-bold text-[#1E3CA7]">
                     {doctor.rating ?? "—"} Rating
                   </span>
                 </div>
-                <p className="text-md font-normal text-[#444444]">
+                <p className="text-sm md:text-md font-normal text-[#444444]">
                   Member Since {doctor.member_since || "—"}
                 </p>
               </div>
@@ -69,64 +73,68 @@ export default function MyAccount({ doctor }: DoctorProps) {
           </div>
 
           {/* Account Detail Header */}
-          <div className="flex items-center justify-between pt-10 mb-4">
-            <h3 className="text-xl font-bold text-[#1E3CA7]">Account Detail</h3>
-            <span className="text-md font-normal text-[#444444]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between pt-2 md:pt-10 mb-3 md:mb-4 gap-1">
+            <h3 className="text-lg md:text-xl font-bold text-[#1E3CA7]">Account Detail</h3>
+            <span className="text-sm md:text-md font-normal text-[#444444]">
               Last Login: {doctor.last_login || "—"}
             </span>
           </div>
 
-          <div className="flex gap-5 mb-5">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-5 mb-4 md:mb-5">
             {/* Left Column - 60% */}
             <div
-              className="w-[60%] bg-white rounded-xl p-4 space-y-4"
+              className="w-full md:w-[60%] bg-white rounded-xl p-4 space-y-3 md:space-y-4"
               style={{ border: "1px solid #2196F3" }}
             >
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1">
+                <label className="text-sm md:text-md font-bold text-[#444444]">
                   Display Name
                 </label>
-                <p className="text-base font-normal text-[#444444]">
+                <p className="text-sm md:text-base font-normal text-[#444444]">
                   {doctor.display_name || doctor.username}
                 </p>
               </div>
 
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1">
+                <label className="text-sm md:text-md font-bold text-[#444444]">
                   Username
                 </label>
-                <p className="text-base font-normal text-[#444444]">
+                <p className="text-sm md:text-base font-normal text-[#444444]">
                   {doctor.username}
                 </p>
               </div>
 
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
-                  Email
-                </label>
-                <div className="flex items-center space-x-2">
-                  <p className="text-base font-normal mb-0 text-[#444444]">
-                    {doctor.email}
-                  </p>
-                  {!!doctor.emailVerified && (
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
-                      {doctor.emailVerified}
+              {/* Email */}
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center py-1 gap-2">
+                <span className="text-base font-semibold text-[#000000]">Email</span>
+                <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
+                  <span className="text-base font-normal text-[#444444] break-words">
+                    {doctor.email || "ayesha@example.com"}
+                  </span>
+                  {doctor.emailVerified ? (
+                    <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold flex items-center">
+                      <span className="text-green-600 mr-1">✓</span>
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold">
+                      Unverified
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Phone */}
-              <div className="flex justify-between items-center">
-                <label className="text-md font-bold text-[#444444]">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1">
+                <label className="text-sm md:text-md font-bold text-[#444444]">
                   Phone
                 </label>
                 {phone ? (
-                  <p className="text-base font-normal text-[#444444]">{phone}</p>
+                  <p className="text-sm md:text-base font-normal text-[#444444]">{phone}</p>
                 ) : (
                   <Link
                     href="/settings/edit-profile"
-                    className="text-[#1E3CA7] text-md bg-transparent text-left font-semibold hover:underline"
+                    className="text-[#1E3CA7] text-sm md:text-md bg-transparent text-left font-semibold hover:underline"
                   >
                     Add a phone number
                   </Link>
@@ -135,19 +143,19 @@ export default function MyAccount({ doctor }: DoctorProps) {
             </div>
 
             {/* Right Column - 40% */}
-            <div className="w-[40%] flex flex-col gap-4">
+            <div className="w-full md:w-[40%] flex flex-col gap-4">
               <div
                 className="bg-white rounded-xl p-4 flex-1 flex flex-col justify-center"
                 style={{ border: "1px solid #2196F3" }}
               >
-                <label className="text-md font-semibold text-[#444444] block mb-3 text-center">
+                <label className="text-sm md:text-md font-semibold text-[#444444] block mb-3 text-center">
                   Affiliated Organization
                 </label>
-                <div className="text-center">
-                  <p className="text-base font-normal text-[#444444] mb-1">
+                <div className="text-center space-y-1">
+                  <p className="text-sm md:text-base font-normal text-[#444444]">
                     {doctor.organization || "—"}
                   </p>
-                  <p className="text-md font-normal text-[#444444]">
+                  <p className="text-sm md:text-md font-normal text-[#444444]">
                     {doctor.location || "—"}
                   </p>
                 </div>
@@ -157,7 +165,7 @@ export default function MyAccount({ doctor }: DoctorProps) {
                 className="bg-white rounded-xl p-4 flex-1 flex flex-col justify-center"
                 style={{ border: "1px solid #2196F3" }}
               >
-                <label className="text-md font-semibold text-[#444444] text-center">
+                <label className="text-sm md:text-md font-semibold text-[#444444] text-center">
                   Patients Assigned: {doctor.patients_assigned ?? "—"}
                 </label>
               </div>
@@ -166,28 +174,28 @@ export default function MyAccount({ doctor }: DoctorProps) {
 
           {/* Qualification Section */}
           <div
-            className="bg-white rounded-xl p-4 mb-4"
+            className="bg-white rounded-xl p-4 mb-3 md:mb-4"
             style={{ border: "1px solid #2196F3" }}
           >
-            <h3 className="text-xl font-bold text-[#444444] mb-4">
+            <h3 className="text-lg md:text-xl font-bold text-[#444444] mb-3 md:mb-4">
               Qualification
             </h3>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+              <div className="space-y-1 md:space-y-2">
                 {doctor.qualifications?.length ? (
                   doctor.qualifications.map((qual, index) => (
-                    <p key={index} className="text-base font-normal text-[#444444]">
+                    <p key={index} className="text-sm md:text-base font-normal text-[#444444]">
                       {qual}
                     </p>
                   ))
                 ) : (
-                  <p className="text-base font-normal text-[#444444]">—</p>
+                  <p className="text-sm md:text-base font-normal text-[#444444]">—</p>
                 )}
               </div>
 
-              <div className="text-right space-y-1">
-                <p className="text-base font-semibold text-[#444444]">
+              <div className="text-left lg:text-right space-y-1">
+                <p className="text-sm md:text-base font-semibold text-[#444444]">
                   {doctor.university || "—"}
                   {doctor.graduation_year ? `: ${doctor.graduation_year}` : ""}
                 </p>
@@ -197,7 +205,7 @@ export default function MyAccount({ doctor }: DoctorProps) {
 
           {/* Update Profile Link */}
           <div className="text-center">
-            <p className="text-md font-normal text-[#1E3CA7]">
+            <p className="text-sm md:text-md font-normal text-[#1E3CA7]">
               Want to update your details?{" "}
               <Link
                 href="/settings/edit-profile"

@@ -259,7 +259,7 @@ export default function EditProfilePage() {
 
   if (authError) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full px-4 md:px-0">
         <div className="text-xl text-red-600">{authError}</div>
       </div>
     );
@@ -267,7 +267,7 @@ export default function EditProfilePage() {
 
   if (!authVerified || loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full px-4 md:px-0">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
