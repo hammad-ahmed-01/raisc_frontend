@@ -68,13 +68,13 @@ const Sidebar = () => {
       //{ id: 3, title: "Motivational Quotes", icon: <FaQuoteRight size={20} />, path: "/quotes" },
       { id: 4, title: "Chat with AI Bot", icon: <FaRobot size={20} />, path: "/chatbot" },
       // Doctors is always visible
-      { id: 5, title: "Doctors", icon: <FaUserMd size={20} />, path: "/Doctors" },
+      { id: 5, title: "Psychologists", icon: <FaUserMd size={20} />, path: "/Doctors" },
       // Associated Psychologist only if exists
       ...(hasAssociatedPsychologist
         ? [
             {
               id: 6,
-              title: "Associated Psychologist",
+              title: "Associated Doctor",
               icon: <FaUserMd size={20} />,
               path: "/AssociatedPsychologist",
             } as MenuItem,
