@@ -93,7 +93,7 @@ function MobileTopBar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
         {/* Center: Robo + RAISC */}
         <div className="flex items-center gap-2">
           <div className="relative w-8 h-8">
-            <Image src="/minirobo.png" alt="RAISC bot" fill className="object-contain drop-shadow-sm" priority />
+            <Image src="/mini-robo.svg" alt="RAISC bot" fill className="object-contain drop-shadow-sm" priority />
           </div>
           <span className="text-heading2 font-extrabold text-xl tracking-wide">RAISC</span>
         </div>

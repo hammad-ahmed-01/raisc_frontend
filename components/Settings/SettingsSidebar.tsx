@@ -31,6 +31,53 @@ export default function SettingsSidebar() {
     }
   }, []);
 
+  async function handleDelete() {
+    if (busy) return;
+    const confirm = window.confirm(
+      "This will permanently delete your account and related data. Are you sure?"
+    );
+    if (!confirm) return;
+
+    try {
+      setBusy(true);
+      const token = localStorage.getItem("session_key") || "";
+      if (!token) {
+        alert("Not authenticated. Please log in again.");
+        setBusy(false);
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch("/api/delete-account", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        // If you're using JWT in parallel and want to blacklist refresh:
+        // body: JSON.stringify({ refresh: localStorage.getItem("refresh_token") || "" })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.detail || "Failed to delete account.");
+      }
+
+      // Clean local state and redirect
+      try {
+        localStorage.removeItem("session_key");
+        localStorage.removeItem("user_data");
+        localStorage.removeItem("refresh_token");
+      } catch {}
+      alert("Your account has been deleted.");
+      router.replace("/login");
+    } catch (err: any) {
+      alert(err?.message || "Something went wrong while deleting your account.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   let settingsNavItems = [
     { href: "/settings/account", label: "My Account", id: "account" },
     { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
@@ -87,6 +134,7 @@ export default function SettingsSidebar() {
       {/* Delete Account Button (unchanged action wiring) */}
       <div className="mt-auto px-12 py-6">
         <button
+          onClick={handleDelete}
           disabled={busy}
           className={`w-full text-center font-semibold text-md transition-all duration-200 ${
             busy ? "opacity-60 cursor-not-allowed" : "hover:bg-red-50"
@@ -165,14 +213,15 @@ export default function SettingsSidebar() {
         <div className="flex items-center gap-3 px-12 pt-8 pb-2 mb-6">
           {/* Desktop keeps its original back arrow behavior; do not alter */}
           <h1 className="text-2xl font-bold text-[#1E3CA7]">
-          <span
+            <span
               onClick={() => router.push("/dashboard")}
               className="cursor-pointer select-none"
               title="Back to Dashboard"
             >
               <ChevronLeft size={24} className="inline mr-2" />
-            </span>{" "}  
-          Settings</h1>
+            </span>{" "}
+            Settings
+          </h1>
         </div>
         <nav className="space-y-1">
           {settingsNavItems.map((item) => (
@@ -191,6 +240,7 @@ export default function SettingsSidebar() {
         </nav>
         <div className="mt-auto py-8">
           <button
+            onClick={handleDelete}
             disabled={busy}
             className={`w-full px-12 py-4 text-center bg-transparent font-semibold text-md transition-all duration-200 ${
               busy ? "opacity-60 cursor-not-allowed" : "hover:bg-red-50"
