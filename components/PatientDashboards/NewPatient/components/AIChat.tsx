@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import ChatBotImage from "@/public/chatbot.png";
+import ChatBotImage from "@/public/chatbot-dash.png";
 import { useEffect, useState } from "react";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import { useRouter } from "next/navigation";
