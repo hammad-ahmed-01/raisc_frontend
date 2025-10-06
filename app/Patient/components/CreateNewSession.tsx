@@ -10,7 +10,7 @@ import SecondaryButton from "@/components/Buttons/SecondaryButton";
 
 interface CreateSessionFormProps {
   onCancel: () => void;
-  /** Optional: pass the clicked patient's display name to prefill the field */
+  /** Pass the clicked patient's display name to prefill the field */
   initialPatientName?: string;
 }
 
@@ -22,7 +22,10 @@ type PatientRow = {
   condition?: string;
 };
 
-export default function CreateSessionForm({ onCancel, initialPatientName }: CreateSessionFormProps) {
+export default function CreateSessionForm({
+  onCancel,
+  initialPatientName,
+}: CreateSessionFormProps) {
   const [sessionType, setSessionType] = useState("Follow-up");
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
@@ -35,10 +38,21 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // keep channel per mount
   const bc = useMemo(() => {
-    try { return new BroadcastChannel("calendar-events"); } catch { return null; }
+    try {
+      return new BroadcastChannel("calendar-events");
+    } catch {
+      return null;
+    }
   }, []);
 
+  // If parent re-opens the popup with a new name, always reflect it
+  useEffect(() => {
+    setPatientName(initialPatientName || "");
+  }, [initialPatientName]);
+
+  // Load doctor’s patients
   useEffect(() => {
     (async () => {
       try {
@@ -52,7 +66,9 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         const data = await res.json().catch(() => []);
         const items: any[] = Array.isArray(data)
           ? data
-          : (Array.isArray((data as any)?.results) ? (data as any).results : []);
+          : Array.isArray((data as any)?.results)
+          ? (data as any).results
+          : [];
 
         const mapped: PatientRow[] = items.map((row: any) => {
           const u = row?.user ?? {};
@@ -70,13 +86,17 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
       }
     })();
 
-    return () => { try { bc?.close(); } catch {} };
+    return () => {
+      try {
+        bc?.close();
+      } catch {}
+    };
   }, [bc]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files;
     if (!files || files.length === 0) return;
-    setAttachments(prev => [...prev, ...Array.from(files)]);
+    setAttachments((prev) => [...prev, ...Array.from(files)]);
   };
 
   const handleBrowseClick = () => fileInputRef.current?.click();
@@ -86,7 +106,8 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
   };
 
   function to24h(human: string): string {
-    let hours = 0, minutes = 0;
+    let hours = 0,
+      minutes = 0;
     const trimmed = human.trim().toUpperCase();
     const ampm = /AM|PM/.test(trimmed) ? (trimmed.includes("PM") ? "PM" : "AM") : null;
     const digits = trimmed.replace(/AM|PM/i, "").trim();
@@ -140,11 +161,16 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
       const text = await res.text();
       if (!res.ok) {
         let msg = "Failed to create session";
-        try { const j = JSON.parse(text); msg = j?.error || j?.detail || msg; } catch {}
+        try {
+          const j = JSON.parse(text);
+          msg = j?.error || j?.detail || msg;
+        } catch {}
         throw new Error(msg);
       }
 
-      try { bc?.postMessage({ type: "refresh-sessions" }); } catch {}
+      try {
+        bc?.postMessage({ type: "refresh-sessions" });
+      } catch {}
 
       setAttachments([]);
       onCancel?.();
@@ -157,34 +183,49 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
   }
 
   return (
-    <div className="bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl p-5 sm:p-6 w-full max-w-md mx-auto">
-      <h2 className="text-xl sm:text-2xl font-bold text-center text-heading mb-4">
+    <div
+      className="
+        bg-[#E6E6FA] border-[#2196F3] rounded-2xl shadow-xl
+        p-4 sm:p-6 w-full max-w-md mx-auto
+      "
+    >
+      <h2 className="text-lg sm:text-2xl font-bold text-center text-heading mb-4">
         Create New session
       </h2>
 
-      <h3 className="text-sm sm:text-md font-semibold text-heading mb-4">
+      <h3 className="text-sm sm:text-base font-semibold text-heading mb-4">
         Session Information
       </h3>
 
       {error ? (
-        <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+        <div className="mb-3 text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
           {error}
         </div>
       ) : null}
 
-      {/* Mobile 1-col, ≥sm 2-col */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Mobile: 1-col, ≥sm: 2-col (desktop unchanged) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="block text-sm text-normal mb-1">Patient</label>
+          <label className="block text-xs sm:text-sm text-normal mb-1">Patient</label>
+          {/* Add datalist for quick mobile autocomplete (desktop unaffected) */}
           <Input
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
-            className="bg-white"
+            className="bg-white text-sm sm:text-base"
             placeholder="Ayesha Khan"
+            list="patient-names"
+            autoComplete="off"
+            inputMode="text"
           />
+          <datalist id="patient-names">
+            {patients.map((p) => (
+              <option key={p.id} value={p.name} />
+            ))}
+          </datalist>
         </div>
+
         <div>
-          <label className="block text-sm text-normal mb-1">Session Type</label>
+          <label className="block text-xs sm:text-sm text-normal mb-1">Session Type</label>
           <select
             value={sessionType}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSessionType(e.target.value)}
@@ -197,17 +238,18 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         </div>
 
         <div>
-          <label className="block text-sm text-normal mb-1">Date</label>
+          <label className="block text-xs sm:text-sm text-normal mb-1">Date</label>
           <Input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="bg-white"
+            className="bg-white text-sm sm:text-base"
             placeholder="YYYY-MM-DD"
           />
         </div>
+
         <div>
-          <label className="block text-sm text-normal mb-1">Time</label>
+          <label className="block text-xs sm:text-sm text-normal mb-1">Time</label>
           <select
             value={time}
             onChange={(e) => setTime(e.target.value)}
@@ -222,30 +264,43 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm text-normal mb-1">Session Notes</label>
+        <label className="block text-xs sm:text-sm text-normal mb-1">Session Notes</label>
         <Textarea
           placeholder="Add objectives, concern or focus area for this session..."
           rows={3}
-          className="bg-white"
+          className="bg-white text-sm sm:text-base"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm text-normal mb-1">Attachments (optional)</label>
+        <label className="block text-xs sm:text-sm text-normal mb-1">
+          Attachments (optional)
+        </label>
         <div
           onClick={handleBrowseClick}
-          className="cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-4 bg-white text-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"
+          className="
+            cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-3 sm:p-4
+            bg-white text-xs sm:text-sm flex items-center justify-center text-gray-500
+            hover:bg-gray-50 transition
+          "
         >
-          <UploadCloud className="w-5 h-5 mr-2" />
-          Drag and drop files here, or <span className="text-blue-600 font-medium ml-1">Browse</span>
+          <UploadCloud className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+          <span className="hidden sm:inline">Drag and drop files here, or</span>
+          <span className="sm:ml-1 text-blue-600 font-medium"> Browse</span>
         </div>
 
-        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          multiple
+        />
 
         {attachments.length > 0 && (
-          <ul className="mt-2 space-y-1 text-sm text-gray-700">
+          <ul className="mt-2 space-y-1 text-xs sm:text-sm text-gray-700">
             {attachments.map((file, index) => (
               <li key={index} className="flex items-center justify-between">
                 <span className="truncate">{file.name}</span>
@@ -262,15 +317,16 @@ export default function CreateSessionForm({ onCancel, initialPatientName }: Crea
         )}
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      {/* Buttons: full-width on mobile, right-aligned on desktop (unchanged) */}
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2 mt-6">
         <SecondaryButton
           text="Cancel"
-          className="px-8 sm:px-10 py-2 rounded-full font-semibold"
+          className="w-full sm:w-auto px-8 sm:px-10 py-2 rounded-full font-semibold"
           onClick={onCancel}
         />
         <PrimaryButton
           text={submitting ? "Creating..." : "Create Session"}
-          className="px-4 py-2 rounded-full font-semibold"
+          className="w-full sm:w-auto px-4 py-2 rounded-full font-semibold"
           onClick={submitting ? undefined : handleCreate}
         />
       </div>

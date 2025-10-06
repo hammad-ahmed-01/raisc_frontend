@@ -45,6 +45,9 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
     (p.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const count = patients.length;
+  const patientWord = count === 1 ? "patient" : "patients";
+
   return (
     <div>
       <div className="px-4 py-4 md:p-6 md:ml-20 max-w-7xl mx-auto">
@@ -53,7 +56,7 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
           My Patients
         </h1>
         <p className="text-heading2 mb-6">
-          You are currently supporting {patients.length} patients. Click on view profile for more
+          You are currently supporting {count} {patientWord}. Click on view profile for more
           details or start a session.
         </p>
 

@@ -8,19 +8,18 @@ import type { Patient } from "@/src/types";
 import TopRightIcons from "@/components/TopRightIcons";
 
 /* ----------------------------- helpers ----------------------------- */
-const toNum = (v: unknown, fallback = 0): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
 const toStr = (v: unknown, fallback = ""): string => {
   const s = (v ?? "").toString().trim();
   return s.length ? s : fallback;
 };
-/** Coerce any backend value to the union: 'Male' | 'Female' | 'Other' */
+const toNum = (v: unknown, fallback = 0): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
 const normalizeGender = (v: unknown): Patient["gender"] => {
   const s = toStr(v).toLowerCase();
-  if (["m", "male", "man"].includes(s)) return "Male";
-  if (["f", "female", "woman"].includes(s)) return "Female";
+  if (s === "male" || s === "m") return "Male";
+  if (s === "female" || s === "f") return "Female";
   return "Other";
 };
 
@@ -52,25 +51,33 @@ export default function PatientsPage() {
       const data = await res.json().catch(() => []);
       const items: any[] = Array.isArray(data)
         ? data
-        : Array.isArray(data?.results)
-        ? data.results
+        : Array.isArray((data?.results as any))
+        ? (data as any).results
         : [];
 
       const mapped: Patient[] = items.map((row: any): Patient => {
         const u = row?.user ?? {};
-        const pd = (row?.profile_data ?? {}) as Record<string, unknown>;
+        const pd = ((row?.profile_data ?? {}) as Record<string, unknown>) || {};
 
-        const idStr = toStr(u.id ?? row.id ?? "", "");
+        const id = toStr(u.id ?? row.id ?? "", "");
+        const name =
+          toStr(pd["display_name"]) ||
+          toStr(`${u.first_name ?? ""} ${u.last_name ?? ""}`) ||
+          toStr(u.username, "Patient");
+
+        const age = toNum(pd["age"], 0);
+        const gender = normalizeGender(pd["gender"]);
+
+        // Therapy focus: prefer `therapyFocus`; if empty, fall back to `condition`.
+        const therapyFocus = toStr(pd["therapyFocus"]);
+        const condition = therapyFocus || toStr(pd["condition"]) || "—";
 
         return {
-          id: idStr,
-          name:
-            toStr((pd as any).display_name) ||
-            toStr(`${u.first_name ?? ""} ${u.last_name ?? ""}`) ||
-            toStr(u.username, "Patient"),
-          age: toNum((pd as any).age, 0),
-          gender: normalizeGender((pd as any).gender),
-          condition: toStr((pd as any).primary_concern ?? (pd as any).condition, "—"),
+          id,
+          name,
+          age,
+          gender,
+          condition, // shown as therapy focus in UI
         };
       });
 
@@ -138,7 +145,6 @@ export default function PatientsPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg/mypatientsbg.png')" }}
     >
-      {/* Light blur on top of bg so content stands out */}
       <div className="backdrop-blur-sm bg-blue-50/40 min-h-screen">
         <TopRightIcons />
         <br />

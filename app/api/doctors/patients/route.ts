@@ -1,4 +1,3 @@
-// app/api/doctors/patients/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +18,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Auth: header first, then cookie fallback
+    // Prefer Authorization header; fallback to cookie `session_key`
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
       const sessionKey = req.cookies.get("session_key")?.value;
@@ -30,11 +29,16 @@ export async function GET(req: NextRequest) {
     }
 
     const upstream = await fetch(`${base}/users/doctor/patients/`, {
-      headers: { "Content-Type": "application/json", Authorization: auth },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: auth,
+      },
       cache: "no-store",
     });
 
     const text = await upstream.text();
+
+    // Pass through upstream response as JSON if possible; otherwise raw
     try {
       const json = text ? JSON.parse(text) : {};
       return NextResponse.json(json, { status: upstream.status });
