@@ -23,6 +23,9 @@ interface ProfileData {
   profile_image?: string;
   rates?: string | number;
 
+  // NEW: Chatgroup nickname (shown/edited for all roles)
+  chatgroup_nickname?: string;
+
   // Patient fields
   age?: string;
   condition?: string;
@@ -56,6 +59,7 @@ export default function EditProfilePage() {
     education: "",
     profile_image: "",
     rates: "",
+    chatgroup_nickname: "", // NEW
   });
 
   const [userType, setUserType] = useState<string>("doctor");
@@ -81,6 +85,7 @@ export default function EditProfilePage() {
         condition: "Anxiety, Depression",
         emergency_contact: "+92 300 1111111",
         therapyFocus: "Managing Stress and Anxiety",
+        chatgroup_nickname: "John’s Group", // NEW
         location: "Islamabad, Pakistan",
         bio: "Patient seeking mental health support.",
         user_type: "patient",
@@ -93,6 +98,7 @@ export default function EditProfilePage() {
         phone: "",
         bio: "",
         location: "Rawalpindi, Pakistan",
+        chatgroup_nickname: "PIMH Group", // NEW (optional for org)
         organization_name: "Pakistan Institute Of Mental Health",
         description: "Pakistan Institute Of Mental Health",
         logo_url: "/PIMH.jpeg",
@@ -115,6 +121,7 @@ export default function EditProfilePage() {
         education: "MSc Clinical Psych",
         profile_image: "/doc.png",
         rates: "480.00",
+        chatgroup_nickname: "Dr Ali’s Group", // NEW
         user_type: "doctor",
       });
     }

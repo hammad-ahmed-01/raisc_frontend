@@ -19,6 +19,7 @@ interface ProfileData {
   education?: string;
   profile_image?: string;
   rates?: string | number;
+  chatgroup_nickname?: string; // NEW
 }
 
 interface EditDoctorProfileProps {
@@ -158,6 +159,20 @@ export default function EditDoctorProfile({
               handleEdit={handleEdit}
               handleSave={handleSave}
               handleCancel={handleCancel}
+            />
+
+            {/* NEW: Chatgroup Nickname */}
+            <EditableRow
+              label="Chatgroup Nickname"
+              field="chatgroup_nickname"
+              value={profile.chatgroup_nickname || ""}
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              placeholder="e.g., 'Dr Ali’s Group'"
             />
 
             <EditableRow

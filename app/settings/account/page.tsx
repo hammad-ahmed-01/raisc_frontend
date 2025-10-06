@@ -21,12 +21,15 @@ export interface Doctor {
   organization?: string;
   location?: string;
   patients_assigned?: number;
-  qualifications?: string[];
+  qualifications?: string[];   // kept for backward compatibility (not displayed now)
   university?: string;
   graduation_year?: string;
   specialization?: string;
-  emailVerified?: string; // "✓ Verified" or "Unverified"
-  imageUrl?: string;      // NEW: shared between Account & Edit Profile
+  emailVerified?: string;      // "✓ Verified" or "Unverified"
+  imageUrl?: string;           // shared between Account & Edit Profile
+  chatgroup_nickname?: string; // show on Accounts page
+  education?: string;          // NEW: raw education string
+  expertise?: string[];        // NEW: normalized expertise list
 }
 
 export interface Patient {
@@ -39,7 +42,8 @@ export interface Patient {
   sessionsCompleted: number;
   lastSession: string;
   phone?: string;
-  imageUrl?: string;      // NEW: shared between Account & Edit Profile
+  imageUrl?: string;           // shared between Account & Edit Profile
+  chatgroup_nickname?: string; // optional display in patient account
 }
 
 export interface Organization {
@@ -77,10 +81,13 @@ const fmtDateTime = (d: unknown) => {
   return dt ? `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}` : "";
 };
 
-const splitQualifications = (education?: string): string[] => {
-  const s = safe(education).trim();
+const splitToList = (text?: string): string[] => {
+  const s = safe(text).trim();
   if (!s) return [];
-  return s.split(/\r?\n|,|\|/g).map((x) => x.trim()).filter(Boolean);
+  return s
+    .split(/\r?\n|,|\|/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
 };
 
 const guessUniversity = (education?: string): string => {
@@ -131,10 +138,15 @@ function mapMeToDoctor(me: any): Doctor {
   const display_name =
     safe(pi?.display_name || me?.display_name || me?.name) || username;
 
-  const education = safe(pi?.education);
-  const qualifications = splitQualifications(education);
-  const university = guessUniversity(education) || "";
+  const education = safe(pi?.education);         // NEW
+  const qualifications = splitToList(education); // derived, but not displayed now
+  const university = safe(pi?.university) || guessUniversity(education) || "";
   const graduation_year = safe(pi?.graduation_year || guessGradYear(education));
+
+  const rawExpertise = pi?.expertise;
+  const expertise = Array.isArray(rawExpertise)
+    ? rawExpertise.map((x: any) => safe(x)).filter(Boolean)
+    : splitToList(safe(rawExpertise)); // NEW normalize
 
   const imageUrl =
     safe(
@@ -159,12 +171,15 @@ function mapMeToDoctor(me: any): Doctor {
     location: safe(pi?.location),
     patients_assigned:
       Number(dp?.patients_assigned ?? dp?.stats?.patients_assigned ?? 0) || 0,
-    qualifications,
+    qualifications, // still computed for compatibility
     university,
     graduation_year,
     specialization: safe(pi?.specialization),
     emailVerified,
     imageUrl,
+    chatgroup_nickname: safe(pi?.chatgroup_nickname || me?.chatgroup_nickname || ""),
+    education,  // NEW
+    expertise,  // NEW
   };
 }
 
@@ -197,6 +212,7 @@ function mapMeToPatient(me: any): Patient {
     lastSession: fmtDate(pp?.last_session),
     phone: safe((pd as any)?.phone || me?.phone || ""),
     imageUrl,
+    chatgroup_nickname: safe((pd as any)?.chatgroup_nickname || ""),
   };
 }
 
@@ -228,6 +244,7 @@ const getDummyPatient = (): Patient => ({
   lastSession: "15 July, 2025",
   phone: "+92 300 5555555",
   imageUrl: "/patient.png",
+  chatgroup_nickname: "Ayesha’s Group",
 });
 
 const getDummyDoctor = (): Doctor => ({
@@ -249,6 +266,9 @@ const getDummyDoctor = (): Doctor => ({
   graduation_year: "2021-2023",
   specialization: "Cognitive Therapy",
   imageUrl: "/doc.png",
+  chatgroup_nickname: "Dr Ali’s Group",
+  education: "MSc Clinical Psychology – University of XYZ (2021–2023)",
+  expertise: ["CBT", "Anxiety", "Trauma"], // NEW
 });
 
 const getDummyOrganization = (): Organization => ({
@@ -308,7 +328,7 @@ export default function AccountPage() {
     })();
   }, []);
 
-  // Ensure real doctor patients count from backend (already working)
+  // Ensure real doctor patients count from backend
   const hydrateDoctorPatientsCount = async (d: Doctor) => {
     if (!isBackendConnected || !DJANGO_BASE) return d;
     try {

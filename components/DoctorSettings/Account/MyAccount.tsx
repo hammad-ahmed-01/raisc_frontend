@@ -5,13 +5,18 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface DoctorProps {
-  doctor: Doctor;
+  doctor: Doctor & { chatgroup_nickname?: string };
 }
 
 export default function MyAccount({ doctor }: DoctorProps) {
   const phone = doctor.phone?.trim();
   const specialization = doctor.specialization?.trim();
   const img = doctor.imageUrl?.trim() || "/doc.png";
+  const chatNick = doctor.chatgroup_nickname?.trim();
+  const education = (doctor.education || "").trim();
+  const expertise = Array.isArray(doctor.expertise)
+    ? doctor.expertise
+    : [];
 
   return (
     <div className="h-full overflow-hidden p-4 md:p-5">
@@ -104,6 +109,16 @@ export default function MyAccount({ doctor }: DoctorProps) {
                 </p>
               </div>
 
+              {/* Chatgroup Nickname */}
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1">
+                <label className="text-sm md:text-md font-bold text-[#444444]">
+                  Chatgroup Nickname
+                </label>
+                <p className="text-sm md:text-base font-normal text-[#444444]">
+                  {chatNick || "—"}
+                </p>
+              </div>
+
               {/* Email */}
               <div className="flex flex-col md:flex-row md:justify-between md:items-center py-1 gap-2">
                 <span className="text-base font-semibold text-[#000000]">Email</span>
@@ -172,7 +187,7 @@ export default function MyAccount({ doctor }: DoctorProps) {
             </div>
           </div>
 
-          {/* Qualification Section */}
+          {/* Qualification Section (no duplicates) */}
           <div
             className="bg-white rounded-xl p-4 mb-3 md:mb-4"
             style={{ border: "1px solid #2196F3" }}
@@ -181,23 +196,45 @@ export default function MyAccount({ doctor }: DoctorProps) {
               Qualification
             </h3>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
-              <div className="space-y-1 md:space-y-2">
-                {doctor.qualifications?.length ? (
-                  doctor.qualifications.map((qual, index) => (
-                    <p key={index} className="text-sm md:text-base font-normal text-[#444444]">
-                      {qual}
-                    </p>
-                  ))
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
+              {/* Education */}
+              <div className="space-y-2">
+                <h4 className="text-sm md:text-base font-semibold text-[#1E3CA7]">Education</h4>
+                <p className="text-sm md:text-base font-normal text-[#444444]">
+                  {education || "—"}
+                </p>
+                {(doctor.university || doctor.graduation_year) && (
+                  <p className="text-xs md:text-sm font-normal text-[#7A8BA0]">
+                    {doctor.university || "—"}
+                    {doctor.graduation_year ? ` — ${doctor.graduation_year}` : ""}
+                  </p>
+                )}
+              </div>
+
+              {/* Expertise */}
+              <div className="space-y-2">
+                <h4 className="text-sm md:text-base font-semibold text-[#1E3CA7]">Expertise</h4>
+                {expertise.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {expertise.map((item, idx) => (
+                      <span
+                        key={`${item}-${idx}`}
+                        className="px-2 py-0.5 rounded-full text-xs md:text-sm bg-[#E9F5FE] text-[#1E3CA7] border border-[#A6B6CC66]"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 ) : (
                   <p className="text-sm md:text-base font-normal text-[#444444]">—</p>
                 )}
               </div>
 
-              <div className="text-left lg:text-right space-y-1">
-                <p className="text-sm md:text-base font-semibold text-[#444444]">
-                  {doctor.university || "—"}
-                  {doctor.graduation_year ? `: ${doctor.graduation_year}` : ""}
+              {/* Specialization */}
+              <div className="space-y-2">
+                <h4 className="text-sm md:text-base font-semibold text-[#1E3CA7]">Specialization</h4>
+                <p className="text-sm md:text-base font-normal text-[#444444]">
+                  {specialization || "—"}
                 </p>
               </div>
             </div>
