@@ -14,14 +14,13 @@ type LatestSession =
   | Record<string, any>;
 
 function buildAuthHeader(): HeadersInit {
-  // Pull token from localStorage (your app already stores it there)
   const raw =
-    (typeof window !== "undefined" && (
-      localStorage.getItem("session_key") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("auth_token") ||
-      localStorage.getItem("access_token")
-    )) || "";
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("session_key") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("access_token"))) ||
+    "";
   const v = raw.trim();
   if (!v) return {};
   const normalized = /^(token|bearer)\s+/i.test(v) ? v : `Token ${v}`;
@@ -55,7 +54,7 @@ export default function MyAccount({ patient }: PatientProps) {
         const res = await fetch("/api/sessions/latest", {
           method: "GET",
           headers,
-          credentials: "include", // include cookies if any
+          credentials: "include",
           cache: "no-store",
         });
         if (!res.ok) return;
@@ -164,6 +163,8 @@ export default function MyAccount({ patient }: PatientProps) {
               {[
                 ["Display Name", patient.displayName || "Ayesha"],
                 ["Username", patient.username || "Ayesha_123"],
+                ["Age", patient.age || "—"],
+                ["Gender", patient.gender || "—"],
               ].map(([label, val]) => (
                 <div
                   key={label}

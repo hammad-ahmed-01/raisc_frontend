@@ -21,15 +21,15 @@ export interface Doctor {
   organization?: string;
   location?: string;
   patients_assigned?: number;
-  qualifications?: string[];   // kept for backward compatibility (not displayed now)
+  qualifications?: string[];
   university?: string;
   graduation_year?: string;
   specialization?: string;
-  emailVerified?: string;      // "✓ Verified" or "Unverified"
-  imageUrl?: string;           // shared between Account & Edit Profile
-  chatgroup_nickname?: string; // show on Accounts page
-  education?: string;          // NEW: raw education string
-  expertise?: string[];        // NEW: normalized expertise list
+  emailVerified?: string;
+  imageUrl?: string;
+  chatgroup_nickname?: string;
+  education?: string;
+  expertise?: string[];
 }
 
 export interface Patient {
@@ -41,9 +41,11 @@ export interface Patient {
   therapyFocus: string;
   sessionsCompleted: number;
   lastSession: string;
+  age?: string;                 // <-- added
+  gender?: string;              // <-- added
   phone?: string;
-  imageUrl?: string;           // shared between Account & Edit Profile
-  chatgroup_nickname?: string; // optional display in patient account
+  imageUrl?: string;
+  chatgroup_nickname?: string;
 }
 
 export interface Organization {
@@ -62,9 +64,10 @@ const isBackendConnected =
   typeof process !== "undefined" &&
   process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
-const DJANGO_BASE = (typeof process !== "undefined"
-  ? process.env.NEXT_PUBLIC_DJANGO_BASE_URL
-  : "")?.replace(/\/+$/, "") || "";
+const DJANGO_BASE =
+  (typeof process !== "undefined"
+    ? process.env.NEXT_PUBLIC_DJANGO_BASE_URL
+    : "")?.replace(/\/+$/, "") || "";
 
 const safe = (v: unknown) => (v == null ? "" : String(v));
 const toDate = (d: unknown) => {
@@ -138,23 +141,23 @@ function mapMeToDoctor(me: any): Doctor {
   const display_name =
     safe(pi?.display_name || me?.display_name || me?.name) || username;
 
-  const education = safe(pi?.education);         // NEW
-  const qualifications = splitToList(education); // derived, but not displayed now
+  const education = safe(pi?.education);
+  const qualifications = splitToList(education);
   const university = safe(pi?.university) || guessUniversity(education) || "";
   const graduation_year = safe(pi?.graduation_year || guessGradYear(education));
 
   const rawExpertise = pi?.expertise;
   const expertise = Array.isArray(rawExpertise)
     ? rawExpertise.map((x: any) => safe(x)).filter(Boolean)
-    : splitToList(safe(rawExpertise)); // NEW normalize
+    : splitToList(safe(rawExpertise));
 
   const imageUrl =
     safe(
       pi?.profile_image ||
-      dp?.profile_image ||
-      me?.profile_image ||
-      me?.avatar ||
-      ""
+        dp?.profile_image ||
+        me?.profile_image ||
+        me?.avatar ||
+        ""
     ) || "";
 
   return {
@@ -167,19 +170,21 @@ function mapMeToDoctor(me: any): Doctor {
     last_login: fmtDateTime(me?.last_login),
     member_since: fmtDate(me?.date_joined || me?.joined_at),
     rating: Number(pi?.rating ?? dp?.rating ?? 0),
-    organization: safe(pi?.organization || me?.organization_profile?.name || me?.organization?.name),
+    organization: safe(
+      pi?.organization || me?.organization_profile?.name || me?.organization?.name
+    ),
     location: safe(pi?.location),
     patients_assigned:
       Number(dp?.patients_assigned ?? dp?.stats?.patients_assigned ?? 0) || 0,
-    qualifications, // still computed for compatibility
+    qualifications,
     university,
     graduation_year,
     specialization: safe(pi?.specialization),
     emailVerified,
     imageUrl,
     chatgroup_nickname: safe(pi?.chatgroup_nickname || me?.chatgroup_nickname || ""),
-    education,  // NEW
-    expertise,  // NEW
+    education,
+    expertise,
   };
 }
 
@@ -195,21 +200,27 @@ function mapMeToPatient(me: any): Patient {
   const imageUrl =
     safe(
       (pd as any)?.profile_image ||
-      pp?.profile_image ||
-      me?.profile_image ||
-      me?.avatar ||
-      ""
+        pp?.profile_image ||
+        me?.profile_image ||
+        me?.avatar ||
+        ""
     ) || "";
 
   return {
     displayName,
     username: safe(me?.username),
     email: safe(me?.email),
-    emailVerified: !!(me?.email_verified === true || me?.is_email_verified === true),
+    emailVerified: !!(
+      me?.email_verified === true || me?.is_email_verified === true
+    ),
     lastLogin: fmtDateTime(me?.last_login),
-    therapyFocus: safe((pd as any)?.therapyFocus || (pd as any)?.therapy_focus || "General Wellbeing"),
+    therapyFocus: safe(
+      (pd as any)?.therapyFocus || (pd as any)?.therapy_focus || "General Wellbeing"
+    ),
     sessionsCompleted: Number(pp?.sessions_completed ?? 0),
     lastSession: fmtDate(pp?.last_session),
+    age: safe((pd as any)?.age || ""),
+    gender: safe((pd as any)?.gender || ""),
     phone: safe((pd as any)?.phone || me?.phone || ""),
     imageUrl,
     chatgroup_nickname: safe((pd as any)?.chatgroup_nickname || ""),
@@ -242,6 +253,8 @@ const getDummyPatient = (): Patient => ({
   therapyFocus: "Anxiety & Stress Management",
   sessionsCompleted: 12,
   lastSession: "15 July, 2025",
+  age: "26",               // dummy
+  gender: "Female",        // dummy
   phone: "+92 300 5555555",
   imageUrl: "/patient.png",
   chatgroup_nickname: "Ayesha’s Group",
@@ -268,7 +281,7 @@ const getDummyDoctor = (): Doctor => ({
   imageUrl: "/doc.png",
   chatgroup_nickname: "Dr Ali’s Group",
   education: "MSc Clinical Psychology – University of XYZ (2021–2023)",
-  expertise: ["CBT", "Anxiety", "Trauma"], // NEW
+  expertise: ["CBT", "Anxiety", "Trauma"],
 });
 
 const getDummyOrganization = (): Organization => ({
@@ -294,7 +307,6 @@ export default function AccountPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
 
-  // Delegate "Add phone number" → Edit Profile
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
@@ -315,7 +327,6 @@ export default function AccountPage() {
     return () => document.removeEventListener("click", handler);
   }, [router]);
 
-  // Step 1: verify auth
   useEffect(() => {
     (async () => {
       const authResult = await checkAuth();
@@ -328,7 +339,6 @@ export default function AccountPage() {
     })();
   }, []);
 
-  // Ensure real doctor patients count from backend
   const hydrateDoctorPatientsCount = async (d: Doctor) => {
     if (!isBackendConnected || !DJANGO_BASE) return d;
     try {
@@ -347,7 +357,6 @@ export default function AccountPage() {
     }
   };
 
-  // Step 2: fetch current user via Next proxy: /api/users/me
   useEffect(() => {
     if (!authVerified) return;
 
@@ -421,8 +430,6 @@ export default function AccountPage() {
 
     fetchUserData();
   }, [authVerified]);
-
-  /* ------------------------------- render -------------------------------- */
 
   if (authError) {
     return (

@@ -12,7 +12,7 @@ interface PatientRequest {
   email: string;
   age: number;
   gender: string;
-  condition: string;
+  condition: string;   // now shows therapy focus
   message: string;
   requestDate: string;
 }
@@ -36,8 +36,17 @@ const toDisplayName = (user: any, profileData?: Record<string, any>) => {
 };
 const toEmail = (user: any, profileData?: Record<string, any>) =>
   safeStr(user?.email).trim() || safeStr(profileData?.email).trim();
+
+/** Prefer therapy focus; gracefully fall back to any legacy "condition" keys. */
 const toCondition = (obj: any, profileData?: Record<string, any>) => {
   const candidates = [
+    // therapy focus (preferred)
+    obj?.therapyFocus,
+    obj?.therapy_focus,
+    profileData?.therapyFocus,
+    profileData?.therapy_focus,
+
+    // legacy/alternate fallbacks
     obj?.primary_concern,
     obj?.condition,
     profileData?.primary_concern,
@@ -50,8 +59,10 @@ const toCondition = (obj: any, profileData?: Record<string, any>) => {
   }
   return "—";
 };
+
 const toGender = (obj: any, profileData?: Record<string, any>) =>
   safeStr(obj?.gender).trim() || safeStr(profileData?.gender).trim() || "—";
+
 const toAge = (obj: any, profileData?: Record<string, any>) => {
   if (obj?.age != null) return toNumber(obj.age, 0);
   if (profileData?.age != null) return toNumber(profileData.age, 0);
@@ -60,6 +71,7 @@ const toAge = (obj: any, profileData?: Record<string, any>) => {
   if (m) return toNumber(m[0], 0);
   return 0;
 };
+
 const toRequestDate = (r: any) => {
   const raw = r?.requested_at || r?.created_at || r?.request_date;
   if (!raw) return "";
@@ -83,7 +95,7 @@ const mapToCard = (r: any): PatientRequest => {
     email: toEmail(user, profileData),
     age: toAge(profileData, profileData),
     gender: toGender(profileData, profileData),
-    condition: toCondition(profileData, profileData),
+    condition: toCondition(profileData, profileData), // <— therapy focus shown here
     message: "",
     requestDate: toRequestDate(r),
   };
@@ -193,7 +205,6 @@ const PendingRequestsPage: React.FC = () => {
         style={{ backgroundImage: "url('/doctordashboard/bg2.png')" }}
       >
         {/* Header */}
-        {/* Added pt-16 for mobile so spacing matches desktop; left the rest intact */}
         <div className="pt-16 md:pt-16 ml-0 md:ml-20">
           <div className="flex items-center">
             <div className="text-2xl sm:text-3xl md:text-4xl text-[#1E3CA7] font-bold">
@@ -220,7 +231,7 @@ const PendingRequestsPage: React.FC = () => {
             />
           </div>
 
-          {/* Keep filters as placeholders; make them wrap nicely on mobile */}
+          {/* Filters (placeholder) */}
           <button
             className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#F6FDFE] border-[3px] border-[#E6E6FA] rounded-full text-[#444444] flex items-center gap-2 hover:opacity-70"
             style={{ boxShadow: "0px 4px 4px 0px #00000040" }}

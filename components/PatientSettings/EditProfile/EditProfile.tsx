@@ -8,6 +8,7 @@ interface ProfileData {
   email: string;
   phone: string;
   age?: string;
+  gender?: string;            // <-- added
   condition?: string;
   emergency_contact?: string;
   location: string;
@@ -116,6 +117,21 @@ export default function EditPatientProfile({
               suffix=" years"
             />
 
+            {/* Gender */}
+            <Row
+              label="Gender"
+              field="gender"
+              value={profile.gender ?? ""}
+              type="text"
+              editingField={editingField}
+              tempValue={tempValue}
+              setTempValue={setTempValue}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              placeholder="e.g., Female / Male / Non-binary / Prefer not to say"
+            />
+
             {/* Email */}
             <Row
               label="Email"
@@ -155,7 +171,9 @@ export default function EditPatientProfile({
               <h3 className="text-lg font-bold text-[#444444]">Therapy Focus</h3>
               {editingField !== "therapyFocus" && (
                 <button
-                  onClick={() => handleEdit("therapyFocus", profile.therapyFocus || "")}
+                  onClick={() =>
+                    handleEdit("therapyFocus", profile.therapyFocus || "")
+                  }
                   className="bg-[#1E3CA7] text-white px-5 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold hover:opacity-70 self-start md:self-auto"
                 >
                   Edit

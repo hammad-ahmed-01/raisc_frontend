@@ -23,11 +23,11 @@ interface ProfileData {
   profile_image?: string;
   rates?: string | number;
 
-  // NEW: Chatgroup nickname (shown/edited for all roles)
   chatgroup_nickname?: string;
 
   // Patient fields
   age?: string;
+  gender?: string;              // <-- added
   condition?: string;
   emergency_contact?: string;
   user_type?: string;
@@ -59,7 +59,9 @@ export default function EditProfilePage() {
     education: "",
     profile_image: "",
     rates: "",
-    chatgroup_nickname: "", // NEW
+    chatgroup_nickname: "",
+    age: "",
+    gender: "",                 // <-- initial
   });
 
   const [userType, setUserType] = useState<string>("doctor");
@@ -82,10 +84,11 @@ export default function EditProfilePage() {
         email: "patient@example.com",
         phone: "+92 300 9876543",
         age: "28",
+        gender: "Male",               // <-- dummy
         condition: "Anxiety, Depression",
         emergency_contact: "+92 300 1111111",
         therapyFocus: "Managing Stress and Anxiety",
-        chatgroup_nickname: "John’s Group", // NEW
+        chatgroup_nickname: "John’s Group",
         location: "Islamabad, Pakistan",
         bio: "Patient seeking mental health support.",
         user_type: "patient",
@@ -98,7 +101,7 @@ export default function EditProfilePage() {
         phone: "",
         bio: "",
         location: "Rawalpindi, Pakistan",
-        chatgroup_nickname: "PIMH Group", // NEW (optional for org)
+        chatgroup_nickname: "PIMH Group",
         organization_name: "Pakistan Institute Of Mental Health",
         description: "Pakistan Institute Of Mental Health",
         logo_url: "/PIMH.jpeg",
@@ -121,7 +124,7 @@ export default function EditProfilePage() {
         education: "MSc Clinical Psych",
         profile_image: "/doc.png",
         rates: "480.00",
-        chatgroup_nickname: "Dr Ali’s Group", // NEW
+        chatgroup_nickname: "Dr Ali’s Group",
         user_type: "doctor",
       });
     }
@@ -135,7 +138,6 @@ export default function EditProfilePage() {
           return;
         }
 
-        // user type from localStorage for initial render
         let currentUserType = "doctor";
         try {
           const ud = localStorage.getItem("user_data");
@@ -150,14 +152,12 @@ export default function EditProfilePage() {
           const sessionKey = localStorage.getItem("session_key");
           if (!sessionKey) throw new Error("No session key found");
 
-          // unified endpoint
           const resp = await fetch(`${BASE}/users/profile/`, {
             headers: { Authorization: `Token ${sessionKey}` },
           });
           if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
           const data = await resp.json();
 
-          // cache display_name into user_data so headers can use it
           try {
             const raw = localStorage.getItem("user_data");
             const userData = raw ? JSON.parse(raw) : {};
@@ -216,7 +216,6 @@ export default function EditProfilePage() {
         return;
       }
 
-      // Optimistic UI
       const updated = { ...profile, [field]: tempValue };
       setProfile(updated);
       setEditingField(null);
@@ -227,25 +226,26 @@ export default function EditProfilePage() {
 
         const resp = await fetch(`${BASE}/users/profile/`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Token ${sessionKey}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${sessionKey}`,
+          },
           body: JSON.stringify({ [field]: tempValue }),
         });
         if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
 
-        // Use server’s canonical response
         const serverProfile = await resp.json();
         setProfile((prev) => ({ ...prev, ...serverProfile }));
 
-        // Keep header consistent: prefer display_name, fallback username
         try {
           const raw = localStorage.getItem("user_data");
           const userData = raw ? JSON.parse(raw) : {};
           if (field === "username") userData.username = serverProfile.username;
-          if (serverProfile.display_name) userData.display_name = serverProfile.display_name;
+          if (serverProfile.display_name)
+            userData.display_name = serverProfile.display_name;
           localStorage.setItem("user_data", JSON.stringify(userData));
         } catch {}
 
-        // Let other tabs/pages refresh
         window.dispatchEvent(new Event("profile:updated"));
         new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
 
