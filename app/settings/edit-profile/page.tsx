@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import EditPatientProfile from "@/components/PatientSettings/EditProfile/EditProfile";
 import EditDoctorProfile from "@/components/DoctorSettings/EditProfile/EditProfile";
@@ -27,7 +27,7 @@ interface ProfileData {
 
   // Patient fields
   age?: string;
-  gender?: string;              // <-- added
+  gender?: string;
   condition?: string;
   emergency_contact?: string;
   user_type?: string;
@@ -44,6 +44,7 @@ interface ProfileData {
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const pictureSectionRef = useRef<HTMLDivElement | null>(null); // <-- NEW REF
 
   const [profile, setProfile] = useState<ProfileData>({
     username: "",
@@ -61,7 +62,7 @@ export default function EditProfilePage() {
     rates: "",
     chatgroup_nickname: "",
     age: "",
-    gender: "",                 // <-- initial
+    gender: "",
   });
 
   const [userType, setUserType] = useState<string>("doctor");
@@ -84,7 +85,7 @@ export default function EditProfilePage() {
         email: "patient@example.com",
         phone: "+92 300 9876543",
         age: "28",
-        gender: "Male",               // <-- dummy
+        gender: "Male",
         condition: "Anxiety, Depression",
         emergency_contact: "+92 300 1111111",
         therapyFocus: "Managing Stress and Anxiety",
@@ -200,11 +201,18 @@ export default function EditProfilePage() {
     if (typeof window !== "undefined") performAuthCheck();
   }, []);
 
+  // ---- Smooth scroll to picture area when edit button is clicked ----
   const handleEdit = (field: string, currentValue: string) => {
     if (field === "email") {
       router.push(CHANGE_EMAIL_ROUTE);
       return;
     }
+
+    // Scroll to profile picture section
+    if (field === "profile_image" && pictureSectionRef.current) {
+      pictureSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
     setEditingField(field);
     setTempValue(currentValue ?? "");
   };
@@ -280,24 +288,44 @@ export default function EditProfilePage() {
     );
   }
 
+  // Add the ref to the EditProfile components so they know where the picture section is
   if (userType === "patient") {
     return (
-      <EditPatientProfile
-        profile={profile}
-        editingField={editingField}
-        tempValue={tempValue}
-        message={message}
-        handleEdit={handleEdit}
-        handleSave={handleSave}
-        handleCancel={handleCancel}
-        setTempValue={setTempValue}
-      />
+      <div ref={pictureSectionRef}>
+        <EditPatientProfile
+          profile={profile}
+          editingField={editingField}
+          tempValue={tempValue}
+          message={message}
+          handleEdit={handleEdit}
+          handleSave={handleSave}
+          handleCancel={handleCancel}
+          setTempValue={setTempValue}
+        />
+      </div>
     );
   }
 
   if (userType === "organization") {
     return (
-      <EditOrganizationProfile
+      <div ref={pictureSectionRef}>
+        <EditOrganizationProfile
+          profile={profile}
+          editingField={editingField}
+          tempValue={tempValue}
+          message={message}
+          handleEdit={handleEdit}
+          handleSave={handleSave}
+          handleCancel={handleCancel}
+          setTempValue={setTempValue}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div ref={pictureSectionRef}>
+      <EditDoctorProfile
         profile={profile}
         editingField={editingField}
         tempValue={tempValue}
@@ -307,19 +335,6 @@ export default function EditProfilePage() {
         handleCancel={handleCancel}
         setTempValue={setTempValue}
       />
-    );
-  }
-
-  return (
-    <EditDoctorProfile
-      profile={profile}
-      editingField={editingField}
-      tempValue={tempValue}
-      message={message}
-      handleEdit={handleEdit}
-      handleSave={handleSave}
-      handleCancel={handleCancel}
-      setTempValue={setTempValue}
-    />
+    </div>
   );
 }
