@@ -6,6 +6,39 @@ import PatientRequestCard from "./PatientRequestCard";
 import { FiSearch, FiChevronDown } from "react-icons/fi";
 
 /* ----------------------------- types ----------------------------- */
+interface ExtraInfo {
+  duration?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  current_condition?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  physical_activity?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  suicidal_thoughts?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  mental_health_history?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+}
+
 interface PatientRequest {
   id: string;
   name: string;
@@ -15,6 +48,7 @@ interface PatientRequest {
   condition: string;   // now shows therapy focus
   message: string;
   requestDate: string;
+  extraInfo?: ExtraInfo;
 }
 
 /* ----------------------------- helpers --------------------------- */
@@ -48,7 +82,7 @@ const toCondition = (obj: any, profileData?: Record<string, any>) => {
 
     // legacy/alternate fallbacks
     obj?.primary_concern,
-    obj?.condition,
+    obj?.current_condition,
     profileData?.primary_concern,
     profileData?.condition,
     profileData?.presenting_problem,
@@ -79,6 +113,28 @@ const toRequestDate = (r: any) => {
   return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
 };
 
+/** Extract extra information fields from profile data */
+const extractExtraInfo = (obj: any, profileData?: Record<string, any>): ExtraInfo | undefined => {
+  // Check both profileData and obj for information_needed
+  const informationNeeded = profileData?.information_needed || obj?.information_needed;
+  if (!informationNeeded || typeof informationNeeded !== 'object') {
+    return undefined;
+  }
+
+  const extraInfo: ExtraInfo = {};
+  const fields = ['duration', 'current_condition', 'physical_activity', 'suicidal_thoughts', 'mental_health_history'];
+  
+  for (const field of fields) {
+    const value = informationNeeded[field];
+    if (value && typeof value === 'object' && ('value' in value || 'collected' in value)) {
+      extraInfo[field as keyof ExtraInfo] = value;
+    }
+  }
+
+  // Only return if we have at least one field
+  return Object.keys(extraInfo).length > 0 ? extraInfo : undefined;
+};
+
 const mapToCard = (r: any): PatientRequest => {
   const patient = r?.patient ?? {};
   const user = {
@@ -98,6 +154,7 @@ const mapToCard = (r: any): PatientRequest => {
     condition: toCondition(profileData, profileData), // <— therapy focus shown here
     message: "",
     requestDate: toRequestDate(r),
+    extraInfo: extractExtraInfo(patient, profileData),
   };
 };
 
@@ -130,6 +187,7 @@ const PendingRequestsPage: React.FC = () => {
       }
 
       const data = await res.json();
+      console.log(data);
       const items: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
       const mapped = items.map(mapToCard);
       setPatientRequests(mapped);

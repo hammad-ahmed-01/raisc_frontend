@@ -3,6 +3,39 @@ import React, { useState } from "react";
 import { FiCheck, FiX } from "react-icons/fi";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
+interface ExtraInfo {
+  duration?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  current_condition?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  physical_activity?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  suicidal_thoughts?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+  mental_health_history?: {
+    value: string | null;
+    required: boolean;
+    collected: boolean;
+    description: string;
+  };
+}
+
 interface PatientRequest {
   id: string | number;
   name: string;
@@ -12,6 +45,7 @@ interface PatientRequest {
   condition: string;
   message: string;
   requestDate: string;
+  extraInfo?: ExtraInfo;
 }
 
 interface PatientRequestCardProps {
@@ -64,6 +98,7 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
   const [busy, setBusy] = useState<"accept" | "reject" | null>(null);
   const [error, setError] = useState<string>("");
   const [hidden, setHidden] = useState<boolean>(false);
+  console.log(patientRequest);
 
   const callManageViaNext = async (intent: "accept" | "reject") => {
     setError("");
@@ -124,6 +159,30 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
 
   if (hidden) return null;
 
+  const formatFieldLabel = (key: string): string => {
+    return key
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const getFieldValue = (field: any): string => {
+    if (!field || field.value === null || field.value === undefined) {
+      return field?.collected === false ? "Not provided" : "—";
+    }
+    return String(field.value);
+  };
+
+  const extraInfoFields = patientRequest.extraInfo
+    ? [
+        { key: 'duration', data: patientRequest.extraInfo.duration },
+        { key: 'current_condition', data: patientRequest.extraInfo.current_condition },
+        { key: 'physical_activity', data: patientRequest.extraInfo.physical_activity },
+        { key: 'suicidal_thoughts', data: patientRequest.extraInfo.suicidal_thoughts },
+        { key: 'mental_health_history', data: patientRequest.extraInfo.mental_health_history },
+      ].filter((item) => item.data !== undefined)
+    : [];
+
   return (
     <div
       className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-[24px] p-4 sm:p-6 shadow-sm"
@@ -137,14 +196,46 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
             <p className="text-[#1E3CA7]">
               <span className="font-bold">Email:</span> {patientRequest.email}
             </p>
-            <p className="text-[#1E3CA7]">
+            {/* <p className="text-[#1E3CA7]">
               <span className="font-bold">Condition:</span> {patientRequest.condition}
-            </p>
+            </p> */}
           </div>
+
+          {/* Extra Information Section */}
+          {extraInfoFields.length > 0 && (
+            <div className="mb-4 sm:mb-6">
+              <h4 className="text-base sm:text-lg font-bold text-[#1E3CA7] mb-3">Additional Information</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {extraInfoFields.map(({ key, data }) => (
+                  <div
+                    key={key}
+                    className="bg-[#F6FDFE] border border-[#E6E6FA] rounded-lg p-3"
+                  >
+                    <p className="text-sm font-semibold text-[#1E3CA7] mb-1">
+                      {formatFieldLabel(key)}
+                    </p>
+                    <p className={`text-sm ${
+                      data?.collected === false || !data?.value
+                        ? "text-gray-500 italic"
+                        : "text-[#444444]"
+                    }`}>
+                      {getFieldValue(data)}
+                    </p>
+                    {/* {data?.description && (
+                      <p className="text-xs text-gray-500 mt-1 italic">
+                        {data.description}
+                      </p>
+                    )} */}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {patientRequest.message && (
             <p className="text-[#444444] mb-6 sm:mb-8">{patientRequest.message}</p>
           )}
-          <PrimaryButton text="View Profile" className="font-bold px-5 py-2 rounded-full" />
+          {/* <PrimaryButton text="View Profile" className="font-bold px-5 py-2 rounded-full" /> */}
           {error && (
             <p className="text-red-600 text-sm mt-3" role="alert">
               {error}
@@ -156,8 +247,8 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
         <div className="flex flex-col items-center md:items-end mt-2 md:mt-0">
           <div className="text-center md:text-right mb-4 md:mb-16">
             <p className="text-[#444444] mb-1">
-              <span className="text-[#222] font-semibold">Age:</span> {patientRequest.age} |{" "}
-              <span className="text-[#222] font-semibold">Gender:</span> {patientRequest.gender}
+              <span className="text-[#222] font-semibold">Age:</span>25 &nbsp;
+              <span className="text-[#222] font-semibold">Gender:</span> Male
             </p>
             <p className="text-[#444444]">
               <span className="text-[#222] font-semibold">Request Date:</span>{" "}

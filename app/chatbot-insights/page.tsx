@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useMemo } from 'react';
-import { checkAuth, redirectToLogin } from "@/lib/auth";
+import React, { useEffect, useState, Suspense, useMemo, useCallback } from 'react';
+import { checkAuth, redirectToLogin, getToken } from "@/lib/auth";
 import FiltersSidebar from './components/FiltersSidebar';
 import ChatEntriesSection from './components/ChatEntriesSection';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -37,6 +37,64 @@ const ChatbotInsightsContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const fetchChatbotProfiles = useCallback(async (pid: string) => {
+    try {
+      const token = (localStorage.getItem("session_key") || "").trim();
+      if (!token) {
+        console.error("No authentication token available");
+        setChatbotProfiles([]);
+        return;
+      }
+
+      const baseUrl = process.env.NEXT_PUBLIC_DJANGO_BASE_URL;
+      if (!baseUrl) {
+        console.error("NEXT_PUBLIC_DJANGO_BASE_URL is not configured");
+        setChatbotProfiles([]);
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const response = await fetch(
+          `${baseUrl}/users/doctor/chatbot-data/${pid}/`,
+          { 
+            headers: { Authorization: `Token ${token}` },
+            signal: controller.signal
+          }
+        );
+        
+        clearTimeout(timeoutId);
+        
+        console.log("response", response);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("data", data);
+          const transformed = data.map((profile: ChatbotProfile) => ({
+            ...profile,
+            topic: profile.topic || "General",
+            important_check: !!profile.important_messages,
+          }));
+          setChatbotProfiles(transformed);
+        } else {
+          console.error(`Failed to fetch chatbot profiles: ${response.status} ${response.statusText}`);
+          setChatbotProfiles([]);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        console.error("Request timed out while fetching chatbot profiles");
+      } else {
+        console.error("Error fetching chatbot profiles:", error);
+      }
+      setChatbotProfiles([]);
+    }
+  }, []);
+
   useEffect(() => {
     const performAuthCheck = async () => {
       const authResult = await checkAuth();
@@ -57,11 +115,13 @@ const ChatbotInsightsContent = () => {
 
   useEffect(() => {
     const name = searchParams.get("name") || "Patient";
-    const id = process.env.TEST_PATIENT_ID || "24";
+    const id = searchParams.get("id") || "";
     setPatientName(name);
     setPatientId(id);
-    if (id && !isLoading) fetchChatbotProfiles(id);
-  }, [searchParams, isLoading]);
+    if (id && !isLoading) {
+      fetchChatbotProfiles(id);
+    }
+  }, [searchParams, isLoading, fetchChatbotProfiles]);
 
   useEffect(() => {
     applyFilters();
@@ -72,54 +132,6 @@ const ChatbotInsightsContent = () => {
     [chatbotProfiles]
   );
 
-  const fetchChatbotProfiles = async (pid: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}/users/doctor/chatbot-data/${pid}/`,
-        { headers: { Authorization: `Token ${testSessionKey}` } }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const transformed = data.map((profile: ChatbotProfile) => ({
-          ...profile,
-          topic: profile.topic || "General",
-          important_check: !!profile.important_messages,
-        }));
-        setChatbotProfiles(transformed);
-      } else {
-        setChatbotProfiles(getFallbackData());
-      }
-    } catch {
-      setChatbotProfiles(getFallbackData());
-    }
-  };
-
-  const getFallbackData = (): ChatbotProfile[] => ([
-    {
-      id: 1,
-      collected_data: "Anxiety, stress management, 5 user messages, Average compound sentiment score was 0.2, min: -0.1, max: 0.5",
-      session_summary: "Patient expressed feeling isolated and mentioned family conflict.",
-      important_messages: "Patient mentioned suicidal thoughts",
-      date: new Date().toISOString(),
-      session_key: testSessionKey,
-      session_start_msg: 1,
-      session_end_msg: 10,
-      topic: "Anxiety, Family Conflict",
-      important_check: true
-    },
-    {
-      id: 2,
-      collected_data: "Sleep issues, 3 user messages, sentiment trending negative",
-      session_summary: "Patient reported severe sleep disturbances and work-related stress.",
-      important_messages: "",
-      date: new Date(Date.now() - 86400000).toISOString(),
-      session_key: testSessionKey,
-      session_start_msg: 11,
-      session_end_msg: 20,
-      topic: "Sleep Issues, Stress Management",
-      important_check: false
-    }
-  ]);
 
   const applyFilters = () => {
     let filtered = [...chatbotProfiles];
@@ -163,7 +175,30 @@ const ChatbotInsightsContent = () => {
   }
 
   if (isLoading) {
-    return <p className="text-center text-gray-600 mt-10">Loading...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[url('/bg/patientbg.png')] bg-cover">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patientId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[url('/bg/patientbg.png')] bg-cover">
+        <div className="text-center p-6 bg-white/90 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Missing Patient Information</h2>
+          <p className="text-gray-700 mb-4">No patient ID provided. Please select a patient first.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -226,7 +261,7 @@ const ChatbotInsightsContent = () => {
         <ChatEntriesSection
           entries={filteredProfiles}
           patientId={patientId}
-          sessionKey={testSessionKey}
+          sessionKey={getToken() || ""}
         />
       </main>
     </div>

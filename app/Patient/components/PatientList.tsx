@@ -56,8 +56,7 @@ export const PatientList: React.FC<PatientListProps> = ({ patients }) => {
           My Patients
         </h1>
         <p className="text-heading2 mb-6">
-          You are currently supporting {count} {patientWord}. Click on view profile for more
-          details or start a session.
+          You are currently supporting {count} {patientWord}.
         </p>
 
         {/* Search + Filters */}

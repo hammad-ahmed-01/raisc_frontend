@@ -53,14 +53,14 @@ export default function Home() {
   const handleBackToDashboard = () => { window.location.href = "/dashboard"; };
 
   return (
-    <div className="min-h-screen w-screen bg-[#EEF5FF] font-quicksand flex flex-col md:flex-row overflow-hidden">
+    <div className="h-screen md:h-screen w-screen bg-[#EEF5FF] font-quicksand flex flex-col md:flex-row overflow-hidden">
       {/* Mobile header (clicking hamburger opens overlay) */}
       <div className="md:hidden sticky top-0 z-20">
         <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
       </div>
 
       {/* Desktop sidebar (unchanged) */}
-      <aside className="hidden md:block md:w-[300px] md:h-screen md:overflow-y-auto md:shrink-0">
+      <aside className="hidden md:block md:w-[300px] md:h-full md:overflow-y-auto md:shrink-0">
         <ChatHistory
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
@@ -69,14 +69,14 @@ export default function Home() {
       </aside>
 
       {/* Main column */}
-      <main className="flex-1 flex flex-col min-h-0">
+      <main className="flex-1 flex flex-col min-h-0 h-full overflow-hidden">
         {/* Desktop header (unchanged) */}
         <div className="hidden md:block p-4 shrink-0">
           <Header />
         </div>
 
         {/* Chat area (fills the screen under the 56px mobile header) */}
-        <div className="flex-1 min-h-0 p-0 md:p-4">
+        <div className="flex-1 min-h-0 p-0 md:p-4 overflow-hidden">
           <div className="h-[calc(100dvh-56px)] md:h-full">
             <ChatWindow activeChatId={activeChatId} />
           </div>

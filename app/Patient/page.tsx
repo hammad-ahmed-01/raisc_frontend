@@ -42,6 +42,8 @@ export default function PatientsPage() {
         cache: "no-store",
       });
 
+      console.log(res);
+
       if (res.status === 401) {
         setAuthError("Unauthorized access");
         setTimeout(redirectToLogin, 1200);
@@ -55,6 +57,29 @@ export default function PatientsPage() {
         ? (data as any).results
         : [];
 
+      console.log(items)
+
+      // Helper to extract extra information
+      const extractExtraInfo = (pd: Record<string, unknown>): Patient["extraInfo"] | undefined => {
+        const informationNeeded = pd?.information_needed;
+        if (!informationNeeded || typeof informationNeeded !== 'object') {
+          return undefined;
+        }
+
+        const info = informationNeeded as Record<string, any>;
+        const extraInfo: Patient["extraInfo"] = {};
+        const fields = ['duration', 'current_condition', 'physical_activity', 'suicidal_thoughts', 'mental_health_history'];
+        
+        for (const field of fields) {
+          const value = info[field];
+          if (value && typeof value === 'object' && ('value' in value || 'collected' in value)) {
+            extraInfo[field as keyof typeof extraInfo] = value;
+          }
+        }
+
+        return Object.keys(extraInfo).length > 0 ? extraInfo : undefined;
+      };
+
       const mapped: Patient[] = items.map((row: any): Patient => {
         const u = row?.user ?? {};
         const pd = ((row?.profile_data ?? {}) as Record<string, unknown>) || {};
@@ -65,12 +90,12 @@ export default function PatientsPage() {
           toStr(`${u.first_name ?? ""} ${u.last_name ?? ""}`) ||
           toStr(u.username, "Patient");
 
-        const age = toNum(pd["age"], 0);
+        const age = toNum(pd["age"], 21);
         const gender = normalizeGender(pd["gender"]);
 
         // Therapy focus: prefer `therapyFocus`; if empty, fall back to `condition`.
         const therapyFocus = toStr(pd["therapyFocus"]);
-        const condition = therapyFocus || toStr(pd["condition"]) || "—";
+        const condition = therapyFocus || toStr(pd["current_condition"]) || "—";
 
         return {
           id,
@@ -78,6 +103,7 @@ export default function PatientsPage() {
           age,
           gender,
           condition, // shown as therapy focus in UI
+          extraInfo: extractExtraInfo(pd),
         };
       });
 

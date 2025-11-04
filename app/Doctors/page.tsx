@@ -137,6 +137,8 @@ export default function DoctorsPage() {
       cache: "no-store",
     });
 
+    console.log(resp)
+
     if (resp.status === 401) {
       setAuthError("Unauthorized access");
       setTimeout(redirectToLogin, 1200);
@@ -145,6 +147,8 @@ export default function DoctorsPage() {
 
     const list = (await resp.json().catch(() => [])) as any[];
     const arr: Doctor[] = Array.isArray(list) ? list : [];
+
+    console.log(arr)
 
     // compute initial status with freshest /me
     try {
