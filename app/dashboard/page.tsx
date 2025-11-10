@@ -65,34 +65,43 @@ export default function Dashboard() {
   const [authError, setAuthError] = useState<string>("");
   const router = useRouter();
 
-  // avoid overlapping refreshes
-  const refreshingRef = useRef(false);
-
-  const normalizeUser = (u: UserShape): UserShape => {
-    if (u.user_type === "patient") {
-      const pp = u.patient_profile ?? ({} as Partial<PatientProfile>);
-      const safe: PatientProfile = {
-        level: typeof pp.level === "number" ? pp.level : 0,
-        associated_psychologist: (pp.associated_psychologist ?? null) as string | null,
-        associated_psychologist_name: (pp.associated_psychologist_name ?? null) as string | null,
-        profile_data: (pp.profile_data ?? null) as Record<string, unknown> | null,
-      };
-      return { ...u, patient_profile: safe };
-    }
-    const { patient_profile, ...rest } = u as any; // strip to avoid accidental reads
-    return rest as UserShape;
-  };
-
-  // canonical refresh from backend
-  const refreshUser = async () => {
-    if (refreshingRef.current) return;
-    refreshingRef.current = true;
-    try {
-      const me = (await fetchMe()) as unknown as UserShape | null;
-      if (me) setUser(normalizeUser(me));
-    } finally {
-      refreshingRef.current = false;
-    }
+  // Create mock organization user for direct access
+  const createMockOrganizationUser = (): UserShape => {
+    return {
+      id: 1,
+      username: "Demo Organization",
+      email: "demo@org.com",
+      user_type: "organization",
+      organization_profile: {
+        name: "Pakistan Institute of Mental Health",
+        total_psychologists: 10,
+        total_patients: 30,
+        sessions_today: 4,
+        new_join_requests: 2,
+        todays_sessions: [
+          {
+            doctor: "Dr. Ali Hamza",
+            therapy_type: "Cognitive Therapy",
+            time: "9:00 AM",
+          },
+          {
+            doctor: "Dr. Alisha",
+            therapy_type: "Cognitive Therapy",
+            time: "11:00 AM",
+          },
+          {
+            doctor: "Dr. Sara Ali",
+            therapy_type: "Cognitive Therapy",
+            time: "10:00 AM",
+          },
+          { 
+            doctor: "Dr. Zahra", 
+            therapy_type: "Cognitive Therapy", 
+            time: "3:00 PM" 
+          },
+        ],
+      }
+    };
   };
 
   // derived display name for header/children
@@ -116,55 +125,13 @@ export default function Dashboard() {
 
   /* --------------------------- first load --------------------------- */
   useEffect(() => {
-    (async () => {
-      const authResult = await checkAuth();
-      if (!authResult.isAuthenticated) {
-        setAuthError(authResult.error || "Authentication failed");
-        setTimeout(() => redirectToLogin(), 1000);
-        return;
-      }
-      await refreshUser();
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
-  /* ---------------------- live sync mechanisms ---------------------- */
-  useEffect(() => {
-    // 1) refetch when tab becomes visible again
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshUser();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    // 2) refetch if session/user_data changes in localStorage (e.g., other tabs)
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "user_data" || e.key === "session_key") {
-        void refreshUser();
-      }
-    };
-    window.addEventListener("storage", onStorage);
-
-    // 3) listen for a custom window event fired by settings page after saves
-    const customHandler = () => void refreshUser();
-    window.addEventListener("profile:updated", customHandler as EventListener);
-
-    // 4) cross-tab BroadcastChannel, guarded for unsupported browsers
-    let bc: BroadcastChannel | null = null;
-    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      bc = new BroadcastChannel("profile-sync");
-      bc.onmessage = (msg: MessageEvent) => {
-        const data = (msg?.data ?? {}) as { type?: string };
-        if (data.type === "profile-updated") void refreshUser();
-      };
-    }
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("profile:updated", customHandler as EventListener);
-      if (bc) bc.close();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Bypass authentication and directly set organization user
+    const mockUser = createMockOrganizationUser();
+    setUser(mockUser);
+    
+    // Also store in localStorage to maintain consistency
+    localStorage.setItem("session_key", "mock-org-token-12345");
+    localStorage.setItem("user_data", JSON.stringify(mockUser));
   }, []);
 
   /* ------------------------------ views ----------------------------- */
