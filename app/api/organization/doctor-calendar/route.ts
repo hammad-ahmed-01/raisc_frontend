@@ -5,7 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_DJANGO_BASE_URL;
 export async function GET(req: Request) {
   try {
     const token = req.headers.get("authorization") || `Token ${localStorage?.getItem("session_key")}`;
-    const res = await fetch(`${BASE_URL}/view_doctor_calendar/`, {
+    const res = await fetch(`${BASE_URL}/organization/view_doctor_calendar/`, {
       headers: { Authorization: token },
       cache: "no-store",
     });

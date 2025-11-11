@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const token = req.headers.get("authorization") || `Token ${localStorage?.getItem("session_key")}`;
 
-    const res = await fetch(`${BASE_URL}/register_doctor/`, {
+    const res = await fetch(`${BASE_URL}/organization/register_doctor/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
