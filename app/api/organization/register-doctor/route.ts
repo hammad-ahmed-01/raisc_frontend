@@ -1,26 +1,49 @@
 import { NextResponse } from "next/server";
 
-const BASE_URL = process.env.NEXT_PUBLIC_DJANGO_BASE_URL;
+export const runtime = "edge";
 
-// POST – Register new doctor
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const token = req.headers.get("authorization") || `Token ${localStorage?.getItem("session_key")}`;
+    const token = req.headers.get("authorization")?.replace("Token ", "");
+    const base = process.env.NEXT_PUBLIC_DJANGO_BASE_URL?.replace(/\/+$/, "");
 
-    const res = await fetch(`${BASE_URL}/register_doctor/`, {
+    if (!base) {
+      return NextResponse.json(
+        { message: "Backend base URL not configured." },
+        { status: 500 }
+      );
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Missing authentication token." },
+        { status: 401 }
+      );
+    }
+
+    const res = await fetch(`${base}/organization/register_doctor/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token,
+        Authorization: `Token ${token}`,
       },
       body: JSON.stringify(body),
     });
 
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error("Organization register doctor error:", data);
+      return NextResponse.json(data, { status: res.status });
+    }
+
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Error registering doctor:", error);
-    return NextResponse.json({ error: "Failed to register doctor" }, { status: 500 });
+    console.error("Register Doctor API Error:", error);
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
   }
 }
