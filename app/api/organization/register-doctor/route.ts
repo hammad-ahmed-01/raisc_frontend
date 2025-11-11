@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
-
+    console.log(base);
     const res = await fetch(`${base}/organization/register_doctor/`, {
       method: "POST",
       headers: {

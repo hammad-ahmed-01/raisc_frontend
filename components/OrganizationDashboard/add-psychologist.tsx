@@ -37,25 +37,28 @@ export default function AddPsychologistForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-
+    //Combining first and last name to make full_name
+    const fullName = `${form.firstName} ${form.lastName}`;  
+    console.log("Submitting form:", form);
     try {
       // ✅ Prepare form data to send
+      //Setting default password as Doctor123! (Doctor can reset and change it later.)
       const body = {
         user_type: "doctor",
         email: form.email,
-        first_name: form.firstName,
-        last_name: form.lastName,
+        full_name: fullName,
+        password: "Doctor123!",
         doctor_profile: {
-          organization: null, // set automatically in backend
-          professional_information: {
+            location: "Not Specified",
             specialization: form.specialization,
             experience: form.experience,
             phone: form.phone,
             gender: form.gender,
             availability: form.availability,
             affiliation: form.affiliation,
+            rates:"1.00"
           },
-        },
+        
       };
 
       const res = await fetch("/api/organization/register-doctor", {
