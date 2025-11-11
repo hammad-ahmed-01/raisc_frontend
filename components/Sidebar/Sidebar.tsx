@@ -96,10 +96,10 @@ const Sidebar = () => {
   } else if (userType === "organization") {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
-      { id: 2, title: "Doctors", icon: <FaUserMd size={20} />, path: "/Doctors" },
-      { id: 3, title: "Calendar", icon: <FaCalendarAlt size={20} />, path: "/calendar" },
-      { id: 4, title: "Pending Requests", icon: <FaHistory size={20} />, path: "/pending-requests" },
-      { id: 5, title: "Analytics / Reports", icon: <FaChartBar size={20} />, path: "/analytics" },
+      //{ id: 2, title: "Doctors", icon: <FaUserMd size={20} />, path: "/Doctors" },
+      //{ id: 3, title: "Calendar", icon: <FaCalendarAlt size={20} />, path: "/calendar" },
+      //{ id: 4, title: "Pending Requests", icon: <FaHistory size={20} />, path: "/pending-requests" },
+      { id: 5, title: "Analytics / Reports", icon: <FaChartBar size={20} />, path: "/OrganizationAnalytics" },
     ];
   }
 

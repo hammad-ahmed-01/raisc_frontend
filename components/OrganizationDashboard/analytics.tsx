@@ -1,11 +1,16 @@
-// components/AnalyticsDashboard.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AreaChart,
   Area,
@@ -16,92 +21,156 @@ import {
 } from "recharts";
 import TopRightIcons from "@/components/TopRightIcons";
 
-const dummyOrg = {
-  name: "Pakistan Institute of Mental Health",
-  total_psychologists: 10,
-  total_patients: 30,
-  sessions_today: 4,
-  new_join_requests: 2,
-  todays_sessions: [
-    { doctor: "Dr. Ali Hamza", therapy_type: "Cognitive Therapy", time: "9:00 AM" },
-    { doctor: "Dr. Alisha", therapy_type: "Cognitive Therapy", time: "11:00 AM" },
-    { doctor: "Dr. Sara Ali", therapy_type: "Cognitive Therapy", time: "10:00 AM" },
-    { doctor: "Dr. Zahra", therapy_type: "Cognitive Therapy", time: "3:00 PM" },
-  ],
-};
+type SessionRange = "Daily" | "Weekly" | "Annually";
 
-const dummyDoctors = [
-  { name: "Dr. Ali Hamza", specialization: "Cognitive Therapy", assigned: 10, rating: 4.7, profile_image: "/doc.png" },
-  { name: "Dr. Alisha", specialization: "Cognitive Therapy", assigned: 10, rating: 4.7, profile_image: "/doc.png" },
-  { name: "Dr. Sara Ali", specialization: "Cognitive Therapy", assigned: 10, rating: 4.7, profile_image: "/doc.png" },
-];
+interface Doctor {
+  doctor_name: string;
+  professional_information?: Record<string, any>;
+  chatgroup_nickname?: string;
+  no_of_patients?: number;
+  rates?: string;
+}
 
-const sessionData = {
-  Daily: [
-    { name: "Mon", sessions: 5 },
-    { name: "Tue", sessions: 7 },
-    { name: "Wed", sessions: 4 },
-    { name: "Thu", sessions: 6 },
-    { name: "Fri", sessions: 8 },
-    { name: "Sat", sessions: 3 },
-    { name: "Sun", sessions: 2 },
-  ],
-  Weekly: [
-    { name: "Week 1", sessions: 30 },
-    { name: "Week 2", sessions: 28 },
-    { name: "Week 3", sessions: 35 },
-    { name: "Week 4", sessions: 40 },
-  ],
-  Annually: [
-    { name: "JAN", sessions: 250 },
-    { name: "FEB", sessions: 300 },
-    { name: "MAR", sessions: 180 },
-    { name: "APR", sessions: 260 },
-    { name: "MAY", sessions: 400 },
-    { name: "JUN", sessions: 350 },
-    { name: "JUL", sessions: 370 },
-    { name: "AUG", sessions: 340 },
-    { name: "SEP", sessions: 310 },
-    { name: "OCT", sessions: 290 },
-    { name: "NOV", sessions: 200 },
-    { name: "DEC", sessions: 390 },
-  ],
-};
+interface Organization {
+  id: number;
+  name: string;
+  no_of_doctors?: number;
+  total_patients?: number;
+}
 
-type SessionRange = keyof typeof sessionData;
+interface CalendarEvent {
+  id: number;
+  title: string;
+  date: string;
+}
 
 export default function AnalyticsDashboard() {
-  const [selectedDoctor, setSelectedDoctor] = useState("Dr. Ali Hamza");
+  const [selectedDoctor, setSelectedDoctor] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState<SessionRange>("Annually");
-  const doctor = dummyDoctors.find((doc) => doc.name === selectedDoctor);
+
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  //  Auth header
+  const getAuthHeader = () => ({
+    Authorization: `Token ${
+      typeof window !== "undefined" ? localStorage.getItem("session_key") : ""
+    }`,
+  });
+
+  //   Fetch data from backend
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [orgRes, docRes, countRes, calRes] = await Promise.all([
+          fetch("/api/organization", { headers: getAuthHeader() }),
+          fetch("/api/organization/view-doctors", { headers: getAuthHeader() }),
+          fetch("/api/organization/no-of-doctors", { headers: getAuthHeader() }),
+          fetch("/api/organization/doctor-calendar", {
+            headers: getAuthHeader(),
+          }),
+        ]);
+
+        const [orgData, docData, countData, calData] = await Promise.all([
+          orgRes.json(),
+          docRes.json(),
+          countRes.json(),
+          calRes.json(),
+        ]);
+
+        const orgDetails = Array.isArray(orgData) ? orgData[0] : orgData;
+        setOrganization({
+          ...orgDetails,
+          no_of_doctors: countData?.[0]?.no_of_doctors ?? 0,
+          total_patients: Array.isArray(docData)
+            ? docData.reduce(
+                (sum: number, d: any) => sum + (d.no_of_patients ?? 0),
+                0
+              )
+            : 0,
+        });
+
+        setDoctors(Array.isArray(docData) ? docData : []);
+        setCalendarEvents(Array.isArray(calData) ? calData : []);
+
+        if (docData.length > 0)
+          setSelectedDoctor(docData[0].doctor_name);
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  //   Build session frequency from calendar data
+  const sessionData = {
+    Daily: buildSessionFrequency(calendarEvents, "day"),
+    Weekly: buildSessionFrequency(calendarEvents, "week"),
+    Annually: buildSessionFrequency(calendarEvents, "month"),
+  };
+
+  const doctor = doctors.find(
+    (doc) => doc.doctor_name === selectedDoctor
+  );
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 bg-[#F0F9FF] min-h-screen flex justify-center items-center text-[#1E3CA7] font-semibold">
+        Loading Analytics...
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 bg-[#F0F9FF] min-h-screen">
       <TopRightIcons />
       <div className="flex justify-between items-center mt-16 mb-6 flex-wrap gap-4">
         <h1 className="text-3xl font-bold text-heading2">Analytics & Reports</h1>
-        <Button className="bg-heading2 font-semibold rounded-2xl text-lg text-white px-6">Export PDF</Button>
+        <Button className="bg-heading2 font-semibold rounded-2xl text-lg text-white px-6">
+          Export PDF
+        </Button>
       </div>
 
+      {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total Psychologists" value={dummyOrg.total_psychologists} />
-        <StatCard title="Total Patients" value={dummyOrg.total_patients} />
-        <StatCard title="Sessions This Month" value={40} />
-        <StatCard title="Avg Session Rating" value="4.7 Rating" />
+        <StatCard
+          title="Total Psychologists"
+          value={organization?.no_of_doctors ?? 0}
+        />
+        <StatCard
+          title="Total Patients"
+          value={organization?.total_patients ?? 0}
+        />
+        <StatCard
+          title="Sessions This Month"
+          value={calendarEvents.length}
+        />
+        <StatCard title="Avg Session Rating" value={averageRating(doctors)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Session Trend Chart */}
         <Card className="lg:col-span-2 p-4 rounded-3xl border-[#2196F3]">
           <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-heading2">Sessions Over Time</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-heading2">
+              Sessions Over Time
+            </h2>
             <div className="flex rounded-2xl p-1 gap-2 border border-[#2196F3]">
               {["Daily", "Weekly", "Annually"].map((range) => (
                 <Button
                   key={range}
                   variant="ghost"
                   onClick={() => setSelectedRange(range as SessionRange)}
-                  className={`px-4 py-1 rounded-2xl  text-sm font-semibold ${
-                    selectedRange === range ? "bg-heading2 text-white" : "bg-white text-normal"
+                  className={`px-4 py-1 rounded-2xl text-sm font-semibold ${
+                    selectedRange === range
+                      ? "bg-heading2 text-white"
+                      : "bg-white text-normal"
                   }`}
                 >
                   {range}
@@ -109,6 +178,7 @@ export default function AnalyticsDashboard() {
               ))}
             </div>
           </div>
+
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={sessionData[selectedRange]}>
               <defs>
@@ -132,26 +202,51 @@ export default function AnalyticsDashboard() {
           </ResponsiveContainer>
         </Card>
 
+        {/* Doctor Performance Card */}
         <Card className="p-4 border-[#2196F3] rounded-3xl">
-          <h2 className="text-2xl text-center font-bold text-heading2 mb-2">Doctors Performance</h2>
-          <div className="mb-2 text-md font-semibold text-normal">Filter By:</div>
-          <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
+          <h2 className="text-2xl text-center font-bold text-heading2 mb-2">
+            Doctors Performance
+          </h2>
+          <div className="mb-2 text-md font-semibold text-normal">
+            Filter By:
+          </div>
+          <Select
+            value={selectedDoctor}
+            onValueChange={setSelectedDoctor}
+          >
             <SelectTrigger className="mb-4 text-normal font-semibold border-[#2196F3] bg-[#E9F5FE]">
               <SelectValue placeholder="Select Doctor" />
             </SelectTrigger>
             <SelectContent>
-              {dummyDoctors.map((doc) => (
-                <SelectItem key={doc.name} value={doc.name}>{doc.name}</SelectItem>
+              {doctors.map((doc, i) => (
+                <SelectItem
+                  key={i}
+                  value={doc.doctor_name}
+                >
+                  {doc.doctor_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
           <div className="flex items-center gap-4">
-            <Image src={doctor?.profile_image ?? ""} alt="" width={64} height={64} className="rounded-full" />
+            <Image
+              src="/doc.png"
+              alt={doctor?.doctor_name || "doctor"}
+              width={64}
+              height={64}
+              className="rounded-full"
+            />
             <div>
-              <div className="font-bold text-xl text-heading2">{doctor?.name}</div>
-              <div className="text-lg text-normal">{doctor?.specialization}</div>
-              <div className="text-lg text-normal">Patient Handled: {doctor?.assigned}</div>
-              <div className="text-lg text-normal">Avg Rating: {doctor?.rating}</div>
+              <div className="font-bold text-xl text-heading2">
+                {doctor?.doctor_name}
+              </div>
+              <div className="text-lg text-normal">
+                Patients Handled: {doctor?.no_of_patients ?? 0}
+              </div>
+              <div className="text-lg text-normal">
+                Avg Rating: {doctor?.rates ?? "N/A"}
+              </div>
               <div className="text-lg text-green-600">Available Now</div>
             </div>
           </div>
@@ -161,11 +256,46 @@ export default function AnalyticsDashboard() {
   );
 }
 
+//   Helper: Build frequency summary
+function buildSessionFrequency(events: CalendarEvent[], range: "day" | "week" | "month") {
+  if (!events?.length) return [];
+
+  const buckets: Record<string, number> = {};
+
+  for (const ev of events) {
+    const date = new Date(ev.date);
+    let key = "";
+
+    if (range === "day") key = date.toLocaleDateString("en-US", { weekday: "short" });
+    else if (range === "week")
+      key = `Week ${Math.ceil(date.getDate() / 7)}`;
+    else key = date.toLocaleDateString("en-US", { month: "short" });
+
+    buckets[key] = (buckets[key] || 0) + 1;
+  }
+
+  return Object.entries(buckets).map(([name, sessions]) => ({ name, sessions }));
+}
+
+//   Helper: Average rating across doctors
+function averageRating(doctors: Doctor[]) {
+  if (!doctors.length) return "N/A";
+  const validRates = doctors
+    .map((d) => parseFloat(d.rates || "0"))
+    .filter((r) => r > 0);
+  if (!validRates.length) return "N/A";
+  const avg = validRates.reduce((a, b) => a + b, 0) / validRates.length;
+  return `${avg.toFixed(1)} Rating`;
+}
+
+//   Stat Card
 function StatCard({ title, value }: { title: string; value: string | number }) {
   return (
     <Card className="rounded-3xl border-[#2196F3]">
       <CardContent className="p-4 text-center">
-        <div className="text-2xl text-heading2 font-semibold mb-1">{title}</div>
+        <div className="text-2xl text-heading2 font-semibold mb-1">
+          {title}
+        </div>
         <div className="text-2xl font-bold text-heading2">{value}</div>
       </CardContent>
     </Card>
