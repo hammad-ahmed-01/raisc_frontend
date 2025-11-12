@@ -4,7 +4,6 @@ import { format, isSameDay } from "date-fns";
 import SessionBadge from "./SessionBadge";
 import { useEffect, useState } from "react";
 
-// Match backend event type
 interface BackendEvent {
   id: number;
   title: string;
@@ -39,7 +38,6 @@ const TodaysSessions = () => {
         if (!res.ok) throw new Error("Failed to fetch today's sessions");
         const data: BackendEvent[] = await res.json();
 
-        // Filter only today's events
         const today = new Date();
         const filtered = data
           .filter((ev) => isSameDay(new Date(ev.date), today))
@@ -63,16 +61,18 @@ const TodaysSessions = () => {
 
   if (loading) {
     return (
-      <div className="mt-12 px-4 min-h-screen py-10 text-[#1E3CA7] font-semibold">
+      <div className="mt-12 px-4 min-h-screen py-10 text-[#1E3CA7] font-semibold text-center">
         Loading today’s sessions...
       </div>
     );
   }
 
   return (
-    <div className="mt-12 px-4 min-h-screen py-10">
-      <h2 className="text-2xl font-bold text-[#1E3CA7] mb-6">Today’s Session</h2>
-      <div className="bg-white border border-[#2196F3] rounded-3xl p-6 flex flex-wrap gap-y-4 max-w-3xl mx-auto">
+    <div className="mt-12 px-2 sm:px-4 min-h-screen py-8 sm:py-10">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#1E3CA7] mb-6 text-center sm:text-left">
+        Today’s Session
+      </h2>
+      <div className="bg-white border border-[#2196F3] rounded-3xl p-4 sm:p-6 flex flex-wrap justify-center sm:justify-start gap-y-4 max-w-3xl mx-auto">
         {sessions.length > 0 ? (
           sessions.map((session, i) => (
             <SessionBadge
@@ -84,7 +84,7 @@ const TodaysSessions = () => {
             />
           ))
         ) : (
-          <p className="text-[#1E3CA7] text-lg font-medium">
+          <p className="text-[#1E3CA7] text-sm sm:text-lg font-medium text-center">
             No sessions scheduled for today.
           </p>
         )}

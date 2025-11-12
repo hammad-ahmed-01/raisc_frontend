@@ -1,23 +1,14 @@
 "use client";
 
-import {
-  Calendar,
-  dateFnsLocalizer,
-} from "react-big-calendar";
+import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
-import {
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-} from "date-fns";
+import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { useState, useEffect } from "react";
-import { CustomToolbar, eventPropGetter, dayPropGetter } from "./CalendarUtils";
+import { CustomToolbar, dayPropGetter } from "./CalendarUtils";
 
-// Keep same localization setup
 const locales = { "en-US": enUS };
 
 const localizer = dateFnsLocalizer({
@@ -28,7 +19,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-// ✅ Backend event type
 interface BackendEvent {
   id: number;
   title: string;
@@ -41,7 +31,6 @@ interface BackendEvent {
   patient_id: number;
 }
 
-// ✅ Calendar event format for react-big-calendar
 interface CalendarEvent {
   id: number;
   title: string;
@@ -63,7 +52,6 @@ export default function CalendarWrapper() {
     }`,
   });
 
-  // ✅ Fetch events from backend on mount
   useEffect(() => {
     async function fetchCalendar() {
       try {
@@ -93,36 +81,35 @@ export default function CalendarWrapper() {
     fetchCalendar();
   }, []);
 
-  // ✅ Build doctor list dynamically
   const doctorList = Array.from(new Set(events.map((e) => e.doctor)));
-
-  // ✅ Filter events by selected doctor
   const filteredEvents = selectedDoctor
     ? events.filter((e) => e.doctor === selectedDoctor)
     : events;
 
   if (loading) {
     return (
-      <div className="p-4 text-[#1E3CA7] font-semibold text-lg">
+      <div className="p-4 text-[#1E3CA7] font-semibold text-lg text-center">
         Loading calendar...
       </div>
     );
   }
 
   return (
-    <div id="3" className="mt-16 px-4">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-        <h2 className="text-2xl font-bold text-[#1E3CA7]">Calendar</h2>
-        <div className="flex items-center gap-2 mt-2 md:mt-0">
+    <div id="3" className="mt-12 sm:mt-16 px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1E3CA7] text-center sm:text-left">
+          Calendar
+        </h2>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-2 sm:mt-0">
           <label
             htmlFor="doctor-filter"
-            className="text-heading2 font-medium"
+            className="text-heading2 font-medium text-sm sm:text-base"
           >
             Filter By:
           </label>
           <select
             id="doctor-filter"
-            className="h-10 px-4 rounded-full bg-white border border-gray-300 shadow-sm text-heading2"
+            className="h-10 px-4 rounded-full bg-white border border-gray-300 shadow-sm text-heading2 text-sm sm:text-base"
             value={selectedDoctor}
             onChange={(e) => setSelectedDoctor(e.target.value)}
           >
@@ -136,13 +123,13 @@ export default function CalendarWrapper() {
         </div>
       </div>
 
-      <div className="p-4 text-heading2">
+      <div className="p-2 sm:p-4 text-heading2">
         <Calendar
           localizer={localizer}
           events={filteredEvents}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: 600 }}
+          style={{ height: 500 }}
           views={["month", "week", "day"]}
           view={view}
           date={currentDate}
@@ -151,9 +138,7 @@ export default function CalendarWrapper() {
           }}
           onNavigate={setCurrentDate}
           components={{
-            toolbar: (props) => (
-              <CustomToolbar {...props} setView={setView} />
-            ),
+            toolbar: (props) => <CustomToolbar {...props} setView={setView} />,
           }}
           eventPropGetter={(event) => ({
             style: {

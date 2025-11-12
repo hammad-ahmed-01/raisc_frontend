@@ -13,7 +13,7 @@ export default function OrganizationAnalyticsLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-20 w-full">
+      <main className="flex-1 w-full">
         {children}
       </main>
     </div>

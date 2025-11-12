@@ -53,14 +53,12 @@ export default function AnalyticsDashboard() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  //  Auth header
   const getAuthHeader = () => ({
     Authorization: `Token ${
       typeof window !== "undefined" ? localStorage.getItem("session_key") : ""
     }`,
   });
 
-  //   Fetch data from backend
   useEffect(() => {
     async function fetchData() {
       try {
@@ -96,8 +94,7 @@ export default function AnalyticsDashboard() {
         setDoctors(Array.isArray(docData) ? docData : []);
         setCalendarEvents(Array.isArray(calData) ? calData : []);
 
-        if (docData.length > 0)
-          setSelectedDoctor(docData[0].doctor_name);
+        if (docData.length > 0) setSelectedDoctor(docData[0].doctor_name);
       } catch (error) {
         console.error("Error fetching analytics data:", error);
       } finally {
@@ -108,16 +105,13 @@ export default function AnalyticsDashboard() {
     fetchData();
   }, []);
 
-  //   Build session frequency from calendar data
   const sessionData = {
     Daily: buildSessionFrequency(calendarEvents, "day"),
     Weekly: buildSessionFrequency(calendarEvents, "week"),
     Annually: buildSessionFrequency(calendarEvents, "month"),
   };
 
-  const doctor = doctors.find(
-    (doc) => doc.doctor_name === selectedDoctor
-  );
+  const doctor = doctors.find((doc) => doc.doctor_name === selectedDoctor);
 
   if (loading) {
     return (
@@ -130,15 +124,19 @@ export default function AnalyticsDashboard() {
   return (
     <div className="p-4 sm:p-6 bg-[#F0F9FF] min-h-screen">
       <TopRightIcons />
-      <div className="flex justify-between items-center mt-16 mb-6 flex-wrap gap-4">
-        <h1 className="text-3xl font-bold text-heading2">Analytics & Reports</h1>
-        <Button className="bg-heading2 font-semibold rounded-2xl text-lg text-white px-6">
+
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-16 mb-6 gap-4 text-center sm:text-left">
+        <h1 className="text-2xl sm:text-3xl font-bold text-heading2">
+          Analytics & Reports
+        </h1>
+        <Button className="bg-heading2 font-semibold rounded-2xl text-sm sm:text-lg text-white px-4 sm:px-6 py-2 sm:py-2">
           Export PDF
         </Button>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:ml-0">
         <StatCard
           title="Total Psychologists"
           value={organization?.no_of_doctors ?? 0}
@@ -147,27 +145,26 @@ export default function AnalyticsDashboard() {
           title="Total Patients"
           value={organization?.total_patients ?? 0}
         />
-        <StatCard
-          title="Sessions This Month"
-          value={calendarEvents.length}
-        />
+        <StatCard title="Sessions This Month" value={calendarEvents.length} />
         <StatCard title="Avg Session Rating" value={averageRating(doctors)} />
       </div>
 
+      {/* Charts and Doctor Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Session Trend Chart */}
         <Card className="lg:col-span-2 p-4 rounded-3xl border-[#2196F3]">
-          <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-heading2">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+            <h2 className="text-lg sm:text-2xl font-bold text-heading2 text-center sm:text-left">
               Sessions Over Time
             </h2>
-            <div className="flex rounded-2xl p-1 gap-2 border border-[#2196F3]">
+
+            <div className="flex flex-wrap justify-center sm:justify-end rounded-2xl p-1 gap-2 border border-[#2196F3]">
               {["Daily", "Weekly", "Annually"].map((range) => (
                 <Button
                   key={range}
                   variant="ghost"
                   onClick={() => setSelectedRange(range as SessionRange)}
-                  className={`px-4 py-1 rounded-2xl text-sm font-semibold ${
+                  className={`px-3 sm:px-4 py-1 rounded-2xl text-sm font-semibold transition ${
                     selectedRange === range
                       ? "bg-heading2 text-white"
                       : "bg-white text-normal"
@@ -179,75 +176,73 @@ export default function AnalyticsDashboard() {
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={sessionData[selectedRange]}>
-              <defs>
-                <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#11337A" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#11337A" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="name" stroke="#11337A" fontSize={12} />
-              <YAxis stroke="#11337A" fontSize={12} />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="sessions"
-                stroke="#11337A"
-                fillOpacity={1}
-                fill="url(#colorSessions)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[220px] sm:h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sessionData[selectedRange]}>
+                <defs>
+                  <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#11337A" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#11337A" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#11337A" fontSize={10} />
+                <YAxis stroke="#11337A" fontSize={10} />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="sessions"
+                  stroke="#11337A"
+                  fillOpacity={1}
+                  fill="url(#colorSessions)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
 
         {/* Doctor Performance Card */}
         <Card className="p-4 border-[#2196F3] rounded-3xl">
-          <h2 className="text-2xl text-center font-bold text-heading2 mb-2">
+          <h2 className="text-xl sm:text-2xl text-center font-bold text-heading2 mb-2">
             Doctors Performance
           </h2>
-          <div className="mb-2 text-md font-semibold text-normal">
+          <div className="mb-2 text-sm sm:text-md font-semibold text-normal text-center sm:text-left">
             Filter By:
           </div>
-          <Select
-            value={selectedDoctor}
-            onValueChange={setSelectedDoctor}
-          >
+          <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
             <SelectTrigger className="mb-4 text-normal font-semibold border-[#2196F3] bg-[#E9F5FE]">
               <SelectValue placeholder="Select Doctor" />
             </SelectTrigger>
             <SelectContent>
               {doctors.map((doc, i) => (
-                <SelectItem
-                  key={i}
-                  value={doc.doctor_name}
-                >
+                <SelectItem key={i} value={doc.doctor_name}>
                   {doc.doctor_name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
             <Image
               src="/doc.png"
               alt={doctor?.doctor_name || "doctor"}
               width={64}
               height={64}
-              className="rounded-full"
+              className="rounded-full mx-auto sm:mx-0"
             />
             <div>
-              <div className="font-bold text-xl text-heading2">
+              <div className="font-bold text-lg sm:text-xl text-heading2">
                 {doctor?.doctor_name}
               </div>
-              <div className="text-lg text-normal">
+              <div className="text-sm sm:text-lg text-normal">
                 Patients Handled: {doctor?.no_of_patients ?? 0}
               </div>
-              <div className="text-lg text-normal">
+              <div className="text-sm sm:text-lg text-normal">
                 Avg Rating: {doctor?.rates ?? "N/A"}
               </div>
-              <div className="text-lg text-green-600">Available Now</div>
+              <div className="text-sm sm:text-lg text-green-600">
+                Available Now
+              </div>
             </div>
           </div>
         </Card>
@@ -256,8 +251,11 @@ export default function AnalyticsDashboard() {
   );
 }
 
-//   Helper: Build frequency summary
-function buildSessionFrequency(events: CalendarEvent[], range: "day" | "week" | "month") {
+// Helper: Build frequency summary
+function buildSessionFrequency(
+  events: CalendarEvent[],
+  range: "day" | "week" | "month"
+) {
   if (!events?.length) return [];
 
   const buckets: Record<string, number> = {};
@@ -267,8 +265,7 @@ function buildSessionFrequency(events: CalendarEvent[], range: "day" | "week" | 
     let key = "";
 
     if (range === "day") key = date.toLocaleDateString("en-US", { weekday: "short" });
-    else if (range === "week")
-      key = `Week ${Math.ceil(date.getDate() / 7)}`;
+    else if (range === "week") key = `Week ${Math.ceil(date.getDate() / 7)}`;
     else key = date.toLocaleDateString("en-US", { month: "short" });
 
     buckets[key] = (buckets[key] || 0) + 1;
@@ -277,7 +274,7 @@ function buildSessionFrequency(events: CalendarEvent[], range: "day" | "week" | 
   return Object.entries(buckets).map(([name, sessions]) => ({ name, sessions }));
 }
 
-//   Helper: Average rating across doctors
+// Helper: Average rating
 function averageRating(doctors: Doctor[]) {
   if (!doctors.length) return "N/A";
   const validRates = doctors
@@ -288,15 +285,17 @@ function averageRating(doctors: Doctor[]) {
   return `${avg.toFixed(1)} Rating`;
 }
 
-//   Stat Card
+// Stat Card
 function StatCard({ title, value }: { title: string; value: string | number }) {
   return (
     <Card className="rounded-3xl border-[#2196F3]">
-      <CardContent className="p-4 text-center">
-        <div className="text-2xl text-heading2 font-semibold mb-1">
+      <CardContent className="p-4 sm:p-6 text-center">
+        <div className="text-base sm:text-xl text-heading2 font-semibold mb-1">
           {title}
         </div>
-        <div className="text-2xl font-bold text-heading2">{value}</div>
+        <div className="text-xl sm:text-2xl font-bold text-heading2">
+          {value}
+        </div>
       </CardContent>
     </Card>
   );

@@ -15,11 +15,16 @@ export const eventPropGetter = (event: any) => {
 };
 
 export const dayPropGetter = (date: Date, currentDate: Date) => {
-  const isSelected = format(date, "yyyy-MM-dd") === format(currentDate, "yyyy-MM-dd");
+  const isSelected =
+    format(date, "yyyy-MM-dd") === format(currentDate, "yyyy-MM-dd");
   const isOtherMonth = date.getMonth() !== currentDate.getMonth();
 
   const style: React.CSSProperties = {
-    backgroundColor: isSelected ? "#E8FAF7" : isOtherMonth ? "#D8E0EA" : "#fff",
+    backgroundColor: isSelected
+      ? "#E8FAF7"
+      : isOtherMonth
+      ? "#D8E0EA"
+      : "#fff",
     color: "#1E3CA7",
     fontWeight: 600,
     textAlign: "center",
@@ -35,15 +40,29 @@ export const dayPropGetter = (date: Date, currentDate: Date) => {
 
 export function CustomToolbar({ label, onNavigate, setView }: any) {
   return (
-    <div className="custom-toolbar">
-      <div className="toolbar-left">
-        <button className="bg-[#D0E9FF] text-heading2 hover:text-heading" onClick={() => onNavigate("PREV")}>&lt;</button>
-        <span>{label}</span>
-        <button className="bg-[#D0E9FF] text-heading2 hover:text-heading" onClick={() => onNavigate("NEXT")}>&gt;</button>
+    <div className="custom-toolbar w-full">
+      <div className="toolbar-left justify-center md:justify-start">
+        <button
+          className="bg-[#D0E9FF] text-heading2 hover:text-heading px-2 py-1 rounded-md"
+          onClick={() => onNavigate("PREV")}
+        >
+          &lt;
+        </button>
+        <span className="text-sm sm:text-base">{label}</span>
+        <button
+          className="bg-[#D0E9FF] text-heading2 hover:text-heading px-2 py-1 rounded-md"
+          onClick={() => onNavigate("NEXT")}
+        >
+          &gt;
+        </button>
       </div>
-      <div className="toolbar-right">
+      <div className="toolbar-right justify-center md:justify-end mt-2 md:mt-0 flex-wrap">
         {["month", "week", "day"].map((v) => (
-          <button className="h-full" key={v} onClick={() => setView(v)}>
+          <button
+            className="h-full px-3 py-1 text-sm sm:text-base"
+            key={v}
+            onClick={() => setView(v)}
+          >
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>
         ))}
