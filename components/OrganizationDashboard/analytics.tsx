@@ -122,7 +122,7 @@ export default function AnalyticsDashboard() {
   }
 
   return (
-    <div className="p-4 sm:p-6 bg-[#F0F9FF] min-h-screen">
+    <div className="p-4 sm:pl-24 bg-[#F0F9FF] min-h-screen">
       <TopRightIcons />
 
       {/* Header Section */}
