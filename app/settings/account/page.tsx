@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DoctorMyAccount from "@/components/DoctorSettings/Account/MyAccount";
@@ -7,7 +8,6 @@ import OrganizationMyAccount from "@/components/OrganizationSettings/Account/MyA
 import { checkAuth, redirectToLogin } from "@/lib/auth";
 
 /* ------------------------------- types ------------------------------- */
-
 export interface Doctor {
   id: number;
   username: string;
@@ -41,8 +41,8 @@ export interface Patient {
   therapyFocus: string;
   sessionsCompleted: number;
   lastSession: string;
-  age?: string;                 // <-- added
-  gender?: string;              // <-- added
+  age?: string;
+  gender?: string;
   phone?: string;
   imageUrl?: string;
   chatgroup_nickname?: string;
@@ -70,15 +70,18 @@ const DJANGO_BASE =
     : "")?.replace(/\/+$/, "") || "";
 
 const safe = (v: unknown) => (v == null ? "" : String(v));
+
 const toDate = (d: unknown) => {
   const s = safe(d);
   const dt = s ? new Date(s) : null;
   return dt && !isNaN(dt.getTime()) ? dt : null;
 };
+
 const fmtDate = (d: unknown) => {
   const dt = toDate(d);
   return dt ? dt.toLocaleDateString() : "";
 };
+
 const fmtDateTime = (d: unknown) => {
   const dt = toDate(d);
   return dt ? `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}` : "";
@@ -93,40 +96,19 @@ const splitToList = (text?: string): string[] => {
     .filter(Boolean);
 };
 
-const guessUniversity = (education?: string): string => {
-  const s = safe(education).trim();
-  if (!s) return "";
-  const at = s.split(/\bat\b/i);
-  if (at.length > 1 && at[1]) {
-    return at[1].replace(/[\(\)\d\-–,]/g, "").trim();
-  }
-  const dash = s.split(/[–-]/);
-  if (dash.length > 1 && dash[1]) {
-    return dash[1].replace(/[\(\)\d,]/g, "").trim();
-  }
-  const m = s.match(/\bUniversity\s+of\s+[A-Za-z ]+/i);
-  return m ? m[0].trim() : s;
-};
-
-const guessGradYear = (education?: string): string => {
-  const m = safe(education).match(/\b(19|20)\d{2}\b/);
-  return m ? m[0] : "";
-};
-
 const buildAuthHeader = (): HeadersInit => {
-  const raw =
+  const token =
     localStorage.getItem("session_key") ||
     localStorage.getItem("token") ||
     localStorage.getItem("auth_token") ||
     localStorage.getItem("access_token") ||
     "";
-  const v = raw.trim();
+  const v = token.trim();
   if (!v) return {};
   return { Authorization: /^token\s+/i.test(v) ? v : `Token ${v}` };
 };
 
 /* ----------------------------- mappers ------------------------------- */
-
 function mapMeToDoctor(me: any): Doctor {
   const dp = me?.doctor_profile || me?.doctor || {};
   const pi = dp?.professional_information || {};
@@ -143,13 +125,6 @@ function mapMeToDoctor(me: any): Doctor {
 
   const education = safe(pi?.education);
   const qualifications = splitToList(education);
-  const university = safe(pi?.university) || guessUniversity(education) || "";
-  const graduation_year = safe(pi?.graduation_year || guessGradYear(education));
-
-  const rawExpertise = pi?.expertise;
-  const expertise = Array.isArray(rawExpertise)
-    ? rawExpertise.map((x: any) => safe(x)).filter(Boolean)
-    : splitToList(safe(rawExpertise));
 
   const imageUrl =
     safe(
@@ -166,7 +141,7 @@ function mapMeToDoctor(me: any): Doctor {
     email,
     user_type: "doctor",
     display_name,
-    phone: safe(pi?.phone || me?.phone || me?.doctor_profile?.phone),
+    phone: safe(pi?.phone || me?.phone),
     last_login: fmtDateTime(me?.last_login),
     member_since: fmtDate(me?.date_joined || me?.joined_at),
     rating: Number(pi?.rating ?? dp?.rating ?? 0),
@@ -177,14 +152,14 @@ function mapMeToDoctor(me: any): Doctor {
     patients_assigned:
       Number(dp?.patients_assigned ?? dp?.stats?.patients_assigned ?? 0) || 0,
     qualifications,
-    university,
-    graduation_year,
+    university: safe(pi?.university),
+    graduation_year: safe(pi?.graduation_year),
     specialization: safe(pi?.specialization),
     emailVerified,
     imageUrl,
-    chatgroup_nickname: safe(pi?.chatgroup_nickname || me?.chatgroup_nickname || ""),
+    chatgroup_nickname: safe(pi?.chatgroup_nickname || ""),
     education,
-    expertise,
+    expertise: splitToList(pi?.expertise),
   };
 }
 
@@ -215,7 +190,9 @@ function mapMeToPatient(me: any): Patient {
     ),
     lastLogin: fmtDateTime(me?.last_login),
     therapyFocus: safe(
-      (pd as any)?.therapyFocus || (pd as any)?.therapy_focus || "General Wellbeing"
+      (pd as any)?.therapyFocus ||
+        (pd as any)?.therapy_focus ||
+        "General Wellbeing"
     ),
     sessionsCompleted: Number(pp?.sessions_completed ?? 0),
     lastSession: fmtDate(pp?.last_session),
@@ -229,73 +206,21 @@ function mapMeToPatient(me: any): Patient {
 
 function mapMeToOrganization(me: any): Organization {
   const op = me?.organization_profile || me?.organization || {};
+  const details = op?.details || {};
   return {
     organization_name: safe(op?.name || me?.organization_name || "Organization"),
-    description: safe(op?.description || ""),
-    logo_url: safe(op?.logo_url || op?.logo || ""),
-    contact_email: safe(op?.contact_email || me?.email || ""),
-    contact_numbers: Array.isArray(op?.contact_numbers)
-      ? op.contact_numbers.map((x: any) => safe(x))
-      : [safe(op?.contact_numbers || "")].filter(Boolean),
+    description: safe(details?.description || ""),
+    logo_url: safe(details?.logo_url || op?.logo_url || ""),
+    contact_email: safe(details?.contact_email || me?.email || ""),
+    contact_numbers: Array.isArray(details?.contact_numbers)
+      ? details.contact_numbers.map((x: any) => safe(x))
+      : [safe(details?.contact_numbers || "")].filter(Boolean),
     location: safe(op?.location || ""),
-    linkedin: safe(op?.linkedin || ""),
+    linkedin: safe(details?.linkedin || ""),
   };
 }
 
-/* ----------------------------- dummy data ---------------------------- */
-
-const getDummyPatient = (): Patient => ({
-  displayName: "Ayesha Khan",
-  username: "ayesha_khan22",
-  email: "ayesha.khan22@example.com",
-  emailVerified: true,
-  lastLogin: "19 July, 2025",
-  therapyFocus: "Anxiety & Stress Management",
-  sessionsCompleted: 12,
-  lastSession: "15 July, 2025",
-  age: "26",               // dummy
-  gender: "Female",        // dummy
-  phone: "+92 300 5555555",
-  imageUrl: "/patient.png",
-  chatgroup_nickname: "Ayesha’s Group",
-});
-
-const getDummyDoctor = (): Doctor => ({
-  id: 1,
-  username: "Ali_Hamza123",
-  email: "AliHamza123@gmail.com",
-  emailVerified: "✓ Verified",
-  display_name: "Dr. Ali Hamza",
-  user_type: "doctor",
-  phone: "+92 300 1234567",
-  last_login: "17 July, 2025",
-  member_since: "Mar, 2024",
-  rating: 4.7,
-  organization: "Pakistan Institute of Mental Health (PIMH)",
-  location: "Rawalpindi, Pakistan",
-  patients_assigned: 8,
-  qualifications: ["MSc in Clinical Psychology", "Certified CBT Therapist"],
-  university: "University of XYZ",
-  graduation_year: "2021-2023",
-  specialization: "Cognitive Therapy",
-  imageUrl: "/doc.png",
-  chatgroup_nickname: "Dr Ali’s Group",
-  education: "MSc Clinical Psychology – University of XYZ (2021–2023)",
-  expertise: ["CBT", "Anxiety", "Trauma"],
-});
-
-const getDummyOrganization = (): Organization => ({
-  organization_name: "Pakistan Institute Of Mental Health",
-  description: "Pakistan Institute Of Mental Health..........",
-  logo_url: "/PIMH.jpeg",
-  contact_email: "info@pimh.org",
-  contact_numbers: ["+92300-xxxxxxx", "+92300-xxxxxxx"],
-  location: "Rawalpindi, Pakistan",
-  linkedin: "linkedin.com",
-});
-
 /* ------------------------------ component ---------------------------- */
-
 export default function AccountPage() {
   const router = useRouter();
 
@@ -306,26 +231,6 @@ export default function AccountPage() {
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (!t) return;
-      const match =
-        t.closest("[data-action='add-phone']") ||
-        t.closest("#add-phone-number") ||
-        (t instanceof HTMLButtonElement &&
-          /add\s*phone/i.test(t.textContent || "")) ||
-        (t instanceof HTMLAnchorElement &&
-          /add\s*phone/i.test(t.textContent || ""));
-      if (match) {
-        e.preventDefault();
-        router.push("/dashboard/settings/profile");
-      }
-    };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [router]);
 
   useEffect(() => {
     (async () => {
@@ -339,93 +244,40 @@ export default function AccountPage() {
     })();
   }, []);
 
-  const hydrateDoctorPatientsCount = async (d: Doctor) => {
-    if (!isBackendConnected || !DJANGO_BASE) return d;
-    try {
-      const res = await fetch(`${DJANGO_BASE}/users/doctor/patients/`, {
-        headers: { "Content-Type": "application/json", ...buildAuthHeader() },
-        cache: "no-store",
-      });
-      if (!res.ok) return d;
-      const arr = await res.json();
-      const realCount = Array.isArray(arr)
-        ? arr.length
-        : Number(arr?.count ?? 0) || d.patients_assigned || 0;
-      return { ...d, patients_assigned: realCount };
-    } catch {
-      return d;
-    }
-  };
-
   useEffect(() => {
     if (!authVerified) return;
 
     const fetchUserData = async () => {
       setLoading(true);
+      try {
+        const res = await fetch("/api/users/me", {
+          headers: {
+            "Content-Type": "application/json",
+            ...buildAuthHeader(),
+          },
+          cache: "no-store",
+        });
 
-      const userDataRaw = localStorage.getItem("user_data");
-      const userData = userDataRaw ? JSON.parse(userDataRaw) : {};
-      const localUserType = userData ? userData.user_type : undefined;
+        const text = await res.text();
+        const me = text ? JSON.parse(text) : null;
+        if (!res.ok || !me) throw new Error(`Upstream failed (${res.status})`);
 
-      if (isBackendConnected) {
-        try {
-          const res = await fetch("/api/users/me", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...buildAuthHeader(),
-            },
-            cache: "no-store",
-          });
-
-          const text = await res.text();
-          const me = text ? JSON.parse(text) : null;
-
-          if (!res.ok || !me) throw new Error(`Upstream failed (${res.status})`);
-
-          const serverType = safe(me?.user_type).toLowerCase();
-          const type = serverType || localUserType || "doctor";
-          setUserTypeS(type);
-
-          if (type === "doctor") {
-            let d = mapMeToDoctor(me);
-            d = await hydrateDoctorPatientsCount(d);
-            setDoctor(d);
-            setPatient(null);
-            setOrganization(null);
-          } else if (type === "patient") {
-            setPatient(mapMeToPatient(me));
-            setDoctor(null);
-            setOrganization(null);
-          } else if (type === "organization") {
-            setOrganization(mapMeToOrganization(me));
-            setDoctor(null);
-            setPatient(null);
-          } else {
-            let d = mapMeToDoctor(me);
-            d = await hydrateDoctorPatientsCount(d);
-            setDoctor(d);
-            setPatient(null);
-            setOrganization(null);
-            setUserTypeS("doctor");
-          }
-        } catch (err) {
-          console.error("AccountPage: /api/users/me failed, using dummy data.", err);
-          const type = localUserType || "doctor";
-          setUserTypeS(type);
-          if (type === "doctor") setDoctor(getDummyDoctor());
-          if (type === "patient") setPatient(getDummyPatient());
-          if (type === "organization") setOrganization(getDummyOrganization());
-        }
-      } else {
-        const type = localUserType || "doctor";
+        const type = safe(me?.user_type).toLowerCase();
         setUserTypeS(type);
-        if (type === "doctor") setDoctor(getDummyDoctor());
-        if (type === "patient") setPatient(getDummyPatient());
-        if (type === "organization") setOrganization(getDummyOrganization());
-      }
 
-      setLoading(false);
+        if (type === "doctor") {
+          setDoctor(mapMeToDoctor(me));
+        } else if (type === "patient") {
+          setPatient(mapMeToPatient(me));
+        } else if (type === "organization") {
+          setOrganization(mapMeToOrganization(me));
+        }
+      } catch (err) {
+        console.error("AccountPage: /api/users/me failed", err);
+        setAuthError("Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchUserData();
@@ -433,15 +285,15 @@ export default function AccountPage() {
 
   if (authError) {
     return (
-      <div className="flex items-center justify-center h-full px-4 md:px-0">
-        <div className="text-xl text-red-600"> {authError} </div>
+      <div className="flex items-center justify-center h-full px-4">
+        <div className="text-xl text-red-600">{authError}</div>
       </div>
     );
   }
 
   if (!authVerified || loading) {
     return (
-      <div className="flex items-center justify-center h-full px-4 md:px-0">
+      <div className="flex items-center justify-center h-full px-4">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -449,7 +301,7 @@ export default function AccountPage() {
 
   if (!doctor && !patient && !organization) {
     return (
-      <div className="flex items-center justify-center h-full px-4 md:px-0">
+      <div className="flex items-center justify-center h-full px-4">
         <div className="text-xl text-red-600">Error loading user data</div>
       </div>
     );
@@ -468,7 +320,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-full px-4 md:px-0">
+    <div className="flex items-center justify-center h-full px-4">
       <div className="text-xl text-red-600">Error loading user data</div>
     </div>
   );
