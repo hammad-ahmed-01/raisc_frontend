@@ -155,18 +155,27 @@ export default function Dashboard() {
 
   // Conditional Rendering
   if (user.user_type === "doctor") {
-    return <DoctorDashboard user={childUser} />;
+    const DashboardComponent = DoctorDashboard as React.ComponentType<any>;
+    return <DashboardComponent user={childUser} />;
   }
 
   if (user.user_type === "organization") {
-    return <OrganizationDashboard user={childUser} />;
+    const OrgDashboard = OrganizationDashboard as React.ComponentType<any>;
+    return <OrgDashboard user={childUser} />;
   }
 
   if (user.user_type === "patient") {
     const level = user.patient_profile?.level ?? 0;
-    if (level === 0) return <NewPatientDashboard user={childUser} />;
-    if (level === 1) return <ReturningPatientDashboard user={childUser} />;
-    return <PatientDashboard user={childUser} />;
+    if (level === 0) {
+      const NewDash = NewPatientDashboard as React.ComponentType<any>;
+      return <NewDash user={childUser} />;
+    }
+    if (level === 1) {
+      const ReturningDash = ReturningPatientDashboard as React.ComponentType<any>;
+      return <ReturningDash user={childUser} />;
+    }
+    const RegularDash = PatientDashboard as React.ComponentType<any>;
+    return <RegularDash user={childUser} />;
   }
 
   // Fallback
