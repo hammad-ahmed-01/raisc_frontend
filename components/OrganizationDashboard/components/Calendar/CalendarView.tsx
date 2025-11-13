@@ -23,12 +23,17 @@ interface BackendEvent {
   id: number;
   title: string;
   date: string;
-  doctor_summary: string;
-  description?: string;
-  details?: string;
-  patient_update?: string;
+  doctor_summary: string | null;
   doctor_id: number;
   patient_id: number;
+}
+
+interface DoctorBackend {
+  id: number;
+  doctor_name: string;
+  professional_information: {
+    display_name: string;
+  };
 }
 
 interface CalendarEvent {
@@ -53,35 +58,58 @@ export default function CalendarWrapper() {
   });
 
   useEffect(() => {
-    async function fetchCalendar() {
+    async function loadData() {
       try {
         setLoading(true);
-        const res = await fetch("/api/organization/doctor-calendar", {
+
+        const doctorRes = await fetch("/api/organization/view-doctors", {
           headers: getAuthHeader(),
         });
-        if (!res.ok) throw new Error("Failed to load calendar data");
-        const data: BackendEvent[] = await res.json();
+        const doctorData: DoctorBackend[] = await doctorRes.json();
 
-        const formatted: CalendarEvent[] = data.map((ev) => ({
-          id: ev.id,
-          title: ev.title || "Session",
-          start: new Date(ev.date),
-          end: new Date(ev.date),
-          doctor: ev.doctor_summary || `Doctor ${ev.doctor_id}`,
-        }));
+        // Build doctor map
+        const doctorMap: Record<number, string> = {};
+        doctorData.forEach((doc) => {
+          const finalName =
+            doc.professional_information?.display_name || doc.doctor_name;
+          doctorMap[doc.id] = finalName;
+        });
+
+        const calRes = await fetch("/api/organization/doctor-calendar", {
+          headers: getAuthHeader(),
+        });
+        const calData: BackendEvent[] = await calRes.json();
+
+        const formatted: CalendarEvent[] = calData.map((ev) => {
+          const bySummary = ev.doctor_summary;
+          const byId = doctorMap[ev.doctor_id];
+          const firstDoctorFallback =
+            doctorData.find((d) => d.id === ev.doctor_id)?.doctor_name ||
+            doctorData[0]?.doctor_name ||
+            "Unknown";
+
+          return {
+            id: ev.id,
+            title: ev.title || "Session",
+            start: new Date(ev.date),
+            end: new Date(ev.date),
+            doctor: bySummary || byId || firstDoctorFallback,
+          };
+        });
 
         setEvents(formatted);
       } catch (err) {
-        console.error("Calendar fetch error:", err);
+        console.error("Calendar error:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchCalendar();
+    loadData();
   }, []);
 
   const doctorList = Array.from(new Set(events.map((e) => e.doctor)));
+
   const filteredEvents = selectedDoctor
     ? events.filter((e) => e.doctor === selectedDoctor)
     : events;
@@ -97,23 +125,22 @@ export default function CalendarWrapper() {
   return (
     <div id="3" className="mt-12 sm:mt-16 px-2 sm:px-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#1E3CA7] text-center sm:text-left">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1E3CA7]">
           Calendar
         </h2>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-2 sm:mt-0">
-          <label
-            htmlFor="doctor-filter"
-            className="text-heading2 font-medium text-sm sm:text-base"
-          >
+
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <label className="text-heading2 font-medium text-sm sm:text-base">
             Filter By:
           </label>
+
           <select
-            id="doctor-filter"
-            className="h-10 px-4 rounded-full bg-white border border-gray-300 shadow-sm text-heading2 text-sm sm:text-base"
+            className="h-10 px-4 rounded-full bg-white border border-gray-300 shadow-sm"
             value={selectedDoctor}
             onChange={(e) => setSelectedDoctor(e.target.value)}
           >
             <option value="">All Doctors</option>
+
             {doctorList.map((doctor) => (
               <option key={doctor} value={doctor}>
                 {doctor}
@@ -123,7 +150,7 @@ export default function CalendarWrapper() {
         </div>
       </div>
 
-      <div className="p-2 sm:p-4 text-heading2">
+      <div className="p-2 sm:p-4">
         <Calendar
           localizer={localizer}
           events={filteredEvents}
@@ -133,20 +160,17 @@ export default function CalendarWrapper() {
           views={["month", "week", "day"]}
           view={view}
           date={currentDate}
-          onView={(v) => {
-            if (v === "month" || v === "week" || v === "day") setView(v);
-          }}
+          onView={(v) => setView(v)}
           onNavigate={setCurrentDate}
           components={{
             toolbar: (props) => <CustomToolbar {...props} setView={setView} />,
           }}
-          eventPropGetter={(event) => ({
+          eventPropGetter={() => ({
             style: {
               backgroundColor: "#1E3CA7",
               color: "#fff",
               borderRadius: "8px",
               border: "none",
-              padding: "4px 6px",
             },
           })}
           dayPropGetter={(date) => dayPropGetter(date, currentDate)}

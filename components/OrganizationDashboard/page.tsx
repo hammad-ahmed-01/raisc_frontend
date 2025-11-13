@@ -6,6 +6,7 @@ import CalendarView from "./components/Calendar/CalendarView";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
+import { Star, StarHalf } from "lucide-react";
 
 interface Doctor {
   id: number;
@@ -14,6 +15,7 @@ interface Doctor {
   chatgroup_nickname: string;
   rates: string;
   no_of_patients: number;
+  rating?: number;
 }
 
 interface Organization {
@@ -103,7 +105,6 @@ const OrganizationDashboard: React.FC = () => {
       <TopRightIcons />
 
       <div className="relative md:ml-10 lg:ml-20 py-10 px-2 sm:px-4 z-10">
-        {/* Welcome Heading */}
         <h1
           className="text-2xl sm:text-3xl font-bold text-[#1E3CA7] text-left mb-6 sm:mb-8"
           style={{
@@ -114,13 +115,9 @@ const OrganizationDashboard: React.FC = () => {
           Welcome, {orgDetails?.name || "Organization"}
         </h1>
 
-        {/* Statistics Section */}
         <div className="w-full flex flex-col sm:flex-row sm:flex-wrap justify-between gap-4 sm:gap-6 lg:gap-8 mb-10 sm:mb-12 pr-0 sm:pr-8 md:pr-16">
           {[
-            {
-              label: "Total Psychologists",
-              value: orgDetails?.no_of_doctors ?? doctors.length,
-            },
+            { label: "Total Psychologists", value: orgDetails?.no_of_doctors ?? doctors.length },
             {
               label: "Total Patients",
               value: doctors.reduce((sum, d) => sum + (d.no_of_patients ?? 0), 0),
@@ -136,31 +133,23 @@ const OrganizationDashboard: React.FC = () => {
               className="flex-1 min-w-[150px] bg-white rounded-2xl border border-[#2196F3] px-6 py-4 sm:px-8 sm:py-6 text-center shadow"
               style={{ boxShadow: "0px 4px 12px 0px #D0E3FFC7" }}
             >
-              <div
-                className="text-sm sm:text-base text-[#1E3CA7]"
-                style={{ fontWeight: 600 }}
-              >
+              <div className="text-sm sm:text-base text-[#1E3CA7]" style={{ fontWeight: 600 }}>
                 {stat.label}
               </div>
-              <div
-                className="text-xl sm:text-2xl font-bold text-[#1E3CA7] mt-2"
-                style={{ fontWeight: 700 }}
-              >
+              <div className="text-xl sm:text-2xl font-bold text-[#1E3CA7] mt-2" style={{ fontWeight: 700 }}>
                 {stat.value}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Psychologists Section */}
+        {/* PSYCHOLOGISTS LIST */}
         <div className="mb-6 flex flex-col w-full">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4 sm:gap-0">
-            <h2
-              className="text-xl sm:text-2xl font-bold text-[#1E3CA7]"
-              style={{ fontWeight: 700 }}
-            >
+            <h2 className="text-xl sm:text-2xl font-bold text-[#1E3CA7]" style={{ fontWeight: 700 }}>
               Psychologists
             </h2>
+
             <div className="sm:mr-8">
               <PrimaryButton
                 text="Add Psychologist"
@@ -180,61 +169,93 @@ const OrganizationDashboard: React.FC = () => {
               }}
             >
               {doctors.length > 0 ? (
-                doctors.map((doc, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col sm:flex-row items-center sm:justify-between bg-white rounded-2xl mb-4 sm:mb-6 px-4 sm:px-8 py-4 sm:py-6 border border-[#2196F3] w-full"
-                    style={{
-                      fontWeight: 400,
-                      boxShadow: "0px 4px 12px 0px #D0E3FFC7",
-                    }}
-                  >
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                      <Image
-                        src="/doc.png"
-                        alt={doc.doctor_name}
-                        width={64}
-                        height={64}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#2196F3] object-cover bg-white"
-                      />
-                      <div className="text-center sm:text-left">
-                        <div
-                          className="text-base sm:text-lg font-bold text-[#1E3CA7]"
-                          style={{ fontWeight: 700 }}
-                        >
-                          {doc.doctor_name}
-                        </div>
-                        <div
-                          className="text-[#1E3CA7] text-sm sm:text-base"
-                          style={{ fontWeight: 600 }}
-                        >
-                          Patients: {doc.no_of_patients}
-                        </div>
-                      </div>
-                    </div>
+                doctors.map((doc, idx) => {
+                  const rating =
+                    doc.professional_information?.rating ??
+                    doc.rating ??
+                    0;
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 justify-center sm:justify-end mt-3 sm:mt-0 w-full sm:w-auto">
-                      <div className="flex flex-col items-center sm:items-end gap-1">
-                        <div
-                          className="text-[#1E3CA7] text-sm sm:text-base"
-                          style={{ fontWeight: 600 }}
-                        >
-                          Rate: {doc.rates}
-                        </div>
-                        <div
-                          className="text-[#1E3CA7] text-sm sm:text-base flex items-center gap-1"
-                          style={{ fontWeight: 400 }}
-                        >
-                          <span>🌟</span> {doc.chatgroup_nickname}
+                  const fullStars = Math.floor(rating);
+                  const hasHalf = rating % 1 >= 0.5;
+
+                  // 🔑 Use real doctor/user id if present in professional_information
+                  const doctorProfileId =
+                    doc.professional_information?.user_id ??
+                    doc.professional_information?.doctor_id ??
+                    doc.id;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row items-center sm:justify-between bg-white rounded-2xl mb-4 sm:mb-6 px-4 sm:px-8 py-4 sm:py-6 border border-[#2196F3] w-full"
+                      style={{ fontWeight: 400, boxShadow: "0px 4px 12px 0px #D0E3FFC7" }}
+                    >
+                      {/* LEFT SIDE */}
+                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <Image
+                          src="/doc.png"
+                          alt={doc.doctor_name}
+                          width={64}
+                          height={64}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#2196F3] object-cover bg-white"
+                        />
+                        <div className="text-center sm:text-left">
+                          <div className="text-base sm:text-lg font-bold text-[#1E3CA7]" style={{ fontWeight: 700 }}>
+                            {doc.doctor_name}
+                          </div>
+                          <div className="text-[#1E3CA7] text-sm sm:text-base" style={{ fontWeight: 600 }}>
+                            Patients: {doc.no_of_patients}
+                          </div>
                         </div>
                       </div>
-                      <PrimaryButton
-                        text="View Profile"
-                        className="font-semibold px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base"
-                      />
+
+                      {/* RIGHT SIDE */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 justify-center sm:justify-end mt-3 sm:mt-0 w-full sm:w-auto">
+                        <div className="flex flex-col items-center sm:items-end gap-1">
+                          <div className="text-[#1E3CA7] text-sm sm:text-base" style={{ fontWeight: 600 }}>
+                            Rate: {doc.rates}
+                          </div>
+
+                          {/* ⭐ Dynamic Stars */}
+                          <div className="flex gap-1">
+                            {Array.from({ length: fullStars }).map((_, i) => (
+                              <Star
+                                key={`full-${i}`}
+                                className="w-5 h-5 text-yellow-500 fill-yellow-400"
+                              />
+                            ))}
+
+                            {hasHalf && (
+                              <StarHalf className="w-5 h-5 text-yellow-500 fill-yellow-400" />
+                            )}
+
+                            {Array.from({
+                              length: 5 - fullStars - (hasHalf ? 1 : 0),
+                            }).map((_, i) => (
+                              <Star
+                                key={`empty-${i}`}
+                                className="w-5 h-5 text-gray-300"
+                              />
+                            ))}
+                          </div>
+
+                          <div className="text-[#1E3CA7] text-sm sm:text-base" style={{ fontWeight: 500 }}>
+                            {doc.chatgroup_nickname}
+                          </div>
+                        </div>
+
+                        {/* View Profile → use real doctor id (e.g. 89), not org row id (25) */}
+                        <PrimaryButton
+                          onClick={() =>
+                            router.push(`/AssociatedPsychologist?doctor_id=${doctorProfileId}`)
+                          }
+                          text="View Profile"
+                          className="font-semibold px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base"
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-[#1E3CA7] text-base sm:text-lg font-semibold text-center">
                   No psychologists registered yet.
@@ -244,7 +265,7 @@ const OrganizationDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Calendar & Sessions */}
+        {/* Calendar + Today's Sessions */}
         <div className="w-full mt-10">
           <CalendarView />
           <TodaysSessions />

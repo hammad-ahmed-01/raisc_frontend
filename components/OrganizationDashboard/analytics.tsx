@@ -146,6 +146,7 @@ export default function AnalyticsDashboard() {
           value={organization?.total_patients ?? 0}
         />
         <StatCard title="Sessions This Month" value={calendarEvents.length} />
+        {/* FIXED: Use rating, not rates */}
         <StatCard title="Avg Session Rating" value={averageRating(doctors)} />
       </div>
 
@@ -237,9 +238,13 @@ export default function AnalyticsDashboard() {
               <div className="text-sm sm:text-lg text-normal">
                 Patients Handled: {doctor?.no_of_patients ?? 0}
               </div>
+
+              {/* FIXED: Avg Rating must use professional_information.rating */}
               <div className="text-sm sm:text-lg text-normal">
-                Avg Rating: {doctor?.rates ?? "N/A"}
+                Avg Rating:{" "}
+                {doctor?.professional_information?.rating ?? "N/A"}
               </div>
+
               <div className="text-sm sm:text-lg text-green-600">
                 Available Now
               </div>
@@ -274,15 +279,18 @@ function buildSessionFrequency(
   return Object.entries(buckets).map(([name, sessions]) => ({ name, sessions }));
 }
 
-// Helper: Average rating
+// Helper: FIXED → compute average rating from professional_information.rating
 function averageRating(doctors: Doctor[]) {
   if (!doctors.length) return "N/A";
-  const validRates = doctors
-    .map((d) => parseFloat(d.rates || "0"))
-    .filter((r) => r > 0);
-  if (!validRates.length) return "N/A";
-  const avg = validRates.reduce((a, b) => a + b, 0) / validRates.length;
-  return `${avg.toFixed(1)} Rating`;
+
+  const ratings = doctors
+    .map((d) => d.professional_information?.rating)
+    .filter((r) => typeof r === "number" && r > 0);
+
+  if (!ratings.length) return "N/A";
+
+  const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+  return `${avg.toFixed(1)} / 5`;
 }
 
 // Stat Card
