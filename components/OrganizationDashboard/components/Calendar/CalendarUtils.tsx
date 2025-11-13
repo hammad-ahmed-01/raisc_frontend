@@ -57,7 +57,7 @@ export function CustomToolbar({ label, onNavigate, setView }: any) {
         </button>
       </div>
       <div className="toolbar-right justify-center md:justify-end mt-2 md:mt-0 flex-wrap">
-        {["month", "week", "day"].map((v) => (
+        {(["month", "week", "day"] as const).map((v) => (
           <button
             className="h-full px-3 py-1 text-sm sm:text-base"
             key={v}

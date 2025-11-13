@@ -17,25 +17,72 @@ interface OrganizationProfileData {
   linkedin?: string;
 }
 
-export default function EditOrganizationProfile() {
+interface EditOrganizationProfileProps {
+  profile?: OrganizationProfileData;
+  editingField?: string | null;
+  tempValue?: string;
+  message?: string;
+  handleEdit?: (field: string, currentValue: string) => void;
+  handleSave?: (field: string) => Promise<void>;
+  handleCancel?: () => void;
+  setTempValue?: (value: string) => void;
+}
+
+export default function EditOrganizationProfile(props?: EditOrganizationProfileProps) {
   const router = useRouter();
 
-  const [orgProfile, setOrgProfile] = useState<OrganizationProfileData>({
-    organization_name: "",
-    description: "",
-    logo_url: "",
-    contact_email: "",
-    contact_numbers: [],
-    location: "",
-    linkedin: "",
-  });
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [tempValue, setTempValue] = useState("");
-  const [message, setMessage] = useState("");
+  // Use props if provided, otherwise use internal state
+  const [orgProfile, setOrgProfile] = useState<OrganizationProfileData>(
+    props?.profile || {
+      organization_name: "",
+      description: "",
+      logo_url: "",
+      contact_email: "",
+      contact_numbers: [],
+      location: "",
+      linkedin: "",
+    }
+  );
+  const [editingField, setEditingField] = useState<string | null>(
+    props?.editingField ?? null
+  );
+  const [tempValue, setTempValue] = useState(props?.tempValue ?? "");
+  const [message, setMessage] = useState(props?.message ?? "");
   const [loading, setLoading] = useState(true);
+
+  // Sync props with internal state when props change
+  useEffect(() => {
+    if (props?.profile) {
+      setOrgProfile(props.profile);
+    }
+  }, [props?.profile]);
+
+  useEffect(() => {
+    if (props?.editingField !== undefined) {
+      setEditingField(props.editingField);
+    }
+  }, [props?.editingField]);
+
+  useEffect(() => {
+    if (props?.tempValue !== undefined) {
+      setTempValue(props.tempValue);
+    }
+  }, [props?.tempValue]);
+
+  useEffect(() => {
+    if (props?.message !== undefined) {
+      setMessage(props.message);
+    }
+  }, [props?.message]);
 
   /* ---------------- Fetch organization info from backend ---------------- */
   useEffect(() => {
+    // Only fetch if props are not provided
+    if (props?.profile) {
+      setLoading(false);
+      return;
+    }
+
     const fetchOrg = async () => {
       try {
         const token =
@@ -72,21 +119,27 @@ export default function EditOrganizationProfile() {
     };
 
     fetchOrg();
-  }, []);
+  }, [props?.profile]);
 
   /* ---------------------- Editing Handlers ---------------------- */
-  const handleEdit = (field: string, currentValue: string) => {
+  const handleEditInternal = (field: string, currentValue: string) => {
     setEditingField(field);
     setTempValue(currentValue);
   };
 
-  const handleCancel = () => {
+  const handleCancelInternal = () => {
     setEditingField(null);
     setTempValue("");
   };
 
+  // Use props handlers if provided, otherwise use internal handlers
+  const handleEdit = props?.handleEdit || handleEditInternal;
+  const handleCancel = props?.handleCancel || handleCancelInternal;
+  const setTempValueInternal = (value: string) => setTempValue(value);
+  const setTempValueHandler = props?.setTempValue || setTempValueInternal;
+
   /* ---------------------- Save Updates ---------------------- */
-  const handleSave = async (field: string) => {
+  const handleSaveInternal = async (field: string) => {
     try {
       const token =
         localStorage.getItem("token") ||
@@ -155,6 +208,9 @@ export default function EditOrganizationProfile() {
     }
   };
 
+  // Use props handler if provided, otherwise use internal handler
+  const handleSave = props?.handleSave || handleSaveInternal;
+
   /* ---------------------- Loading State ---------------------- */
   if (loading) {
     return (
@@ -185,7 +241,7 @@ export default function EditOrganizationProfile() {
                 <input
                   type="text"
                   value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
+                  onChange={(e) => setTempValueHandler(e.target.value)}
                   className="px-3 py-2 border border-[#1E3CA7] rounded text-md w-full"
                 />
                 <button
@@ -228,7 +284,7 @@ export default function EditOrganizationProfile() {
                 <textarea
                   className="w-full h-[140px] rounded-[18px] border border-[#1E3CA7] px-4 py-2 text-[16px] text-[#444444] resize-none focus:outline-none"
                   value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
+                  onChange={(e) => setTempValueHandler(e.target.value)}
                 />
                 <button
                   onClick={() => handleSave("description")}
@@ -304,7 +360,7 @@ export default function EditOrganizationProfile() {
           handleEdit={handleEdit}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          setTempValue={setTempValue}
+          setTempValue={setTempValueHandler}
           tempValue={tempValue}
         />
 
@@ -317,7 +373,7 @@ export default function EditOrganizationProfile() {
           handleEdit={handleEdit}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          setTempValue={setTempValue}
+          setTempValue={setTempValueHandler}
           tempValue={tempValue}
         />
 
@@ -330,7 +386,7 @@ export default function EditOrganizationProfile() {
           handleEdit={handleEdit}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          setTempValue={setTempValue}
+          setTempValue={setTempValueHandler}
           tempValue={tempValue}
         />
 
@@ -343,7 +399,7 @@ export default function EditOrganizationProfile() {
           handleEdit={handleEdit}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          setTempValue={setTempValue}
+          setTempValue={setTempValueHandler}
           tempValue={tempValue}
         />
       </div>

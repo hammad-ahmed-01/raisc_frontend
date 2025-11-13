@@ -160,7 +160,11 @@ export default function CalendarWrapper() {
           views={["month", "week", "day"]}
           view={view}
           date={currentDate}
-          onView={(v) => setView(v)}
+          onView={(v) => {
+            if (v === "month" || v === "week" || v === "day") {
+              setView(v);
+            }
+          }}
           onNavigate={setCurrentDate}
           components={{
             toolbar: (props) => <CustomToolbar {...props} setView={setView} />,

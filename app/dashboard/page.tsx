@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { fetchMe } from "@/lib/auth";
 import DoctorDashboard from "@/components/DoctorDashboard/page";
 import PatientDashboard from "@/components/PatientDashboards/RegularPatient/page";
@@ -63,7 +63,6 @@ export default function Dashboard() {
   const [user, setUser] = useState<UserShape | null>(null);
   const [authError, setAuthError] = useState<string>("");
   const router = useRouter();
-  const params = useSearchParams();
 
   const refreshingRef = useRef(false);
 
