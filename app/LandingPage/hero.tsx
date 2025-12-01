@@ -87,7 +87,7 @@ export default function HeroSection() {
                 w-full sm:w-auto
               "
             >
-              {isLoggedIn ? "Dashboard" : "Get Started"}
+              {isLoggedIn ? "Dashboard" : "Join the Waitlist"}
             </button>
 
             {!isLoggedIn && (
