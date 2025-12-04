@@ -61,19 +61,25 @@ export default function PatientsPage() {
 
       // Helper to extract extra information
       const extractExtraInfo = (pd: Record<string, unknown>): Patient["extraInfo"] | undefined => {
-        const informationNeeded = pd?.information_needed;
-        if (!informationNeeded || typeof informationNeeded !== 'object') {
+        const questionnaireInsights = pd?.questionnaire_insights;
+        if (!questionnaireInsights || typeof questionnaireInsights !== 'object') {
           return undefined;
         }
 
-        const info = informationNeeded as Record<string, any>;
+        const insights = questionnaireInsights as Record<string, any>;
         const extraInfo: Patient["extraInfo"] = {};
-        const fields = ['duration', 'current_condition', 'physical_activity', 'suicidal_thoughts', 'mental_health_history'];
+        const fields = ['duration', 'current_condition', 'physical_activity', 'mental_health_history'];
         
         for (const field of fields) {
-          const value = info[field];
-          if (value && typeof value === 'object' && ('value' in value || 'collected' in value)) {
-            extraInfo[field as keyof typeof extraInfo] = value;
+          const value = insights[field];
+          if (value && typeof value === 'string') {
+            // Transform string value to expected ExtraInfo format
+            extraInfo[field as keyof typeof extraInfo] = {
+              value: value,
+              required: true,
+              collected: true,
+              description: value,
+            };
           }
         }
 

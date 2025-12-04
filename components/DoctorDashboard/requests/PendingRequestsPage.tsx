@@ -115,19 +115,26 @@ const toRequestDate = (r: any) => {
 
 /** Extract extra information fields from profile data */
 const extractExtraInfo = (obj: any, profileData?: Record<string, any>): ExtraInfo | undefined => {
-  // Check both profileData and obj for information_needed
-  const informationNeeded = profileData?.information_needed || obj?.information_needed;
-  if (!informationNeeded || typeof informationNeeded !== 'object') {
+  // Check both profileData and obj for questionnaire_insights
+  const questionnaireInsights = profileData?.questionnaire_insights || obj?.questionnaire_insights;
+  if (!questionnaireInsights || typeof questionnaireInsights !== 'object') {
     return undefined;
   }
 
+  const insights = questionnaireInsights as Record<string, any>;
   const extraInfo: ExtraInfo = {};
-  const fields = ['duration', 'current_condition', 'physical_activity', 'suicidal_thoughts', 'mental_health_history'];
+  const fields = ['duration', 'current_condition', 'physical_activity', 'mental_health_history'];
   
   for (const field of fields) {
-    const value = informationNeeded[field];
-    if (value && typeof value === 'object' && ('value' in value || 'collected' in value)) {
-      extraInfo[field as keyof ExtraInfo] = value;
+    const value = insights[field];
+    if (value && typeof value === 'string') {
+      // Transform string value to expected ExtraInfo format
+      extraInfo[field as keyof ExtraInfo] = {
+        value: value,
+        required: true,
+        collected: true,
+        description: value,
+      };
     }
   }
 
