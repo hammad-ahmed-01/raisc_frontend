@@ -53,7 +53,7 @@ export default function SettingsLayout({
 
       {/* IMPORTANT: Only offset content on desktop */}
       <main className="flex-1 md:ml-80 min-h-screen overflow-y-auto bg-blue-50">
-        <div className="h-full w-full p-6">{children}</div>
+        <div className="h-full w-full">{children}</div>
       </main>
     </div>
   );
