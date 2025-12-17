@@ -10,11 +10,19 @@ import { fetchMe, getToken } from "@/lib/auth";
 /* ----------------------------- config ----------------------------- */
 
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(
+  /\/+$/,
+  ""
+);
 
 /* ------------------------------ types ----------------------------- */
 
-export type RequestStatus = "none" | "pending" | "accepted" | "rejected" | "cancelled";
+export type RequestStatus =
+  | "none"
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "cancelled";
 
 type Doctor = {
   id: number;
@@ -43,7 +51,8 @@ interface TherapistCardProps {
 /* ----------------------------- utils ----------------------------- */
 
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
-const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const isNum = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v);
 
 const PENDING_CACHE_KEY = "pending_requests_cache";
 const CANCELLED_CACHE_KEY = "cancelled_requests_cache";
@@ -71,7 +80,10 @@ function addToSet(key: string, idLike: number | string | undefined | null) {
   cache.add(s);
   writeSet(key, cache);
 }
-function removeFromSet(key: string, idLike: number | string | undefined | null) {
+function removeFromSet(
+  key: string,
+  idLike: number | string | undefined | null
+) {
   if (idLike == null) return;
   const s = String(idLike);
   const cache = readSet(key);
@@ -80,13 +92,18 @@ function removeFromSet(key: string, idLike: number | string | undefined | null) 
 }
 const readPendingCache = () => readSet(PENDING_CACHE_KEY);
 const writePendingCache = (s: Set<string>) => writeSet(PENDING_CACHE_KEY, s);
-const addToPendingCache = (id?: number | string | null) => addToSet(PENDING_CACHE_KEY, id);
-const removeFromPendingCache = (id?: number | string | null) => removeFromSet(PENDING_CACHE_KEY, id);
+const addToPendingCache = (id?: number | string | null) =>
+  addToSet(PENDING_CACHE_KEY, id);
+const removeFromPendingCache = (id?: number | string | null) =>
+  removeFromSet(PENDING_CACHE_KEY, id);
 
 const readCancelledCache = () => readSet(CANCELLED_CACHE_KEY);
-const writeCancelledCache = (s: Set<string>) => writeSet(CANCELLED_CACHE_KEY, s);
-const addToCancelledCache = (id?: number | string | null) => addToSet(CANCELLED_CACHE_KEY, id);
-const removeFromCancelledCache = (id?: number | string | null) => removeFromSet(CANCELLED_CACHE_KEY, id);
+const writeCancelledCache = (s: Set<string>) =>
+  writeSet(CANCELLED_CACHE_KEY, s);
+const addToCancelledCache = (id?: number | string | null) =>
+  addToSet(CANCELLED_CACHE_KEY, id);
+const removeFromCancelledCache = (id?: number | string | null) =>
+  removeFromSet(CANCELLED_CACHE_KEY, id);
 
 function readSelectedDoctor(): Doctor | null {
   try {
@@ -99,7 +116,9 @@ function readSelectedDoctor(): Doctor | null {
     return null;
   }
 }
-function writeSelectedDoctor(doc: Partial<Doctor> & { requestStatus?: RequestStatus }) {
+function writeSelectedDoctor(
+  doc: Partial<Doctor> & { requestStatus?: RequestStatus }
+) {
   try {
     localStorage.setItem(SELECTED_DOCTOR_KEY, JSON.stringify(doc));
   } catch {}
@@ -108,8 +127,10 @@ function writeSelectedDoctor(doc: Partial<Doctor> & { requestStatus?: RequestSta
 function normalizeDoctor(raw: any): Doctor {
   const p = raw?.professional_information || {};
   const username = safeStr(raw?.user?.username || raw?.username);
-  const displayName = safeStr(p?.display_name) || safeStr(raw?.name) || username || "Doctor";
-  const profile_image = safeStr(p?.profile_image) || safeStr(raw?.profile_image) || "/doctor.jpg";
+  const displayName =
+    safeStr(p?.display_name) || safeStr(raw?.name) || username || "Doctor";
+  const profile_image =
+    safeStr(p?.profile_image) || safeStr(raw?.profile_image) || "/doctor.jpg";
 
   return {
     id: Number(raw?.id ?? raw?.pk ?? raw?.user?.id ?? 0),
@@ -128,17 +149,31 @@ function normalizeDoctor(raw: any): Doctor {
     rating: Number(p?.rating ?? raw?.rating ?? 0) || 0,
     expertise: Array.isArray(p?.expertise) ? p.expertise : [],
     education: safeStr(p?.education || raw?.education),
-    description: safeStr(p?.description || raw?.description || (p as any)?.bio || raw?.bio),
+    description: safeStr(
+      p?.description || raw?.description || (p as any)?.bio || raw?.bio
+    ),
     rates: safeStr(raw?.rates),
   };
 }
 
-function normalizeDecision(v: unknown): "pending" | "accepted" | "rejected" | "" {
+function normalizeDecision(
+  v: unknown
+): "pending" | "accepted" | "rejected" | "" {
   const s = safeStr(v).toLowerCase();
   if (!s) return "";
   if (s === "pending") return "pending";
-  if (s === "approved" || s === "accepted" || s === "approve") return "accepted";
-  if (["rejected", "declined", "request_again", "canceled", "cancelled", "denied"].includes(s))
+  if (s === "approved" || s === "accepted" || s === "approve")
+    return "accepted";
+  if (
+    [
+      "rejected",
+      "declined",
+      "request_again",
+      "canceled",
+      "cancelled",
+      "denied",
+    ].includes(s)
+  )
     return "rejected";
   return "";
 }
@@ -147,7 +182,9 @@ function normalizeDecision(v: unknown): "pending" | "accepted" | "rejected" | ""
  * Build a map of the **latest** status per doctor.user_id.
  * Assumes payload is newest-first from backend.
  */
-function buildLatestStatusByDoctor(payload: any): Map<string, "pending" | "accepted" | "rejected"> {
+function buildLatestStatusByDoctor(
+  payload: any
+): Map<string, "pending" | "accepted" | "rejected"> {
   const map = new Map<string, "pending" | "accepted" | "rejected">();
   const consider = (item: any) => {
     const status = normalizeDecision(item?.status);
@@ -164,7 +201,10 @@ function buildLatestStatusByDoctor(payload: any): Map<string, "pending" | "accep
   if (Array.isArray(payload)) payload.forEach(consider);
   else if (payload && typeof payload === "object") {
     if (Array.isArray(payload.requests)) payload.requests.forEach(consider);
-    else Object.values(payload).forEach((v) => v && typeof v === "object" && consider(v));
+    else
+      Object.values(payload).forEach(
+        (v) => v && typeof v === "object" && consider(v)
+      );
   }
   return map;
 }
@@ -173,14 +213,21 @@ function buildLatestStatusByDoctor(payload: any): Map<string, "pending" | "accep
  * Base list status: "accepted" (association), "pending" (cache), or "none".
  * We overlay "cancelled" or "rejected" later depending on source.
  */
-function computeStatusForDoctor(d: Doctor, me: any, pendingCache: Set<string>): RequestStatus {
+function computeStatusForDoctor(
+  d: Doctor,
+  me: any,
+  pendingCache: Set<string>
+): RequestStatus {
   const pp = me?.patient_profile || {};
-  const assocRaw = pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
+  const assocRaw =
+    pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
   const assocName = safeStr(pp?.associated_psychologist_name);
-  const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+  const assocId =
+    assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
 
   const matchesAssoc =
-    (assocId != null && (Number(d.user_id) === assocId || Number(d.id) === assocId)) ||
+    (assocId != null &&
+      (Number(d.user_id) === assocId || Number(d.id) === assocId)) ||
     (assocName &&
       (assocName.toLowerCase() === safeStr(d.name).toLowerCase() ||
         assocName.toLowerCase() === safeStr(d.username).toLowerCase()));
@@ -227,9 +274,10 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   const rejectWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /** patient’s requests (latest status map) */
-  const fetchLatestStatusMap = async (): Promise<
-    Map<string, "pending" | "accepted" | "rejected"> | null
-  > => {
+  const fetchLatestStatusMap = async (): Promise<Map<
+    string,
+    "pending" | "accepted" | "rejected"
+  > | null> => {
     try {
       const res = await fetch(`/api/patient/requests`, {
         headers: { ...authHeaders() },
@@ -261,7 +309,11 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       if (d.requestStatus !== "pending") return;
       const uid = String(d.user_id ?? "");
       const latest = uid ? latestMap.get(uid) : undefined;
-      if (latest === "rejected" && !cancelledCache.has(uid) && !cancelledCache.has(String(d.id))) {
+      if (
+        latest === "rejected" &&
+        !cancelledCache.has(uid) &&
+        !cancelledCache.has(String(d.id))
+      ) {
         affectedIds.add(String(d.id));
         // clear pending flags
         removeFromPendingCache(d.id);
@@ -283,7 +335,9 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
     // Flip UI
     setDoctors((prev) =>
       prev.map((d) =>
-        affectedIds.has(String(d.id)) ? { ...d, requestStatus: "rejected" as const } : d
+        affectedIds.has(String(d.id))
+          ? { ...d, requestStatus: "rejected" as const }
+          : d
       )
     );
   };
@@ -300,7 +354,9 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         cache: "no-store",
       });
       const list = (await res.json().catch(() => [])) as any[];
-      const normalized: Doctor[] = Array.isArray(list) ? list.map(normalizeDoctor) : [];
+      const normalized: Doctor[] = Array.isArray(list)
+        ? list.map(normalizeDoctor)
+        : [];
 
       let pendingCache = readPendingCache();
       const cancelledCache = readCancelledCache();
@@ -316,7 +372,10 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         if (d.requestStatus === "none") {
           const idKey = String(d.id);
           const uidKey = String(d.user_id ?? "");
-          if ((uidKey && cancelledCache.has(uidKey)) || cancelledCache.has(idKey)) {
+          if (
+            (uidKey && cancelledCache.has(uidKey)) ||
+            cancelledCache.has(idKey)
+          ) {
             return { ...d, requestStatus: "cancelled" as const };
           }
         }
@@ -362,12 +421,18 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
 
     // doctor UI accepts/rejects → refresh immediately
     const onDoctorDecision = () => void load();
-    window.addEventListener("doctor-request-updated", onDoctorDecision as EventListener);
+    window.addEventListener(
+      "doctor-request-updated",
+      onDoctorDecision as EventListener
+    );
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("doctor-request-updated", onDoctorDecision as EventListener);
+      window.removeEventListener(
+        "doctor-request-updated",
+        onDoctorDecision as EventListener
+      );
       if (bcRef.current) bcRef.current.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -435,8 +500,10 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       user_id: Number((doctorProp as any)?.user_id ?? 0) || undefined,
       name: safeStr((doctorProp as any)?.name) || "Doctor",
       username: safeStr((doctorProp as any)?.username),
-      profile_image: safeStr((doctorProp as any)?.profile_image) || "/doctor.jpg",
-      specialization: safeStr((doctorProp as any)?.specialization) || "Psychologist",
+      profile_image:
+        safeStr((doctorProp as any)?.profile_image) || "/doctor.jpg",
+      specialization:
+        safeStr((doctorProp as any)?.specialization) || "Psychologist",
       location: safeStr((doctorProp as any)?.location),
       rating: Number((doctorProp as any)?.rating ?? 0) || 0,
       requestStatus:
@@ -487,13 +554,21 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   );
 
   const pendingDoctor =
-    overrideDoctor?.requestStatus === "pending" ? overrideDoctor : pendingDoctorComputed;
+    overrideDoctor?.requestStatus === "pending"
+      ? overrideDoctor
+      : pendingDoctorComputed;
   const acceptedDoctor =
-    overrideDoctor?.requestStatus === "accepted" ? overrideDoctor : acceptedDoctorComputed;
+    overrideDoctor?.requestStatus === "accepted"
+      ? overrideDoctor
+      : acceptedDoctorComputed;
   const rejectedDoctor =
-    overrideDoctor?.requestStatus === "rejected" ? overrideDoctor : rejectedDoctorComputed;
+    overrideDoctor?.requestStatus === "rejected"
+      ? overrideDoctor
+      : rejectedDoctorComputed;
   const cancelledDoctor =
-    overrideDoctor?.requestStatus === "cancelled" ? overrideDoctor : cancelledDoctorComputed;
+    overrideDoctor?.requestStatus === "cancelled"
+      ? overrideDoctor
+      : cancelledDoctorComputed;
 
   /* ------------------------------ actions ------------------------------ */
 
@@ -512,11 +587,14 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
 
     const markPendingLocally = () => {
       setDoctors((prev) =>
-        prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "pending" } : d))
+        prev.map((d) =>
+          d.id === doc.id ? { ...d, requestStatus: "pending" } : d
+        )
       );
       try {
         writeSelectedDoctor({ ...doc, requestStatus: "pending" });
-        if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
+        if (bcRef.current)
+          bcRef.current.postMessage({ type: "profile-updated" });
       } catch {}
     };
 
@@ -557,7 +635,9 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
       addToCancelledCache(doc.user_id);
 
       setDoctors((prev) =>
-        prev.map((d) => (d.id === doc.id ? { ...d, requestStatus: "cancelled" } : d))
+        prev.map((d) =>
+          d.id === doc.id ? { ...d, requestStatus: "cancelled" } : d
+        )
       );
 
       try {
@@ -565,7 +645,8 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
         if (sel && Number(sel?.id) === Number(doc.id)) {
           writeSelectedDoctor({ ...sel, requestStatus: "cancelled" });
         }
-        if (bcRef.current) bcRef.current.postMessage({ type: "profile-updated" });
+        if (bcRef.current)
+          bcRef.current.postMessage({ type: "profile-updated" });
       } catch {}
     };
 
@@ -605,220 +686,260 @@ export const TherapistCard: React.FC<TherapistCardProps> = ({
   /* ------------------------------ render ------------------------------ */
 
   return (
-    <div
-      className="
+    <div className="w-full flex flex-col items-center gap-6">
+      <div
+        className="
+          w-full
+          max-w-[680px] sm:max-w-[720px] lg:max-w-[760px]
+          bg-[#F6FDFE]
+          rounded-2xl
+          shadow-md
+          px-6 py-8
+          text-center
+        "
+      >
+        <h2 className="text-heading2 font-bold text-xl sm:text-2xl">
+          Continue Your Care
+        </h2>
+
+        <p className="mt-2 text-md sm:text-md text-[#4A67C7]">
+          Choose how you’d like to proceed today.
+        </p>
+
+        <div className="mt-6 flex flex-col gap-3 items-center">
+          <PrimaryButton
+            text="Find a Therapist"
+            onClick={onViewMoreClick}
+            className="w-full sm:w-auto px-8 py-3 rounded-full text-sm sm:text-base"
+          />
+
+          <SecondaryButton
+            text="Chat with RAISC AI"
+            onClick={() => {
+              window.location.href = "/chatbot";
+            }}
+            className="
+              w-full sm:w-auto
+              px-8 py-3
+              rounded-full
+              text-sm sm:text-base
+              border-[#1E3CA7]
+              text-[#1E3CA7]
+            "
+          />
+        </div>
+      </div>
+      <div
+        className="
         bg-[#F6FDFE] shadow-md p-3 sm:p-6 rounded-2xl
         w-full
         max-w-[680px] sm:max-w-[720px] lg:max-w-[760px]
         text-heading2
       "
-    >
-      <h2 className="text-heading2 bg-[#D7E2FE] text-base sm:text-xl font-semibold p-3 sm:p-4 mb-4 sm:mb-6 rounded-full text-center">
-        Choose Your Therapist
-      </h2>
-
-      {acceptedDoctor && (
-        <div className="border border-green-300 bg-green-50 rounded-xl p-3 sm:p-4 mb-4">
-          <div className="flex items-center gap-3">
-            <Image
-              src={acceptedDoctor.profile_image || "/doctor.jpg"}
-              alt={acceptedDoctor.name}
-              className="w-12 h-12 rounded-full border-green-300 border object-cover"
-              width={48}
-              height={48}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-green-800 font-semibold text-sm sm:text-base truncate">
-                {acceptedDoctor.name}
-              </p>
-              <p className="text-green-700 text-xs sm:text-sm truncate">
-                {acceptedDoctor.specialization || "Psychologist"}
-              </p>
-            </div>
-            <span className="text-green-600 text-xs sm:text-sm font-semibold">✅ Connected</span>
-          </div>
-        </div>
-      )}
-
-      {!acceptedDoctor && pendingDoctor && (
-        <div className="border border-[#CFE0FF] bg-white rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 text-[#1E3CA7] font-semibold text-xs sm:text-sm whitespace-nowrap">
-              <span>Status:</span>
-              <Hourglass className="w-4 h-4 flex-shrink-0" />
-              <span>Pending Request</span>
-            </div>
-            <SecondaryButton
-              text={cancelId === pendingDoctor.id ? "Cancelling…" : "Cancel"}
-              onClick={() => cancelRequest(pendingDoctor)}
-              className="px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm"
-              disabled={cancelId === pendingDoctor.id}
-            />
-          </div>
-
-          <div className="mt-3 flex items-center gap-3 sm:gap-4">
-            <Image
-              src={pendingDoctor.profile_image || "/doctor.jpg"}
-              alt={pendingDoctor.name}
-              className="w-14 h-14 rounded-full border-blue-200 border object-cover"
-              width={56}
-              height={56}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-blue-800 font-semibold text-sm sm:text-base truncate">
-                {pendingDoctor.name}
-              </p>
-              <p className="text-blue-600 text-xs sm:text-sm truncate">
-                {pendingDoctor.specialization || "Psychologist"}
-              </p>
+      >
+        {acceptedDoctor && (
+          <div className="border border-green-300 bg-green-50 rounded-xl p-3 sm:p-4 mb-4">
+            <div className="flex items-center gap-3">
+              <Image
+                src={acceptedDoctor.profile_image || "/doctor.jpg"}
+                alt={acceptedDoctor.name}
+                className="w-12 h-12 rounded-full border-green-300 border object-cover"
+                width={48}
+                height={48}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-green-800 font-semibold text-sm sm:text-base truncate">
+                  {acceptedDoctor.name}
+                </p>
+                <p className="text-green-700 text-xs sm:text-sm truncate">
+                  {acceptedDoctor.specialization || "Psychologist"}
+                </p>
+              </div>
+              <span className="text-green-600 text-xs sm:text-sm font-semibold">
+                ✅ Connected
+              </span>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Rejected info card (no Cancel button) */}
-      {!acceptedDoctor && !pendingDoctor && rejectedDoctor && (
-        <div className="border border-red-200 bg-red-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 text-red-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
-              <span>Status:</span>
-              <span>Rejected</span>
+        {!acceptedDoctor && pendingDoctor && (
+          <div className="border border-[#CFE0FF] bg-white rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 text-[#1E3CA7] font-semibold text-xs sm:text-sm whitespace-nowrap">
+                <span>Status:</span>
+                <Hourglass className="w-4 h-4 flex-shrink-0" />
+                <span>Pending Request</span>
+              </div>
+              <SecondaryButton
+                text={cancelId === pendingDoctor.id ? "Cancelling…" : "Cancel"}
+                onClick={() => cancelRequest(pendingDoctor)}
+                className="px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm"
+                disabled={cancelId === pendingDoctor.id}
+              />
+            </div>
+
+            <div className="mt-3 flex items-center gap-3 sm:gap-4">
+              <Image
+                src={pendingDoctor.profile_image || "/doctor.jpg"}
+                alt={pendingDoctor.name}
+                className="w-14 h-14 rounded-full border-blue-200 border object-cover"
+                width={56}
+                height={56}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-blue-800 font-semibold text-sm sm:text-base truncate">
+                  {pendingDoctor.name}
+                </p>
+                <p className="text-blue-600 text-xs sm:text-sm truncate">
+                  {pendingDoctor.specialization || "Psychologist"}
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="mt-3 flex items-center gap-3 sm:gap-4">
-            <Image
-              src={rejectedDoctor.profile_image || "/doctor.jpg"}
-              alt={rejectedDoctor.name}
-              className="w-14 h-14 rounded-full border-red-200 border object-cover"
-              width={56}
-              height={56}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-red-800 font-semibold text-sm sm:text-base truncate">
-                {rejectedDoctor.name}
-              </p>
-              <p className="text-red-700 text-xs sm:text-sm truncate">
-                {rejectedDoctor.specialization || "Psychologist"}
-              </p>
+        {/* Rejected info card (no Cancel button) */}
+        {!acceptedDoctor && !pendingDoctor && rejectedDoctor && (
+          <div className="border border-red-200 bg-red-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 text-red-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
+                <span>Status:</span>
+                <span>Rejected</span>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-3 sm:gap-4">
+              <Image
+                src={rejectedDoctor.profile_image || "/doctor.jpg"}
+                alt={rejectedDoctor.name}
+                className="w-14 h-14 rounded-full border-red-200 border object-cover"
+                width={56}
+                height={56}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-red-800 font-semibold text-sm sm:text-base truncate">
+                  {rejectedDoctor.name}
+                </p>
+                <p className="text-red-700 text-xs sm:text-sm truncate">
+                  {rejectedDoctor.specialization || "Psychologist"}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Cancelled info card (no Cancel button) */}
-      {!acceptedDoctor && !pendingDoctor && !rejectedDoctor && cancelledDoctor && (
-        <div className="border border-orange-200 bg-orange-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 text-orange-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
-              <span>Status:</span>
-              <span>Cancelled</span>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-3 sm:gap-4">
-            <Image
-              src={cancelledDoctor.profile_image || "/doctor.jpg"}
-              alt={cancelledDoctor.name}
-              className="w-14 h-14 rounded-full border-orange-200 border object-cover"
-              width={56}
-              height={56}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-orange-800 font-semibold text-sm sm:text-base truncate">
-                {cancelledDoctor.name}
-              </p>
-              <p className="text-orange-700 text-xs sm:text-sm truncate">
-                {cancelledDoctor.specialization || "Psychologist"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Only when no pending exists → show the full list */}
-      {!pendingDoctor && (
-        <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1" style={{ maxHeight: 420 }}>
-          {loading && (
-            <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
-              Loading doctors…
-            </div>
-          )}
-          {!loading && doctors.length === 0 && (
-            <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
-              No therapists available.
-            </div>
-          )}
-
-          {!loading &&
-            doctors.map((d) => (
-              <div
-                key={`${d.id}-${d.user_id ?? "x"}`}
-                className="border border-blue-100 rounded-[18px] p-3 sm:p-4 hover:bg-blue-50 transition shadow-[0_1px_6px_rgba(0,0,0,0.03)]"
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <Image
-                    src={d.profile_image || "/doctor.jpg"}
-                    alt={d.name}
-                    className="w-14 h-14 rounded-full border-blue-200 border object-cover"
-                    width={56}
-                    height={56}
-                  />
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <p className="text-blue-800 font-semibold text-sm sm:text-base truncate">
-                      {d.name}
-                    </p>
-                    <p className="text-blue-600 text-xs sm:text-sm truncate">
-                      {d.specialization || "Psychologist"}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-yellow-500 text-xs sm:text-sm">
-                        ⭐ {isNum(d.rating) ? d.rating.toFixed(1) : "0.0"}
-                      </span>
-                      {safeStr(d.location) && (
-                        <span className="text-gray-400 text-xs sm:text-sm">• {d.location}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {d.requestStatus === "accepted" ? (
-                    <span className="text-green-600 text-xs sm:text-sm font-semibold">
-                      Connected
-                    </span>
-                  ) : d.requestStatus === "pending" ? (
-                    <span className="inline-flex items-center gap-1 text-[#1E3CA7] text-xs sm:text-sm font-semibold whitespace-nowrap">
-                      <Hourglass className="w-4 h-4" /> Pending
-                    </span>
-                  ) : d.requestStatus === "rejected" ? (
-                    <span className="text-red-600 text-xs sm:text-sm font-semibold">
-                      Rejected
-                    </span>
-                  ) : d.requestStatus === "cancelled" ? (
-                    <span className="text-orange-600 text-xs sm:text-sm font-semibold">
-                      Cancelled
-                    </span>
-                  ) : (
-                    <SecondaryButton
-                      text={sendingId === d.id ? "Sending…" : "Request"}
-                      onClick={() => sendRequest(d)}
-                      className="px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold disabled:opacity-60"
-                      disabled={sendingId === d.id}
-                    />
-                  )}
+        {/* Cancelled info card (no Cancel button) */}
+        {!acceptedDoctor &&
+          !pendingDoctor &&
+          !rejectedDoctor &&
+          cancelledDoctor && (
+            <div className="border border-orange-200 bg-orange-50 rounded-2xl p-3 sm:p-4 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center gap-2 text-orange-700 font-semibold text-xs sm:text-sm whitespace-nowrap">
+                  <span>Status:</span>
+                  <span>Cancelled</span>
                 </div>
               </div>
-            ))}
-        </div>
-      )}
 
-      <hr className="my-3 sm:my-5 text-[#D0E3FFC7]" />
+              <div className="mt-3 flex items-center gap-3 sm:gap-4">
+                <Image
+                  src={cancelledDoctor.profile_image || "/doctor.jpg"}
+                  alt={cancelledDoctor.name}
+                  className="w-14 h-14 rounded-full border-orange-200 border object-cover"
+                  width={56}
+                  height={56}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-orange-800 font-semibold text-sm sm:text-base truncate">
+                    {cancelledDoctor.name}
+                  </p>
+                  <p className="text-orange-700 text-xs sm:text-sm truncate">
+                    {cancelledDoctor.specialization || "Psychologist"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
-      <div className="flex justify-center">
-        <PrimaryButton
-          text="View More"
-          onClick={onViewMoreClick}
-          className="w-fit flex items-center justify-center px-6 py-2 rounded-full text-xs sm:text-sm"
-        />
+        {/* Only when no pending exists → show the full list */}
+        {!pendingDoctor && (
+          <div
+            className="flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1"
+            style={{ maxHeight: 130 }}
+          >
+            {loading && (
+              <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
+                Loading doctors…
+              </div>
+            )}
+            {!loading && doctors.length === 0 && (
+              <div className="text-center text-xs sm:text-sm text-gray-500 py-6">
+                No therapists available.
+              </div>
+            )}
+
+            {!loading &&
+              doctors.map((d) => (
+                <div
+                  key={`${d.id}-${d.user_id ?? "x"}`}
+                  className="border border-blue-100 rounded-[18px] p-3 sm:p-4 hover:bg-blue-50 transition shadow-[0_1px_6px_rgba(0,0,0,0.03)]"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Image
+                      src={d.profile_image || "/doctor.jpg"}
+                      alt={d.name}
+                      className="w-14 h-14 rounded-full border-blue-200 border object-cover"
+                      width={56}
+                      height={56}
+                    />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <p className="text-blue-800 font-semibold text-sm sm:text-base truncate">
+                        {d.name}
+                      </p>
+                      <p className="text-blue-600 text-xs sm:text-sm truncate">
+                        {d.specialization || "Psychologist"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-yellow-500 text-xs sm:text-sm">
+                          ⭐ {isNum(d.rating) ? d.rating.toFixed(1) : "0.0"}
+                        </span>
+                        {safeStr(d.location) && (
+                          <span className="text-gray-400 text-xs sm:text-sm">
+                            • {d.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {d.requestStatus === "accepted" ? (
+                      <span className="text-green-600 text-xs sm:text-sm font-semibold">
+                        Connected
+                      </span>
+                    ) : d.requestStatus === "pending" ? (
+                      <span className="inline-flex items-center gap-1 text-[#1E3CA7] text-xs sm:text-sm font-semibold whitespace-nowrap">
+                        <Hourglass className="w-4 h-4" /> Pending
+                      </span>
+                    ) : d.requestStatus === "rejected" ? (
+                      <span className="text-red-600 text-xs sm:text-sm font-semibold">
+                        Rejected
+                      </span>
+                    ) : d.requestStatus === "cancelled" ? (
+                      <span className="text-orange-600 text-xs sm:text-sm font-semibold">
+                        Cancelled
+                      </span>
+                    ) : (
+                      <SecondaryButton
+                        text={sendingId === d.id ? "Sending…" : "Request"}
+                        onClick={() => sendRequest(d)}
+                        className="px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold disabled:opacity-60"
+                        disabled={sendingId === d.id}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );
