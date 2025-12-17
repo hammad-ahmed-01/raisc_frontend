@@ -5,6 +5,8 @@ import TestimonialSection from './LandingPage/Testimonials';
 import ContactSection from './LandingPage/Contact';
 import Footer from '@/components/LatestFooter';
 import Navbar from './LandingPage/constants/navbar';
+import JoinWaitlistSection from './LandingPage/WaitList';
+import PricingSection from './LandingPage/Pricing';
 
 export default function Home() {
   return (
@@ -14,6 +16,8 @@ export default function Home() {
       <AboutSection />
       <ServicesSection />
       <TestimonialSection />
+      <JoinWaitlistSection />
+      <PricingSection />
       <ContactSection />
       <Footer />
     </main>
