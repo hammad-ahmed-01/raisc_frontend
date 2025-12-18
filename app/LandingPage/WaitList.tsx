@@ -43,6 +43,7 @@ export default function JoinWaitlistSection() {
         <div className="flex justify-center">
           <PrimaryButton
             text="Register Now"
+            onClick = {() => window.location.href = '/register'}
             className="px-8 py-3 rounded-full shadow-[0_4px_0_#00000030]"
           />
         </div>
