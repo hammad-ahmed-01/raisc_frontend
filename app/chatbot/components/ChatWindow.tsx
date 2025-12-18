@@ -6,6 +6,7 @@ import { RoomContext, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
 import MessageBubble from "./MessageBubble";
 import InputBar from "./InputBar";
+import ChatLimitPopup from "./ChatLimitPopup";
 
 interface ChatMessage {
   role: string;
@@ -45,6 +46,11 @@ const DUMMY_THREADS: Record<string, ChatMessage[]> = {
 };
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
+  const MAX_FREE_REPLIES = 20;
+
+  const [assistantReplyCount, setAssistantReplyCount] = useState(0);
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,6 +59,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [isConnectedToSTT, setIsConnectedToSTT] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
+
+  // const incrementAssistantCount = () => {
+  //   setAssistantReplyCount((prev) => {
+  //     const next = prev + 1;
+  //     if (next >= MAX_FREE_REPLIES) {
+  //       setShowLimitPopup(true);
+  //     }
+  //     return next;
+  //   });
+  // };
 
   const sessionKeyRef = useRef<string>("");
   if (typeof window !== "undefined" && !sessionKeyRef.current) {
@@ -151,6 +167,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     chatBoxRef.current?.scrollTo({ top: chatBoxRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    const assistantCount = messages.filter(
+      (m) => m.role === "assistant"
+    ).length;
+
+    setAssistantReplyCount(assistantCount);
+
+    if (assistantCount >= MAX_FREE_REPLIES) {
+      setShowLimitPopup(true);
+    }
+  }, [messages]);
+
+
   const initializeSTTRoom = async () => {
     if (sttInitializedRef.current) return;
     try {
@@ -212,8 +241,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       const userVoiceMessage: ChatMessage = { role: "user", content: data.transcription, isVoiceMessage: true };
       setMessages((prev) => [...prev, userVoiceMessage]);
       processVoiceTranscription(data.transcription);
+
     } else if (!data.success) {
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I could not process your voice message. Please try again." }]);
+      //incrementAssistantCount();
     }
     setVoiceLoading(false);
     setIsRecording(false);
@@ -230,23 +261,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       if (!response.ok) throw new Error("Failed to process voice message");
       const data = await response.json();
       setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+      //incrementAssistantCount();
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error processing your voice message." }]);
+      //incrementAssistantCount();
     } finally {
       setLoading(false);
     }
   };
 
   const handleSend = async (text: string) => {
+    if (showLimitPopup) return;
     if (!text.trim()) return;
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
     setIsTyping(true);
 
+
     if (!isBackendConnected) {
       setTimeout(() => {
         const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
         setMessages((prev) => [...prev, { role: "assistant", content: randomResponse }]);
+        //incrementAssistantCount();
         setLoading(false);
         setIsTyping(false);
       }, 900);
@@ -266,12 +302,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
       if (ct.includes("application/json")) {
         const data = await response.json();
         setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+        //incrementAssistantCount();
       } else {
         const txt = await response.text();
         setMessages((prev) => [...prev, { role: "assistant", content: txt || "…" }]);
+        //incrementAssistantCount();
       }
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "I’m having trouble right now. Please try again in a moment." }]);
+      //incrementAssistantCount();
     } finally {
       setLoading(false);
       setIsTyping(false);
@@ -349,6 +388,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
           />
         </div>
       </div>
+      {showLimitPopup && (
+        <ChatLimitPopup
+          onBookTherapist={() => {
+            window.location.href = "/Doctors"; 
+          }}
+        />
+      )}
     </RoomContext.Provider>
   );
 };
