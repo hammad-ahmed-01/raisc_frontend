@@ -40,6 +40,7 @@ export default function PricingSection() {
           </ul>
           <SecondaryButton
             text="Get Started"
+            onClick={() => window.location.href = '/register'}
             className="px-8 py-2 rounded-full bg-[#FFFFFF] text-[#0A2C75] border border-[#2196F3] hover:bg-[#bed7eb] transition-all duration-300 shadow-[0_2px_6px_rgba(0,0,0,0.1)]"
           />
         </div>
@@ -57,6 +58,7 @@ export default function PricingSection() {
           </ul>
           <SecondaryButton
             text="Get Started"
+            onClick={() => window.location.href = '/register'}
             className="px-8 py-2 rounded-full bg-[#FFFFFF] text-[#0A2C75] border border-[#2196F3] hover:bg-[#bed7eb] transition-all duration-300 shadow-[0_2px_6px_rgba(0,0,0,0.1)]"
           />
         </div>
@@ -74,6 +76,7 @@ export default function PricingSection() {
           </ul>
           <SecondaryButton
             text="Get Started"
+            onClick={() => window.location.href = '/register'}
             className="px-8 py-2 rounded-full bg-[#FFFFFF] text-[#0A2C75] border border-[#2196F3] transition-all duration-300 shadow-[0_2px_6px_rgba(0,0,0,0.1)]"
           />
         </div>
