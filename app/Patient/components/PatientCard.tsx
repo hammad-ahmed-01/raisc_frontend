@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Patient } from "@/src/types";
 import CreateSessionForm from "./CreateNewSession";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
@@ -12,12 +12,25 @@ interface PatientCardProps {
   patient: Patient;
 }
 
+type MoodOption = {
+  value: string;
+  label: string;
+};
+
 export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
   const [showForm, setShowForm] = useState(false);
   const [showExtraInfo, setShowExtraInfo] = useState(false);
 
-  const router = useRouter();
+  const [moodOptions, setMoodOptions] = useState<MoodOption[]>([]);
+  const [currentMood, setCurrentMood] = useState<string>("neutral");
+  const [updatingMood, setUpdatingMood] = useState(false);
 
+  const router = useRouter();
+  const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+
+  /* ==============================
+     Extra Info (UNCHANGED)
+  ============================== */
   const extraInfoFields = patient.extraInfo
     ? [
         { key: "duration", data: patient.extraInfo.duration },
@@ -31,8 +44,73 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
       ].filter((item) => item.data !== undefined)
     : [];
 
-  const mood: string = patient?.profile_data?.mood?.current_mood ?? "neutral";
+  /* ==============================
+     Fetch mood options + default
+     (mood-today)
+  ============================== */
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!BASE) return;
 
+        const headers: Record<string, string> = {};
+        const tok = localStorage.getItem("session_key");
+        if (tok) headers.Authorization = `Token ${tok}`;
+
+        const res = await fetch(`${BASE}/patients/mood-today/`, {
+          headers,
+          cache: "no-store",
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setMoodOptions(data.moods || []);
+
+        // set backend-defined default mood
+        if (data.default) {
+          setCurrentMood(data.default);
+        }
+      } catch (err) {
+        console.error("Failed to load mood options:", err);
+      }
+    })();
+  }, [BASE]);
+
+  /* ==============================
+     Set mood (set-mood)
+  ============================== */
+  async function updateMood(label: string) {
+    if (!BASE || updatingMood) return;
+
+    const option = moodOptions.find((m) => m.label === label);
+    if (!option) return;
+
+    setUpdatingMood(true);
+    setCurrentMood(option.value);
+
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const tok = localStorage.getItem("session_key");
+      if (tok) headers.Authorization = `Token ${tok}`;
+
+      await fetch(`${BASE}/patients/set-mood/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ mood: option.label }),
+      });
+    } catch (err) {
+      console.error("Failed to update mood:", err);
+    } finally {
+      setUpdatingMood(false);
+    }
+  }
+
+  /* ==============================
+     Mood UI Mapping
+  ============================== */
   const moodConfig = {
     happy: { icon: Smile, color: "text-green-500" },
     excited: { icon: Laugh, color: "text-blue-500" },
@@ -43,9 +121,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
   };
 
   const MoodIcon =
-    moodConfig[mood as keyof typeof moodConfig]?.icon || Meh;
+    moodConfig[currentMood as keyof typeof moodConfig]?.icon || Meh;
   const moodColor =
-    moodConfig[mood as keyof typeof moodConfig]?.color || "text-gray-400";
+    moodConfig[currentMood as keyof typeof moodConfig]?.color ||
+    "text-gray-400";
 
   return (
     <>
@@ -61,11 +140,30 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
               Age: {patient.age ?? "—"} | Gender: {patient.gender || "—"}
             </p>
 
-            <div className="flex items-center gap-2 mt-1">
+            {/* Mood emoji + selector */}
+            <div className="flex items-center gap-3 mt-1">
               <span className="text-xs font-semibold text-gray-600">
                 Mood Today:
               </span>
               <MoodIcon className={`w-6 h-6 ${moodColor}`} />
+
+              {moodOptions.length > 0 && (
+                <select
+                  className="text-xs border rounded-md px-2 py-1 bg-white"
+                  value={
+                    moodOptions.find((m) => m.value === currentMood)?.label ??
+                    "Neutral"
+                  }
+                  onChange={(e) => updateMood(e.target.value)}
+                  disabled={updatingMood}
+                >
+                  {moodOptions.map((m) => (
+                    <option key={m.value} value={m.label}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -77,7 +175,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
             </p>
           </div>
 
-          {/* Actions – Fully Responsive */}
+          {/* Actions */}
           <div
             className="
               md:col-span-2
@@ -92,11 +190,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
           >
             <PrimaryButton
               text="View Profile"
-              className="
-                rounded-full font-semibold px-5 py-2 text-sm
-                w-full sm:w-auto
-                whitespace-nowrap
-              "
+              className="rounded-full font-semibold px-5 py-2 text-sm w-full sm:w-auto whitespace-nowrap"
               onClick={() =>
                 router.push(
                   `/chatbot-insights?id=${patient.id}&name=${encodeURIComponent(
@@ -109,22 +203,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
             {extraInfoFields.length > 0 && (
               <SecondaryButton
                 text={showExtraInfo ? "Hide Info" : "View Info"}
-                className="
-                  rounded-full px-4 py-2 text-sm
-                  w-full sm:w-auto
-                  whitespace-nowrap
-                "
+                className="rounded-full px-4 py-2 text-sm w-full sm:w-auto whitespace-nowrap"
                 onClick={() => setShowExtraInfo(!showExtraInfo)}
               />
             )}
 
             <SecondaryButton
               text="Create Session"
-              className="
-                rounded-full px-4 py-2 text-sm
-                w-full sm:w-auto
-                whitespace-nowrap
-              "
+              className="rounded-full px-4 py-2 text-sm w-full sm:w-auto whitespace-nowrap"
               onClick={() => setShowForm(true)}
             />
           </div>

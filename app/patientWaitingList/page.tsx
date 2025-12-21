@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import { WaitingList } from "./components/WaitingList";
 import type { Patient } from "@/src/types";
 import TopRightIcons from "@/components/TopRightIcons";
-import * as XLSX from "xlsx";
 
 interface WaitingListPatient extends Omit<Patient, "condition" | "extraInfo"> {
   comment?: string;
