@@ -50,7 +50,7 @@ export const WaitingList: React.FC<WaitingListProps> = ({ patients }) => {
           Patient Waiting List
         </h1>
         <p className="text-heading2 mb-6">
-          You have 400 {patientWord} on the waiting list.
+          You have 461 {patientWord} on the waiting list.
         </p>
 
         {/* Search + Filters */}
