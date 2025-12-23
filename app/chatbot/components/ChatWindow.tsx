@@ -175,7 +175,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChatId }) => {
     setAssistantReplyCount(assistantCount);
 
     if (assistantCount >= MAX_FREE_REPLIES) {
-      setShowLimitPopup(true);
+      // setShowLimitPopup(true);
     }
   }, [messages]);
 
