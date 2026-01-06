@@ -7,12 +7,14 @@ import Footer from '@/components/LatestFooter';
 import Navbar from './LandingPage/constants/navbar';
 import JoinWaitlistSection from './LandingPage/WaitList';
 import PricingSection from './LandingPage/Pricing';
+import MeetYourCompanion from './LandingPage/MeetYourCompanion';
 
 export default function Home() {
   return (
     <main>
       <Navbar />
       <HeroSection />
+      <MeetYourCompanion />
       <AboutSection />
       <ServicesSection />
       <TestimonialSection />
