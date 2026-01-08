@@ -93,7 +93,7 @@ export default function DoctorPermissionsPanel() {
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full p-12">
       <h1 className="text-2xl font-bold text-left text-heading2 mb-1">Doctor Permissions</h1>
       <p className="text-lg font-medium text-left text-heading2 mb-6">
         Set the default permissions granted to psychologists associated with your organization.
