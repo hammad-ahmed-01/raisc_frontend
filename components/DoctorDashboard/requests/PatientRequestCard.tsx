@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { FiCheck, FiX } from "react-icons/fi";
-import PrimaryButton from "@/components/Buttons/PrimaryButton";
 
 interface ExtraInfo {
   duration?: {
@@ -54,32 +53,14 @@ interface PatientRequestCardProps {
   onReject?: () => void;
 }
 
-function parseCookies(): Record<string, string> {
-  if (typeof document === "undefined") return {};
-  const out: Record<string, string> = {};
-  const raw = document.cookie || "";
-  if (!raw) return out;
-  for (const part of raw.split(";")) {
-    const [k, ...rest] = part.split("=");
-    if (!k) continue;
-    const key = k.trim();
-    const val = decodeURIComponent((rest.join("=") || "").trim());
-    if (key) out[key] = val;
-  }
-  return out;
-}
-
 function getToken(): string | null {
+  if (typeof window === "undefined") return null;
   try {
-    for (const k of ["session_key", "access_token", "token", "authToken", "jwt", "id_token"]) {
+    for (const k of ["session_key", "access_token", "token", "authToken"]) {
       const v = localStorage.getItem(k);
       if (v) return v;
     }
   } catch {}
-  const cookies = parseCookies();
-  for (const k of ["session_key", "access_token", "token", "authToken", "jwt", "id_token"]) {
-    if (cookies[k]) return cookies[k];
-  }
   return null;
 }
 
@@ -98,9 +79,8 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
   const [busy, setBusy] = useState<"accept" | "reject" | null>(null);
   const [error, setError] = useState<string>("");
   const [hidden, setHidden] = useState<boolean>(false);
-  console.log(patientRequest);
 
-  const callManageViaNext = async (intent: "accept" | "reject") => {
+  const handleAction = async (intent: "accept" | "reject") => {
     setError("");
 
     const requestId = patientRequest.id;
@@ -124,7 +104,6 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
         headers: {
           "Content-Type": "application/json",
           [auth.key]: auth.value,
-          "X-Authorization": auth.value,
         } as Record<string, string>,
         body: JSON.stringify({
           requestId,
@@ -139,12 +118,12 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
         return;
       }
 
-      // optimistic hide
+      // Success - call callback and hide
       if (intent === "accept") onAccept?.();
       else onReject?.();
       setHidden(true);
 
-      // notify other UIs
+      // Notify other UI components
       try {
         window.dispatchEvent(
           new CustomEvent("doctor-request-updated", { detail: { id: requestId, intent } })
@@ -183,6 +162,12 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
       ].filter((item) => item.data !== undefined)
     : [];
 
+  // Format age display
+  const ageDisplay = patientRequest.age > 0 ? patientRequest.age : "—";
+  const genderDisplay = patientRequest.gender && patientRequest.gender !== "—" 
+    ? patientRequest.gender 
+    : "—";
+
   return (
     <div
       className="bg-[#FFF8EC] border-2 border-[#2196F3] rounded-[24px] p-4 sm:p-6 shadow-sm"
@@ -192,19 +177,25 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
         {/* Left section */}
         <div className="flex-grow">
           <div className="mb-3">
-            <h3 className="text-lg sm:text-xl font-bold text-[#1E3CA7]">{patientRequest.name}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-[#1E3CA7]">
+              {patientRequest.name}
+            </h3>
             <p className="text-[#1E3CA7]">
               <span className="font-bold">Email:</span> {patientRequest.email}
             </p>
-            {/* <p className="text-[#1E3CA7]">
-              <span className="font-bold">Condition:</span> {patientRequest.condition}
-            </p> */}
+            {patientRequest.condition && patientRequest.condition !== "—" && (
+              <p className="text-[#1E3CA7]">
+                <span className="font-bold">Focus:</span> {patientRequest.condition}
+              </p>
+            )}
           </div>
 
           {/* Extra Information Section */}
           {extraInfoFields.length > 0 && (
             <div className="mb-4 sm:mb-6">
-              <h4 className="text-base sm:text-lg font-bold text-[#1E3CA7] mb-3">Additional Information</h4>
+              <h4 className="text-base sm:text-lg font-bold text-[#1E3CA7] mb-3">
+                Additional Information
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {extraInfoFields.map(({ key, data }) => (
                   <div
@@ -221,11 +212,6 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
                     }`}>
                       {getFieldValue(data)}
                     </p>
-                    {/* {data?.description && (
-                      <p className="text-xs text-gray-500 mt-1 italic">
-                        {data.description}
-                      </p>
-                    )} */}
                   </div>
                 ))}
               </div>
@@ -233,11 +219,11 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
           )}
 
           {patientRequest.message && (
-            <p className="text-[#444444] mb-6 sm:mb-8">{patientRequest.message}</p>
+            <p className="text-[#444444] mb-4">{patientRequest.message}</p>
           )}
-          {/* <PrimaryButton text="View Profile" className="font-bold px-5 py-2 rounded-full" /> */}
+
           {error && (
-            <p className="text-red-600 text-sm mt-3" role="alert">
+            <p className="text-red-600 text-sm mt-3 bg-red-50 p-2 rounded" role="alert">
               {error}
             </p>
           )}
@@ -245,31 +231,32 @@ const PatientRequestCard: React.FC<PatientRequestCardProps> = ({
 
         {/* Right section */}
         <div className="flex flex-col items-center md:items-end mt-2 md:mt-0">
-          <div className="text-center md:text-right mb-4 md:mb-16">
+          <div className="text-center md:text-right mb-4 md:mb-8">
             <p className="text-[#444444] mb-1">
-              <span className="text-[#222] font-semibold">Age:</span>25 &nbsp;
-              <span className="text-[#222] font-semibold">Gender:</span> Male
+              <span className="text-[#222] font-semibold">Age:</span> {ageDisplay}
+              <span className="mx-2">·</span>
+              <span className="text-[#222] font-semibold">Gender:</span> {genderDisplay}
             </p>
             <p className="text-[#444444]">
               <span className="text-[#222] font-semibold">Request Date:</span>{" "}
-              {patientRequest.requestDate}
+              {patientRequest.requestDate || "—"}
             </p>
           </div>
 
-          <div className="flex gap-6 sm:gap-8">
+          <div className="flex gap-4 sm:gap-6">
             <button
-              onClick={() => callManageViaNext("accept")}
+              onClick={() => handleAction("accept")}
               className={`${
                 busy === "accept" ? "opacity-60 cursor-not-allowed" : "hover:bg-green-600"
               } bg-green-500 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition`}
-              title="Approve"
+              title="Accept"
               disabled={!!busy}
             >
               <FiCheck size={22} className="md:hidden" />
               <FiCheck size={24} className="hidden md:block" />
             </button>
             <button
-              onClick={() => callManageViaNext("reject")}
+              onClick={() => handleAction("reject")}
               className={`${
                 busy === "reject" ? "opacity-60 cursor-not-allowed" : "hover:bg-red-600"
               } bg-red-500 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition`}

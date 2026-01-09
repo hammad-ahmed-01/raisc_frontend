@@ -5,6 +5,7 @@ import { UserCircle2, Dot, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserShape } from "@/app/dashboard/page";
 import Image from "next/image";
+import PatientRescheduleModal, { PatientSession } from "./PatientRescheduleModal";
 
 interface PsychologistData {
   name: string;
@@ -27,7 +28,7 @@ interface BackendLatestSession {
   title: string;
   date: string;                // ISO datetime
   description?: string | null;
-  display_datetime?: string | null; // e.g. "May 24, 2025 – 4:00 PM"
+  display_datetime?: string | null; // e.g. "May 24, 2025 — 4:00 PM"
   session_number?: number | null;
   feedback?: string | null;
 }
@@ -56,7 +57,7 @@ function getAuthHeaderFromStorage(): Record<string, string> {
 function formatPrettyDate(d?: string | null) {
   if (!d) return "";
   // if backend already sent a pretty string, keep it
-  if (/–|\bam\b|\bpm\b|AM|PM/.test(d)) return d;
+  if (/—|\bam\b|\bpm\b|AM|PM/.test(d)) return d;
   const date = new Date(d);
   if (isNaN(date.getTime())) return d;
   return new Intl.DateTimeFormat("en-US", {
@@ -77,6 +78,12 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
     imageUrl: "/doctor.jpg",
     upcomingSession: "—",
   });
+
+  // Session data for reschedule modal
+  const [upcomingSessionData, setUpcomingSessionData] = useState<PatientSession | null>(null);
+  
+  // Modal state
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -122,6 +129,14 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
             ...prev,
             upcomingSession: titled || prev.upcomingSession,
           }));
+
+          // Store full session data for reschedule modal
+          setUpcomingSessionData({
+            id: s.id,
+            title: s.title,
+            date: s.date,
+            display_datetime: s.display_datetime || undefined,
+          });
         }
       } catch (e) {
         console.error("Failed to load psychologist/upcoming session:", e);
@@ -132,72 +147,105 @@ export default function PsychologistCard({ user }: PsychologistCardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleRescheduleClick = () => {
+    if (!upcomingSessionData) {
+      alert("No upcoming session to reschedule.");
+      return;
+    }
+    setShowRescheduleModal(true);
+  };
+
+  const handleRescheduleSuccess = () => {
+    // Optionally refresh the session data
+    // For now, just close the modal - the notification system handles the rest
+    setShowRescheduleModal(false);
+  };
+
+  // Check if there's a valid session to reschedule
+  const canReschedule = upcomingSessionData && upcomingSessionData.id;
+
   return (
-    <div className="max-w-sm p-6 bg-gradient-to-br border-2 border-[#bfaaff] from-purple-100 to-blue-50 rounded-3xl shadow-md">
-      <h2 className="text-2xl font-bold text-heading mb-3">Psychologist Connection</h2>
-      <hr className="border-blue-200 mb-4" />
+    <>
+      <div className="max-w-sm p-6 bg-gradient-to-br border-2 border-[#bfaaff] from-purple-100 to-blue-50 rounded-3xl shadow-md">
+        <h2 className="text-2xl font-bold text-heading mb-3">Psychologist Connection</h2>
+        <hr className="border-blue-200 mb-4" />
 
-      <div className="flex items-center gap-4">
-        {psychologist.imageUrl ? (
-          <a
-            href="/AssociatedPsychologist"
-            className="rounded-full overflow-hidden w-16 h-16 border-2 border-blue-200 flex-shrink-0 bg-blue-50"
-            title="View profile"
-          >
-            <Image
-              src={psychologist.imageUrl}
-              alt={psychologist.name}
-              className="w-16 h-16 rounded-full object-cover"
-              width={64}
-              height={64}
-            />
-          </a>
-        ) : (
-          <a
-            href="/AssociatedPsychologist"
-            className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center border-2 border-blue-200"
-            title="View profile"
-          >
-            <UserCircle2 size={36} className="text-gray-600" />
-          </a>
-        )}
+        <div className="flex items-center gap-4">
+          {psychologist.imageUrl ? (
+            <a
+              href="/AssociatedPsychologist"
+              className="rounded-full overflow-hidden w-16 h-16 border-2 border-blue-200 flex-shrink-0 bg-blue-50"
+              title="View profile"
+            >
+              <Image
+                src={psychologist.imageUrl}
+                alt={psychologist.name}
+                className="w-16 h-16 rounded-full object-cover"
+                width={64}
+                height={64}
+              />
+            </a>
+          ) : (
+            <a
+              href="/AssociatedPsychologist"
+              className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center border-2 border-blue-200"
+              title="View profile"
+            >
+              <UserCircle2 size={36} className="text-gray-600" />
+            </a>
+          )}
 
-        <div>
-          <p className="font-bold text-lg">{psychologist.name}</p>
-          <p className="text-sm">{psychologist.role}</p>
-          <p
-            className={`${
-              psychologist.isAvailable ? "text-green-600" : "text-red-600"
-            } text-sm flex items-center gap-1`}
-          >
-            <Dot className={psychologist.isAvailable ? "text-green-600" : "text-red-600"} />
-            {psychologist.isAvailable ? "Available Now" : "Not Available"}
+          <div>
+            <p className="font-bold text-lg">{psychologist.name}</p>
+            <p className="text-sm">{psychologist.role}</p>
+            <p
+              className={`${
+                psychologist.isAvailable ? "text-green-600" : "text-red-600"
+              } text-sm flex items-center gap-1`}
+            >
+              <Dot className={psychologist.isAvailable ? "text-green-600" : "text-red-600"} />
+              {psychologist.isAvailable ? "Available Now" : "Not Available"}
+            </p>
+            <a href="/AssociatedPsychologist" className="text-blue-600 underline text-sm">
+              view more
+            </a>
+          </div>
+        </div>
+
+        <button className="mt-4 w-full bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition">
+          Send Message
+        </button>
+
+        <div className="mt-6">
+          <p className="font-semibold flex items-center text-center gap-2">
+            <Calendar size={18} /> Upcoming session
           </p>
-          <a href="/AssociatedPsychologist" className="text-blue-600 underline text-sm">
-            view more
-          </a>
+          <p className="text-sm text-left ml-7">{psychologist.upcomingSession}</p>
+
+          {/* Reschedule Button - Now functional! */}
+          <button
+            onClick={handleRescheduleClick}
+            disabled={!canReschedule}
+            className={`mt-3 w-full px-6 py-2 shadow-sm rounded-full transition ${
+              canReschedule
+                ? "bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white hover:opacity-90"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            title={canReschedule ? "Request to reschedule this session" : "No upcoming session to reschedule"}
+          >
+            Reschedule
+          </button>
         </div>
       </div>
 
-      <button className="mt-4 w-full bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition">
-        Send Message
-      </button>
-
-      <div className="mt-6">
-        <p className="font-semibold flex items-center text-center gap-2">
-          <Calendar size={18} /> Upcoming session
-        </p>
-        <p className="text-sm text-left ml-7">{psychologist.upcomingSession}</p>
-
-        {/* Reschedule intentionally untouched per your request */}
-        <button
-          className="mt-3 w-full bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90 transition"
-          disabled
-          title="Reschedule not implemented in this card (per request)."
-        >
-          Reschedule
-        </button>
-      </div>
-    </div>
+      {/* Reschedule Modal */}
+      <PatientRescheduleModal
+        open={showRescheduleModal}
+        session={upcomingSessionData}
+        doctorName={psychologist.name}
+        onClose={() => setShowRescheduleModal(false)}
+        onSuccess={handleRescheduleSuccess}
+      />
+    </>
   );
 }

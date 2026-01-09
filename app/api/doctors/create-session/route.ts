@@ -21,18 +21,14 @@ function toDateOnly(s: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBase =
-      process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-      process.env.DJANGO_BASE_URL ||
-      "";
-    const base = rawBase.replace(/\/+$/, "");
+   const base = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
     if (!base) {
       return NextResponse.json(
         { error: "Missing Django base URL (NEXT_PUBLIC_DJANGO_BASE_URL)" },
         { status: 500 }
       );
     }
-
+    
     // Auth: header first, then cookie fallback
     let auth = req.headers.get("authorization") || "";
     if (!auth) {
