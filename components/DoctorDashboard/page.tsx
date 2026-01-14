@@ -5,7 +5,7 @@ import { Header } from "./components/Header";
 import { DoctorProfileCard } from "./components/DoctorProfileCard";
 import { QuoteSection } from "./components/QuoteSection";
 import { SessionCalendar } from "./components/SessionCalendar";
-import TopRightIcons from "@/components/TopRightIcons";
+import TopRightIcons from "../TopRightIcons";
 
 interface User {
   username: string;
