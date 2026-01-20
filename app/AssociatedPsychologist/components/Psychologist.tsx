@@ -11,8 +11,8 @@ import { Star } from "lucide-react";
 interface PsychologistData {
   name: string;
   role: string;
-  affiliationOrg: string;   // bold org name
-  affiliationCity: string;  // appended in parentheses after org
+  affiliationOrg: string; // bold org name
+  affiliationCity: string; // appended in parentheses after org
   image: string;
   about: string;
   qualifications: string[];
@@ -25,6 +25,7 @@ interface PsychologistData {
 type Doctor = {
   id: number;
   user_id?: number;
+  organization_id: number | null;
   username?: string;
   name: string;
   profile_image: string;
@@ -44,7 +45,10 @@ type Doctor = {
 
 /* ----------------------------- utils ----------------------------- */
 
-const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(
+  /\/+$/,
+  ""
+);
 const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
 
 const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
@@ -53,11 +57,15 @@ function toArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.map((x) => safeStr(x)).filter(Boolean);
   const s = safeStr(v);
   if (!s) return [];
-  return s.split(/[,\|]/g).map((x) => x.trim()).filter(Boolean);
+  return s
+    .split(/[,\|]/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
 function pickImage(src: any): string {
-  const p = src?.professional_information || src?.professionalInformation || src || {};
+  const p =
+    src?.professional_information || src?.professionalInformation || src || {};
   return (
     safeStr(p.avatar_url) ||
     safeStr(p.profile_image_url) ||
@@ -96,10 +104,14 @@ function normalizeDoctor(raw: any): Doctor {
     safeStr(p?.organization) ||
     safeStr(p?.hospital);
 
+  const organization_id =
+    raw?.organization_id != null ? Number(raw.organization_id) : null;
+
   return {
     id: Number(raw?.id ?? raw?.pk ?? 0),
     user_id,
     username,
+    organization_id,
     name: displayName,
     profile_image: pickImage(raw),
     specialization: safeStr(p?.specialization || raw?.specialization),
@@ -110,7 +122,9 @@ function normalizeDoctor(raw: any): Doctor {
     education: safeStr(p?.education || raw?.education),
     description,
     rates: safeStr(raw?.rates),
-    phone: safeStr(p?.phone || p?.phone_number || p?.contact || p?.contact_number),
+    phone: safeStr(
+      p?.phone || p?.phone_number || p?.contact || p?.contact_number
+    ),
     affiliated_organization: affiliatedOrg,
     availability: safeStr(p?.availability || p?.available_slots || p?.schedule),
     website: safeStr(p?.website || p?.site),
@@ -118,7 +132,9 @@ function normalizeDoctor(raw: any): Doctor {
 }
 
 function toUI(d: Doctor): PsychologistData {
-  const org = safeStr(d.affiliated_organization) || "Pakistan Institute of Mental Health (PIMH)";
+  const org =
+    safeStr(d.affiliated_organization) ||
+    "Pakistan Institute of Mental Health (PIMH)";
   const city = safeStr(d.location);
   return {
     name: d.name || d.username || "Doctor",
@@ -129,7 +145,9 @@ function toUI(d: Doctor): PsychologistData {
     about:
       d.description ||
       (d.expertise?.length
-        ? `Specializes in ${d.specialization} with expertise in ${d.expertise.join(", ")}.`
+        ? `Specializes in ${
+            d.specialization
+          } with expertise in ${d.expertise.join(", ")}.`
         : d.specialization
         ? `Specializes in ${d.specialization}.`
         : "—"),
@@ -212,6 +230,10 @@ export default function Psychologist() {
   const pollStopAt = useRef<number>(0);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // State for real organization name & city
+  const [realAffiliationOrg, setRealAffiliationOrg] = useState<string>("");
+  const [realAffiliationCity, setRealAffiliationCity] = useState<string>("");
+
   /* ----------------------------- helpers ----------------------------- */
 
   const computeAssocStatus = (doc: Doctor | null, me: any): AssocStatus => {
@@ -221,7 +243,8 @@ export default function Psychologist() {
       pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
     const assocName = safeStr(pp?.associated_psychologist_name);
 
-    const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+    const assocId =
+      assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
 
     // accepted by id (could match user_id or doctor.id depending on backend)
     if (
@@ -241,7 +264,9 @@ export default function Psychologist() {
     }
 
     // pending if request already sent
-    const sentArr: string[] = Array.isArray(pp?.sent_requests) ? pp.sent_requests : [];
+    const sentArr: string[] = Array.isArray(pp?.sent_requests)
+      ? pp.sent_requests
+      : [];
     if (
       sentArr.includes(String(doc.id)) ||
       (doc.user_id != null && sentArr.includes(String(doc.user_id)))
@@ -263,9 +288,13 @@ export default function Psychologist() {
     }
   };
 
-  const tryApiCurrent = async (token: string | null): Promise<Doctor | null> => {
+  const tryApiCurrent = async (
+    token: string | null
+  ): Promise<Doctor | null> => {
     try {
-      const headers: HeadersInit = token ? { Authorization: `Token ${token}` } : {};
+      const headers: HeadersInit = token
+        ? { Authorization: `Token ${token}` }
+        : {};
       const res = await fetch("/api/psychologist/current", {
         headers,
         cache: "no-store",
@@ -280,18 +309,28 @@ export default function Psychologist() {
     }
   };
 
-  const tryDirectoryMatch = async (token: string | null): Promise<Doctor | null> => {
+  const tryDirectoryMatch = async (
+    token: string | null
+  ): Promise<Doctor | null> => {
     try {
       const me: any = await fetchMe().catch(() => null);
       const assocRaw =
         me?.patient_profile?.associated_psychologist ??
         me?.patient_profile?.associated_psychologist_id ??
         null;
-      const assocName = safeStr(me?.patient_profile?.associated_psychologist_name);
-      const assocId = assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+      const assocName = safeStr(
+        me?.patient_profile?.associated_psychologist_name
+      );
+      const assocId =
+        assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
 
-      const headers: HeadersInit = token ? { Authorization: `Token ${token}` } : {};
-      const res = await fetch("/api/doctors/list", { headers, cache: "no-store" });
+      const headers: HeadersInit = token
+        ? { Authorization: `Token ${token}` }
+        : {};
+      const res = await fetch("/api/doctors/list", {
+        headers,
+        cache: "no-store",
+      });
       const list = (await res.json().catch(() => [])) as any[];
       const docs = Array.isArray(list) ? list.map(normalizeDoctor) : [];
 
@@ -321,6 +360,22 @@ export default function Psychologist() {
     setAssocStatus(computeAssocStatus(doc, me));
   }, []);
 
+  const fetchRealOrganization = async (orgId: number) => {
+    try {
+      const res = await fetch(`/api/organization/profile?organization_id=${orgId}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to fetch org");
+      const data = await res.json();
+      setRealAffiliationOrg(data.name || "Unknown Organization");
+      setRealAffiliationCity(data.location || "");
+    } catch (err) {
+      console.error("Failed to fetch real organization:", err);
+      setRealAffiliationOrg("Unknown Organization");
+      setRealAffiliationCity("");
+    }
+  };
+
   const resolveDoctor = useCallback(async () => {
     const token = getToken();
 
@@ -330,6 +385,11 @@ export default function Psychologist() {
       setSelectedDoctor(fromLocal);
       setPsychologist(toUI(fromLocal));
       await refreshAssocStatus(fromLocal);
+
+      // Fetch real organization name if organization_id exists
+      if (fromLocal.organization_id) {
+        await fetchRealOrganization(fromLocal.organization_id);
+      }
       return true;
     }
 
@@ -339,6 +399,10 @@ export default function Psychologist() {
       setSelectedDoctor(fromCurrent);
       setPsychologist(toUI(fromCurrent));
       await refreshAssocStatus(fromCurrent);
+
+      if (fromCurrent.organization_id) {
+        await fetchRealOrganization(fromCurrent.organization_id);
+      }
       return true;
     }
 
@@ -348,6 +412,10 @@ export default function Psychologist() {
       setSelectedDoctor(fromDirectory);
       setPsychologist(toUI(fromDirectory));
       await refreshAssocStatus(fromDirectory);
+
+      if (fromDirectory.organization_id) {
+        await fetchRealOrganization(fromDirectory.organization_id);
+      }
       return true;
     }
 
@@ -362,7 +430,8 @@ export default function Psychologist() {
   useEffect(() => {
     const onFocus = () => refreshAssocStatus(selectedDoctor);
     const onVis = () => {
-      if (document.visibilityState === "visible") refreshAssocStatus(selectedDoctor);
+      if (document.visibilityState === "visible")
+        refreshAssocStatus(selectedDoctor);
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
@@ -432,13 +501,16 @@ export default function Psychologist() {
         return;
       }
 
-      const resp = await fetch(`${BASE}/users/doctor/request/${selectedDoctor.id}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
-        },
-      });
+      const resp = await fetch(
+        `${BASE}/users/doctor/request/${selectedDoctor.id}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
 
       if (!resp.ok) {
         const t = await resp.text();
@@ -463,7 +535,9 @@ export default function Psychologist() {
           };
           localStorage.setItem("user_data", JSON.stringify(parsed));
           try {
-            new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
+            new BroadcastChannel("profile-sync").postMessage({
+              type: "profile-updated",
+            });
           } catch {}
         }
       } catch {}
@@ -557,10 +631,13 @@ export default function Psychologist() {
                 {psychologist.role}
               </p>
 
-              {/* Affiliation line with bold org name; city in parentheses */}
+              {/* Affiliation line with bold REAL org name; city in parentheses */}
               <p className="text-[#123AAB] text-sm sm:text-base mt-1">
                 Affiliated with{" "}
-                <strong className="font-semibold">{psychologist.affiliationOrg}</strong>
+                <strong className="font-semibold">
+                  {realAffiliationOrg || psychologist.affiliationOrg}
+                </strong>
+                {realAffiliationCity && ` (${realAffiliationCity})`}
               </p>
             </div>
           </div>
@@ -571,7 +648,12 @@ export default function Psychologist() {
               <button
                 type="button"
                 onClick={sendRequest}
-                disabled={!selectedDoctor || sending || sent || assocStatus === "pending"}
+                disabled={
+                  !selectedDoctor ||
+                  sending ||
+                  sent ||
+                  assocStatus === "pending"
+                }
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-6 py-2 bg-white text-[#123AAB] font-semibold shadow-sm disabled:opacity-60"
                 style={{ border: "1px solid #2196F3" }}
                 title={
@@ -603,7 +685,9 @@ export default function Psychologist() {
             <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
               👤 About Me
             </h3>
-            <p className="text-xs sm:text-sm text-heading2">{psychologist.about || "—"}</p>
+            <p className="text-xs sm:text-sm text-heading2">
+              {psychologist.about || "—"}
+            </p>
 
             <h3 className="font-semibold text-heading mt-3 mb-1 flex items-center gap-2 text-sm sm:text-base">
               🎓 Qualification
@@ -647,7 +731,8 @@ export default function Psychologist() {
               ⭐ Rating / Reviews
             </h3>
             <p className="text-heading2 mb-2 sm:mb-3 flex items-center gap-1 text-xs sm:text-sm">
-              <span>⭐</span> {Number(psychologist.rating || 0).toFixed(1)} rating
+              <span>⭐</span> {Number(psychologist.rating || 0).toFixed(1)}{" "}
+              rating
             </p>
             <button
               className="w-full bg-[#E9F5FE] text-heading2 font-medium py-1.5 sm:py-2 rounded-full hover:bg-blue-100 transition text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"

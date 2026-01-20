@@ -1,3 +1,4 @@
+// app/api/doctors/list/route.ts
 import { NextResponse, NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 type Doctor = {
   id: number;
   user_id: number;
+  organization_id?: number | null;  // ADDED
   username: string;
   name: string;
   profile_image: string;
@@ -90,9 +92,13 @@ function normalizeDoctor(raw: any): Doctor {
   const availability =
     safeStr(p?.availability) || safeStr(p?.available_slots) || safeStr(p?.schedule) || "";
 
+  // CRITICAL FIX: Extract organization_id
+  const organizationId = raw?.organization_id != null ? Number(raw.organization_id) : null;
+
   return {
     id: Number(raw?.id ?? raw?.pk ?? 0),
     user_id: Number(raw?.user?.id ?? raw?.user_id ?? 0),
+    organization_id: organizationId,  // ADDED - This is the critical fix!
     username,
     name: displayName,
     profile_image: safeStr(p?.profile_image) || safeStr(raw?.profile_image) || "/doc.png",
@@ -118,6 +124,7 @@ export async function GET(req: Request) {
         {
           id: 12,
           user_id: 1012,
+          organization_id: null,  // ADDED
           username: "drali",
           name: "Dr. Ali Hamza",
           profile_image: "/doc.png",
@@ -137,6 +144,7 @@ export async function GET(req: Request) {
         {
           id: 16,
           user_id: 1016,
+          organization_id: null,  // ADDED
           username: "draisha",
           name: "Dr. Aisha Mahmood",
           profile_image: "/doc.png",
@@ -188,9 +196,23 @@ export async function GET(req: Request) {
     }
 
     let parsed: any = [];
-    try { parsed = JSON.parse(rawText); } catch { parsed = []; }
+    try { 
+      parsed = JSON.parse(rawText);
+      // Log first item to verify organization_id is present
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log("First doctor from Django API:", parsed[0]);
+      }
+    } catch { 
+      parsed = []; 
+    }
 
     const doctors = Array.isArray(parsed) ? parsed.map(normalizeDoctor) : [];
+    
+    // Log normalized result to verify organization_id is preserved
+    if (doctors.length > 0) {
+      console.log("First normalized doctor:", doctors[0]);
+    }
+    
     return NextResponse.json(doctors, { status: 200 });
   } catch (err: any) {
     console.error("GET /api/doctors/list error:", err);
