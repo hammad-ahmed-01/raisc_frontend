@@ -177,10 +177,12 @@ export default function PatientsPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg/mypatientsbg.png')" }}
     >
-      <div className="backdrop-blur-sm bg-blue-50/40 min-h-screen">
+
+      <div className="pt-4 pb-8">
         <TopRightIcons />
-        <br />
-        <br />
+        </div>
+
+      <div className="min-h-screen">
         <PatientList patients={patients} />
       </div>
     </main>

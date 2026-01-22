@@ -379,7 +379,7 @@ const PendingRequestsPage: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="text-2xl sm:text-3xl md:text-4xl text-[#1E3CA7] font-bold">
               <TopRightIcons />
-              <span className="mr-2">👤</span> Pending Requests
+              Pending Requests
               {totalPending > 0 && (
                 <span className="ml-3 px-3 py-1 bg-red-500 text-white text-lg rounded-full">
                   {totalPending}

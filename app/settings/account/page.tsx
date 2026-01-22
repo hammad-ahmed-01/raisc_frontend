@@ -19,6 +19,7 @@ export interface Doctor {
   member_since?: string;
   rating?: number;
   organization?: string;
+  organization_id?: number;
   location?: string;
   patients_assigned?: number;
   qualifications?: string[];
@@ -59,16 +60,6 @@ export interface Organization {
 }
 
 /* ------------------------------ helpers ------------------------------ */
-
-const isBackendConnected =
-  typeof process !== "undefined" &&
-  process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
-
-const DJANGO_BASE =
-  (typeof process !== "undefined"
-    ? process.env.NEXT_PUBLIC_DJANGO_BASE_URL
-    : "")?.replace(/\/+$/, "") || "";
-
 const safe = (v: unknown) => (v == null ? "" : String(v));
 
 const toDate = (d: unknown) => {
@@ -110,8 +101,13 @@ const buildAuthHeader = (): HeadersInit => {
 
 /* ----------------------------- mappers ------------------------------- */
 function mapMeToDoctor(me: any): Doctor {
+  console.log("Raw backend data:", me); // Debug log
+
   const dp = me?.doctor_profile || me?.doctor || {};
   const pi = dp?.professional_information || {};
+
+  console.log("Doctor profile:", dp); // Debug log
+  console.log("Professional info:", pi); // Debug log
 
   const username = safe(me?.username);
   const email = safe(me?.email);
@@ -135,6 +131,26 @@ function mapMeToDoctor(me: any): Doctor {
         ""
     ) || "";
 
+  // ✅ CRITICAL: Get organization from serializer fields FIRST
+  const organizationName = 
+    safe(dp?.organization_name) ||           // ← Serializer field (highest priority)
+    safe(pi?.organization) ||                 // ← Professional info
+    safe(me?.organization_profile?.name) ||   // ← Nested profile
+    safe(me?.organization?.name) ||           // ← Direct organization
+    "";
+
+  const organizationId = 
+    dp?.organization_id ||                    // ← Serializer field (highest priority)
+    me?.organization_profile?.id ||
+    me?.organization?.id ||
+    null;
+
+  // ✅ CRITICAL: Get patients_assigned from serializer field
+  const patientsAssigned = Number(dp?.patients_assigned ?? 0);
+
+  console.log("Extracted organization:", organizationName, organizationId); // Debug
+  console.log("Extracted patients_assigned:", patientsAssigned); // Debug
+
   return {
     id: Number(me?.id ?? 0),
     username,
@@ -145,21 +161,19 @@ function mapMeToDoctor(me: any): Doctor {
     last_login: fmtDateTime(me?.last_login),
     member_since: fmtDate(me?.date_joined || me?.joined_at),
     rating: Number(pi?.rating ?? dp?.rating ?? 0),
-    organization: safe(
-      pi?.organization || me?.organization_profile?.name || me?.organization?.name
-    ),
-    location: safe(pi?.location),
-    patients_assigned:
-      Number(dp?.patients_assigned ?? dp?.stats?.patients_assigned ?? 0) || 0,
+    organization: organizationName || "—",
+    organization_id: organizationId,
+    patients_assigned: patientsAssigned,
     qualifications,
     university: safe(pi?.university),
     graduation_year: safe(pi?.graduation_year),
     specialization: safe(pi?.specialization),
     emailVerified,
     imageUrl,
-    chatgroup_nickname: safe(pi?.chatgroup_nickname || ""),
+    chatgroup_nickname: safe(dp?.chatgroup_nickname || pi?.chatgroup_nickname || ""),
     education,
     expertise: splitToList(pi?.expertise),
+    location: safe(pi?.location),
   };
 }
 
@@ -260,20 +274,27 @@ export default function AccountPage() {
 
         const text = await res.text();
         const me = text ? JSON.parse(text) : null;
-        if (!res.ok || !me) throw new Error(`Upstream failed (${res.status})`);
+        
+        if (!res.ok || !me) {
+          throw new Error(`Failed to load user data (${res.status})`);
+        }
+
+        console.log("✅ Full user data received:", me);
 
         const type = safe(me?.user_type).toLowerCase();
         setUserTypeS(type);
 
         if (type === "doctor") {
-          setDoctor(mapMeToDoctor(me));
+          const mappedDoctor = mapMeToDoctor(me);
+          console.log("✅ Mapped doctor data:", mappedDoctor);
+          setDoctor(mappedDoctor);
         } else if (type === "patient") {
           setPatient(mapMeToPatient(me));
         } else if (type === "organization") {
           setOrganization(mapMeToOrganization(me));
         }
       } catch (err) {
-        console.error("AccountPage: /api/users/me failed", err);
+        console.error("❌ AccountPage: /api/users/me failed", err);
         setAuthError("Failed to load user data");
       } finally {
         setLoading(false);

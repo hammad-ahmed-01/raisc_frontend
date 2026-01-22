@@ -122,7 +122,7 @@ const OrganizationDashboard: React.FC = () => {
               label: "Total Patients",
               value: doctors.reduce((sum, d) => sum + (d.no_of_patients ?? 0), 0),
             },
-            { label: "Sessions Today", value: calendarEvents.length },
+            { label: "Sessions", value: calendarEvents.length },
             {
               label: "New Join Request",
               value: orgDetails?.details?.new_join_requests ?? 0,
