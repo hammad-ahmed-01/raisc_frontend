@@ -28,6 +28,7 @@ export interface Doctor {
   specialization?: string;
   emailVerified?: string;
   imageUrl?: string;
+  profile_image?: string;
   chatgroup_nickname?: string;
   education?: string;
   expertise?: string[];
@@ -46,6 +47,7 @@ export interface Patient {
   gender?: string;
   phone?: string;
   imageUrl?: string;
+  profile_image?: string;
   chatgroup_nickname?: string;
 }
 
@@ -101,13 +103,8 @@ const buildAuthHeader = (): HeadersInit => {
 
 /* ----------------------------- mappers ------------------------------- */
 function mapMeToDoctor(me: any): Doctor {
-  console.log("Raw backend data:", me); // Debug log
-
   const dp = me?.doctor_profile || me?.doctor || {};
   const pi = dp?.professional_information || {};
-
-  console.log("Doctor profile:", dp); // Debug log
-  console.log("Professional info:", pi); // Debug log
 
   const username = safe(me?.username);
   const email = safe(me?.email);
@@ -131,25 +128,20 @@ function mapMeToDoctor(me: any): Doctor {
         ""
     ) || "";
 
-  // ✅ CRITICAL: Get organization from serializer fields FIRST
   const organizationName = 
-    safe(dp?.organization_name) ||           // ← Serializer field (highest priority)
-    safe(pi?.organization) ||                 // ← Professional info
-    safe(me?.organization_profile?.name) ||   // ← Nested profile
-    safe(me?.organization?.name) ||           // ← Direct organization
+    safe(dp?.organization_name) ||
+    safe(pi?.organization) ||
+    safe(me?.organization_profile?.name) ||
+    safe(me?.organization?.name) ||
     "";
 
   const organizationId = 
-    dp?.organization_id ||                    // ← Serializer field (highest priority)
+    dp?.organization_id ||
     me?.organization_profile?.id ||
     me?.organization?.id ||
     null;
 
-  // ✅ CRITICAL: Get patients_assigned from serializer field
   const patientsAssigned = Number(dp?.patients_assigned ?? 0);
-
-  console.log("Extracted organization:", organizationName, organizationId); // Debug
-  console.log("Extracted patients_assigned:", patientsAssigned); // Debug
 
   return {
     id: Number(me?.id ?? 0),
@@ -221,14 +213,24 @@ function mapMeToPatient(me: any): Patient {
 function mapMeToOrganization(me: any): Organization {
   const op = me?.organization_profile || me?.organization || {};
   const details = op?.details || {};
+  
+  // Handle contact numbers - ensure it's always an array
+  let contactNumbers: string[] = [];
+  if (Array.isArray(details?.contact_numbers)) {
+    contactNumbers = details.contact_numbers.map((x: any) => safe(x)).filter(Boolean);
+  } else if (details?.contact_numbers) {
+    contactNumbers = [safe(details.contact_numbers)].filter(Boolean);
+  }
+  
+  // Get logo from either the direct field or details
+  const logoUrl = safe(op?.logo || details?.logo_url || "");
+  
   return {
     organization_name: safe(op?.name || me?.organization_name || "Organization"),
     description: safe(details?.description || ""),
-    logo_url: safe(details?.logo_url || op?.logo_url || ""),
+    logo_url: logoUrl || undefined,
     contact_email: safe(details?.contact_email || me?.email || ""),
-    contact_numbers: Array.isArray(details?.contact_numbers)
-      ? details.contact_numbers.map((x: any) => safe(x))
-      : [safe(details?.contact_numbers || "")].filter(Boolean),
+    contact_numbers: contactNumbers,
     location: safe(op?.location || ""),
     linkedin: safe(details?.linkedin || ""),
   };
@@ -291,7 +293,9 @@ export default function AccountPage() {
         } else if (type === "patient") {
           setPatient(mapMeToPatient(me));
         } else if (type === "organization") {
-          setOrganization(mapMeToOrganization(me));
+          const mappedOrg = mapMeToOrganization(me);
+          console.log("✅ Mapped organization data:", mappedOrg);
+          setOrganization(mappedOrg);
         }
       } catch (err) {
         console.error("❌ AccountPage: /api/users/me failed", err);

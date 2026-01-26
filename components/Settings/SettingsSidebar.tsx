@@ -91,9 +91,9 @@ export default function SettingsSidebar() {
     settingsNavItems = [
       { href: "/settings/account", label: "My Account", id: "account" },
       { href: "/settings/edit-profile", label: "Edit Profile", id: "edit-profile" },
-      { href: "/settings/manage-team", label: "Manage Team", id: "manage-team" },
-      { href: "/settings/doctor-permissions", label: "Doctor Permissions", id: "doctor-permissions" },
-      { href: "/settings/notifications", label: "Notifications", id: "notifications" },
+      //{ href: "/settings/manage-team", label: "Manage Team", id: "manage-team" },
+      //{ href: "/settings/doctor-permissions", label: "Doctor Permissions", id: "doctor-permissions" },
+      //{ href: "/settings/notifications", label: "Notifications", id: "notifications" },
     ];
   }
 

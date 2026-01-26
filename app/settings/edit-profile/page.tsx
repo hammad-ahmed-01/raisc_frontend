@@ -44,7 +44,7 @@ interface ProfileData {
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const pictureSectionRef = useRef<HTMLDivElement | null>(null); // <-- NEW REF
+  const pictureSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [profile, setProfile] = useState<ProfileData>({
     username: "",
@@ -89,7 +89,7 @@ export default function EditProfilePage() {
         condition: "Anxiety, Depression",
         emergency_contact: "+92 300 1111111",
         therapyFocus: "Managing Stress and Anxiety",
-        chatgroup_nickname: "John’s Group",
+        chatgroup_nickname: "John's Group",
         location: "Islamabad, Pakistan",
         bio: "Patient seeking mental health support.",
         user_type: "patient",
@@ -125,7 +125,7 @@ export default function EditProfilePage() {
         education: "MSc Clinical Psych",
         profile_image: "/doc.png",
         rates: "480.00",
-        chatgroup_nickname: "Dr Ali’s Group",
+        chatgroup_nickname: "Dr Ali's Group",
         user_type: "doctor",
       });
     }
@@ -150,24 +150,66 @@ export default function EditProfilePage() {
         } catch {}
 
         if (isBackendConnected && BASE) {
-          const sessionKey = localStorage.getItem("session_key");
-          if (!sessionKey) throw new Error("No session key found");
+          const token =
+            localStorage.getItem("session_key") ||
+            localStorage.getItem("token") ||
+            "";
 
-          const resp = await fetch(`${BASE}/users/profile/`, {
-            headers: { Authorization: `Token ${sessionKey}` },
-          });
-          if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
-          const data = await resp.json();
+          if (!token) {
+            setDummyProfile(currentUserType);
+            setLoading(false);
+            return;
+          }
 
-          try {
-            const raw = localStorage.getItem("user_data");
-            const userData = raw ? JSON.parse(raw) : {};
-            userData.username = data.username ?? userData.username;
-            userData.display_name = data.display_name ?? userData.display_name;
-            localStorage.setItem("user_data", JSON.stringify(userData));
-          } catch {}
-
-          setProfile((prev) => ({ ...prev, ...data }));
+          // For organization, fetch from organization endpoint
+          if (currentUserType === "organization") {
+            const resp = await fetch(`${BASE}/organization/organization_details`, {
+              headers: { 
+                Authorization: `Token ${token}`,
+                "Content-Type": "application/json"
+              },
+              cache: "no-store"
+            });
+            
+            if (resp.ok) {
+              const data = await resp.json();
+              setProfile({
+                username: "",
+                display_name: "",
+                email: "",
+                phone: "",
+                bio: "",
+                location: data.location || "",
+                organization_name: data.name || "",
+                description: data.details?.description || "",
+                logo_url: data.logo || data.details?.logo_url || "",
+                contact_email: data.details?.contact_email || "",
+                contact_numbers: data.details?.contact_numbers || [],
+                linkedin: data.details?.linkedin || "",
+              });
+            } else {
+              setDummyProfile(currentUserType);
+            }
+          } else {
+            // For doctor/patient, fetch from users/profile
+            const resp = await fetch(`${BASE}/users/profile/`, {
+              headers: { Authorization: `Token ${token}` },
+            });
+            
+            if (resp.ok) {
+              const data = await resp.json();
+              try {
+                const raw = localStorage.getItem("user_data");
+                const userData = raw ? JSON.parse(raw) : {};
+                userData.username = data.username ?? userData.username;
+                userData.display_name = data.display_name ?? userData.display_name;
+                localStorage.setItem("user_data", JSON.stringify(userData));
+              } catch {}
+              setProfile((prev) => ({ ...prev, ...data }));
+            } else {
+              setDummyProfile(currentUserType);
+            }
+          }
         } else {
           setDummyProfile(currentUserType);
         }
@@ -201,15 +243,13 @@ export default function EditProfilePage() {
     if (typeof window !== "undefined") performAuthCheck();
   }, []);
 
-  // ---- Smooth scroll to picture area when edit button is clicked ----
   const handleEdit = (field: string, currentValue: string) => {
     if (field === "email") {
       router.push(CHANGE_EMAIL_ROUTE);
       return;
     }
 
-    // Scroll to profile picture section
-    if (field === "profile_image" && pictureSectionRef.current) {
+    if ((field === "profile_image" || field === "logo_url") && pictureSectionRef.current) {
       pictureSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
@@ -229,30 +269,69 @@ export default function EditProfilePage() {
       setEditingField(null);
 
       if (isBackendConnected && BASE) {
-        const sessionKey = localStorage.getItem("session_key");
-        if (!sessionKey) throw new Error("No session key found");
+        const token =
+          localStorage.getItem("session_key") ||
+          localStorage.getItem("token") ||
+          "";
 
-        const resp = await fetch(`${BASE}/users/profile/`, {
-          method: "PATCH",
+        if (!token) throw new Error("No session key found");
+
+        let endpoint = `${BASE}/users/profile/`;
+        let payload: any = { [field]: tempValue };
+
+        // For organization, use different endpoint and payload structure
+        if (userType === "organization") {
+          endpoint = `${BASE}/organization/organization_details`;
+          payload = {
+            name: field === "organization_name" ? tempValue : profile.organization_name,
+            location: field === "location" ? tempValue : profile.location,
+            details: {
+              description: field === "description" ? tempValue : profile.description,
+              contact_email: field === "contact_email" ? tempValue : profile.contact_email,
+              contact_numbers: field === "contact_numbers" 
+                ? tempValue.split(",").map(n => n.trim()).filter(Boolean)
+                : profile.contact_numbers,
+              linkedin: field === "linkedin" ? tempValue : profile.linkedin,
+            },
+          };
+        }
+
+        const resp = await fetch(endpoint, {
+          method: userType === "organization" ? "PUT" : "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${sessionKey}`,
+            Authorization: `Token ${token}`,
           },
-          body: JSON.stringify({ [field]: tempValue }),
+          body: JSON.stringify(payload),
         });
+
         if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
 
         const serverProfile = await resp.json();
-        setProfile((prev) => ({ ...prev, ...serverProfile }));
+        
+        if (userType === "organization") {
+          setProfile((prev) => ({
+            ...prev,
+            organization_name: serverProfile.name || prev.organization_name,
+            location: serverProfile.location || prev.location,
+            description: serverProfile.details?.description || prev.description,
+            contact_email: serverProfile.details?.contact_email || prev.contact_email,
+            contact_numbers: serverProfile.details?.contact_numbers || prev.contact_numbers,
+            linkedin: serverProfile.details?.linkedin || prev.linkedin,
+            logo_url: serverProfile.logo || prev.logo_url,
+          }));
+        } else {
+          setProfile((prev) => ({ ...prev, ...serverProfile }));
 
-        try {
-          const raw = localStorage.getItem("user_data");
-          const userData = raw ? JSON.parse(raw) : {};
-          if (field === "username") userData.username = serverProfile.username;
-          if (serverProfile.display_name)
-            userData.display_name = serverProfile.display_name;
-          localStorage.setItem("user_data", JSON.stringify(userData));
-        } catch {}
+          try {
+            const raw = localStorage.getItem("user_data");
+            const userData = raw ? JSON.parse(raw) : {};
+            if (field === "username") userData.username = serverProfile.username;
+            if (serverProfile.display_name)
+              userData.display_name = serverProfile.display_name;
+            localStorage.setItem("user_data", JSON.stringify(userData));
+          } catch {}
+        }
 
         window.dispatchEvent(new Event("profile:updated"));
         new BroadcastChannel("profile-sync").postMessage({ type: "profile-updated" });
@@ -288,7 +367,6 @@ export default function EditProfilePage() {
     );
   }
 
-  // Add the ref to the EditProfile components so they know where the picture section is
   if (userType === "patient") {
     return (
       <div ref={pictureSectionRef}>

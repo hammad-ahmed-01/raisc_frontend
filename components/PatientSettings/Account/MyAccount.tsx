@@ -29,6 +29,9 @@ function buildAuthHeader(): HeadersInit {
 
 export default function MyAccount({ patient }: PatientProps) {
   const phone = patient.phone?.trim();
+  const img = patient.profile_image?.trim()
+    ? `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}${patient.profile_image}`
+    : "/patient.png";
 
   const [sessionsCompleted, setSessionsCompleted] = useState<number | null>(
     patient.sessionsCompleted ?? null

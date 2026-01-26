@@ -3,7 +3,7 @@
 
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 
 interface ProfileData {
   username?: string;
@@ -43,6 +43,39 @@ export default function EditDoctorProfile({
   handleCancel,
   setTempValue,
 }: EditDoctorProfileProps) {
+  const [loading, setLoading] = useState(false);
+  const [localProfileImage, setLocalProfileImage] = useState(profile.profile_image || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleProfileImageChange = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("session_key") || "";
+      const formData = new FormData();
+      formData.append("profile_image", file);
+      // Add other fields as needed
+      const res = await fetch("/api/doctor/profile", {
+        method: "PATCH",
+        headers: {
+          Authorization: token ? `Token ${token}` : "",
+        },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to upload profile image");
+      const data = await res.json();
+      setLocalProfileImage(data.profile_image);
+    } catch (err) {
+      // handle error
+    } finally {
+      setLoading(false);
+    }
+  };
   const expertiseList = useMemo(() => {
     const e = profile.expertise;
     if (!e) return [];
@@ -94,7 +127,7 @@ export default function EditDoctorProfile({
                   style={{ border: "2px solid #1E3CA7" }}
                 >
                   <Image
-                    src={profile.profile_image || "/doc.png"}
+                    src={localProfileImage ? `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}${localProfileImage}` : "/doc.png"}
                     alt="Doctor"
                     className="w-full h-full object-cover"
                     width={48}
@@ -112,8 +145,15 @@ export default function EditDoctorProfile({
               </div>
               <PrimaryButton
                 text="Edit Profile Picture"
-                onClick={() => handleEdit("profile_image", profile.profile_image || "")}
+                onClick={handleProfileImageChange}
                 className="px-4 md:px-6 py-1.5 rounded-full text-sm md:text-md font-semibold flex items-center gap-2 self-start md:self-auto"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleProfileImageUpload}
               />
             </div>
           </div>

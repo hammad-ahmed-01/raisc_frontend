@@ -11,7 +11,9 @@ interface DoctorProps {
 export default function MyAccount({ doctor }: DoctorProps) {
   const phone = doctor.phone?.trim();
   const specialization = doctor.specialization?.trim();
-  const img = doctor.imageUrl?.trim() || "/doc.png";
+  const img = doctor.profile_image?.trim()
+    ? `${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}${doctor.profile_image}`
+    : "/doc.png";
   const chatNick = doctor.chatgroup_nickname?.trim();
   const education = (doctor.education || "").trim();
   const expertise = Array.isArray(doctor.expertise)
@@ -19,28 +21,32 @@ export default function MyAccount({ doctor }: DoctorProps) {
     : [];
 
   return (
-    <div className="h-full overflow-hidden p-4 md:p-5">
-      <div className="max-w-6xl mx-auto h-full flex flex-col">
-        <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-6 md:mb-16">
-          My Account
-        </h1>
+      <div className="h-full overflow-hidden p-4 md:p-5">
+        <div className="max-w-6xl mx-auto h-full flex flex-col">
+          <h1 className="text-xl md:text-2xl font-bold text-left text-[#1E3CA7] mb-6 md:mb-16">
+            My Account
+          </h1>
 
-        {/* Account Detail Section - Single container */}
-        <div
-          className="bg-[#E9F5FE] rounded-3xl p-4 md:p-5 relative flex-1"
-          style={{ border: "1px solid #2196F3" }}
-        >
-          {/* Doctor Profile Header - Inside Account Detail */}
+          {/* Account Detail Section - Single container */}
           <div
-            className="
-              bg-white rounded-2xl p-4 md:p-5 mb-4 md:mb-5
-              w-full md:w-[calc(100%-2.5rem)]
-              static md:absolute md:top-0 md:-translate-y-1/2
-            "
+            className="bg-[#E9F5FE] rounded-3xl p-4 md:p-5 relative flex-1"
             style={{ border: "1px solid #2196F3" }}
           >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-center gap-3 md:gap-4">
+            {/* Doctor Profile Header - Inside Account Detail */}
+            <div
+              className="
+                bg-white rounded-2xl p-4 md:p-5 mb-4 md:mb-5
+                w-full md:w-[calc(100%-2.5rem)]
+                static md:absolute md:top-0 md:-translate-y-1/2
+              "
+              style={{ border: "1px solid #2196F3" }}
+            >
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden" style={{ border: "2px solid #1E3CA7" }}>
+                    <Image src={img} alt="Doctor" className="w-full h-full object-cover" width={48} height={48} />
+                  </div>
+                  {/* ...existing code... */}
                 <div
                   className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden"
                   style={{ border: "2px solid #1E3CA7" }}
