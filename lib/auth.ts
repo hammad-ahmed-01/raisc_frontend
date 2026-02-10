@@ -1,3 +1,4 @@
+// lib/auth.ts
 export type UserType = "patient" | "doctor" | "organization";
 
 export interface PatientProfile {
@@ -47,15 +48,17 @@ export interface AuthResult {
   error?: string;
 }
 
-/* ----------------------------- utilities ----------------------------- */
-
 const DJANGO_BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(/\/+$/, "");
 
-export function redirectToLogin() {
-  window.location.href = "/login";
+if (!DJANGO_BASE && typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  console.warn("auth.ts: NEXT_PUBLIC_DJANGO_BASE_URL is missing");
 }
 
-export function saveSession(token: string, user: any) {
+export function redirectToLogin() {
+  if (typeof window !== "undefined") window.location.href = "/login";
+}
+
+export function saveSession(token: string, user: User) {
   try {
     localStorage.setItem("session_key", token);
     localStorage.setItem("user_data", JSON.stringify(user ?? {}));
@@ -69,7 +72,7 @@ export function clearSession() {
   } catch {}
 }
 
-function getToken(): string | null {
+export function getToken(): string | null {
   try {
     const t = (typeof window !== "undefined" && localStorage.getItem("session_key")) || "";
     return t.trim() || null;
@@ -78,12 +81,6 @@ function getToken(): string | null {
   }
 }
 
-/* ------------------------------ core api ------------------------------ */
-
-/**
- * Fetch the canonical user from the backend using the stored token.
- * If successful, also refreshes localStorage "user_data" to prevent stale roles.
- */
 export async function checkAuth(): Promise<AuthResult> {
   try {
     if (!DJANGO_BASE) return { isAuthenticated: false, error: "Backend URL missing" };
@@ -100,7 +97,10 @@ export async function checkAuth(): Promise<AuthResult> {
     });
 
     if (!res.ok) {
-      if (res.status === 401) return { isAuthenticated: false, error: "Unauthorized" };
+      if (res.status === 401) {
+        clearSession();
+        return { isAuthenticated: false, error: "Unauthorized" };
+      }
       return { isAuthenticated: false, error: `Fetch failed (${res.status})` };
     }
 
@@ -112,11 +112,6 @@ export async function checkAuth(): Promise<AuthResult> {
   }
 }
 
-/**
- * Login helper:
- * - accepts identifier (email or username) + password
- * - hits Django /users/login/, stores token + user on success
- */
 export async function login(
   identifier: string,
   password: string
@@ -136,7 +131,7 @@ export async function login(
       return { ok: false, error: msg };
     }
 
-    saveSession(data.token, data.user);
+    saveSession(data.token, data.user as User);
     return { ok: true };
   } catch {
     return { ok: false, error: "Login error" };
@@ -153,7 +148,13 @@ export async function fetchMe(): Promise<User | null> {
       headers: { "Content-Type": "application/json", Authorization: `Token ${token}` },
       cache: "no-store",
     });
-    if (!res.ok) return null;
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        clearSession();
+      }
+      return null;
+    }
 
     const user = (await res.json()) as User;
     saveSession(token, user);

@@ -1,6 +1,7 @@
+/* Base skin */
 .custom-calendar {
   background-color: white;
-  color: #1E3CA7; /* Text color for everything */
+  color: #1E3CA7; /* base dark blue */
   font-weight: normal;
 }
 
@@ -23,49 +24,36 @@
   margin-right: 5px;
   border-radius: 5px;
 }
-
 .custom-calendar .rbc-toolbar button.rbc-active {
   background-color: #2196F3;
-  color: white;
+  color: #fff;
 }
 
-/* Month view layout */
+/* Month view */
 .custom-calendar .rbc-month-view {
   border-color: #2196F3;
-  background-color: white;
+  background-color: #fff;
 }
-
-/* Weekday header row */
 .custom-calendar .rbc-month-header {
-  background-color: white;
+  background-color: #fff;
   color: #1E3CA7;
 }
-
 .custom-calendar .rbc-header {
-  font-weight: 600; /* Semibold for days (Sun, Mon, etc.) */
+  font-weight: 600;
   color: #1E3CA7;
   text-align: center;
   padding: 0.5rem;
   border-bottom: 1px solid #2196F3;
 }
-
-/* Date cells */
-.custom-calendar .rbc-month-row {
-  height: 60px;
-}
-
-.custom-calendar .rbc-date-cell {
-  padding: 2px 4px;
-}
-
+.custom-calendar .rbc-month-row { height: 60px; }
+.custom-calendar .rbc-date-cell { padding: 2px 4px; }
 .custom-calendar .rbc-day-bg {
-  background-color: white;
+  background-color: #fff;
   border: 1px solid #2196F3;
 }
-
 .custom-calendar .rbc-off-range-bg {
   background-color: #7A8BA0;
-  color: white;
+  color: #fff;
 }
 
 /* Events */
@@ -76,4 +64,83 @@
   border: none;
   font-size: 12px;
   padding: 1px 4px;
+}
+
+/* ======================= AGENDA / DETAILS OVERRIDES ======================= */
+/* Make agenda text HIGH contrast and readable. Use !important to beat defaults. */
+.custom-calendar .rbc-agenda-view,
+.custom-calendar .rbc-agenda-view * {
+  color: #0F1F4B !important; /* dark blue */
+}
+
+/* If you prefer dark pink instead, replace #0F1F4B with #C2185B in this block */
+
+/* Table header cells (date/time/title) */
+.custom-calendar .rbc-agenda-table th {
+  color: #0F1F4B !important;
+  font-weight: 700 !important;
+  background: #EEF4FF !important;
+  border-bottom: 1px solid #2196F3 !important;
+}
+
+/* Table body cells (actual agenda rows) */
+.custom-calendar .rbc-agenda-table td,
+.custom-calendar .rbc-agenda-date-cell,
+.custom-calendar .rbc-agenda-time-cell,
+.custom-calendar .rbc-agenda-event-cell {
+  color: #0F1F4B !important;
+  background: #ffffff !important;
+}
+
+/* Links inside agenda rows */
+.custom-calendar .rbc-agenda-view a,
+.custom-calendar .rbc-agenda-event-cell a {
+  color: #0F1F4B !important;
+  text-decoration: none !important;
+}
+.custom-calendar .rbc-agenda-view a:hover {
+  text-decoration: underline !important;
+}
+
+/* Time-grid (Day/Week) labels, for consistency */
+.custom-calendar .rbc-time-view,
+.custom-calendar .rbc-time-header,
+.custom-calendar .rbc-time-content,
+.custom-calendar .rbc-time-header-content,
+.custom-calendar .rbc-time-content > * {
+  color: #0F1F4B !important;
+}
+
+/* "Show more" overlay popover list */
+.custom-calendar .rbc-overlay,
+.custom-calendar .rbc-overlay * {
+  color: #0F1F4B !important;
+}
+.custom-calendar .rbc-overlay .rbc-overlay-header {
+  font-weight: 700 !important;
+}
+
+/* -------------------- Mobile tweaks (<= 640px) -------------------- */
+@media (max-width: 640px) {
+  .custom-calendar { font-size: 0.9rem; }
+
+  .custom-calendar .rbc-toolbar { padding: 0.4rem; }
+
+  .custom-calendar .rbc-toolbar button {
+    padding: 4px 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+  }
+
+  .custom-calendar .rbc-header {
+    padding: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .custom-calendar .rbc-month-row { height: 46px; }
+
+  .custom-calendar .rbc-event {
+    font-size: 10px;
+    padding: 1px 3px;
+  }
 }

@@ -6,15 +6,15 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   FaHome,
-  FaHistory,
-  FaQuoteRight,
   FaRobot,
   FaUserMd,
-  FaBook,
-  FaUser,
   FaBars,
   FaTimes,
   FaSignOutAlt,
+  FaHistory,
+  FaQuoteRight,
+  FaBook,
+  FaUser,
   FaChartBar,
   FaCalendarAlt,
 } from "react-icons/fa";
@@ -33,10 +33,23 @@ const Sidebar = () => {
 
   const pathname = rawPathname ?? "";
 
-  let userType = "patient";
+  let userType: "patient" | "doctor" | "organization" | "unknown" = "patient";
+  let hasAssociatedPsychologist = false;
+
   if (typeof window !== "undefined") {
-    const rawUserType = localStorage.getItem("user_data");
-    userType = rawUserType ? JSON.parse(rawUserType).user_type : "patient";
+    const rawUserData = localStorage.getItem("user_data");
+    if (rawUserData) {
+      try {
+        const parsed = JSON.parse(rawUserData);
+        userType = parsed?.user_type ?? "patient";
+        hasAssociatedPsychologist = Boolean(
+          parsed?.patient_profile?.associated_psychologist
+        );
+      } catch {
+        userType = "patient";
+        hasAssociatedPsychologist = false;
+      }
+    }
   }
 
   interface MenuItem {
@@ -51,42 +64,56 @@ const Sidebar = () => {
   if (userType === "patient") {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
-      { id: 2, title: "Session History", icon: <FaHistory size={20} />, path: "/history" },
-      { id: 3, title: "Motivational Quotes", icon: <FaQuoteRight size={20} />, path: "/quotes" },
+      //{ id: 2, title: "Session History", icon: <FaHistory size={20} />, path: "/history" },
+      //{ id: 3, title: "Motivational Quotes", icon: <FaQuoteRight size={20} />, path: "/quotes" },
       { id: 4, title: "Chat with AI Bot", icon: <FaRobot size={20} />, path: "/chatbot" },
-      { id: 5, title: "Psychologist", icon: <FaUserMd size={20} />, path: ["/AssociatedPsychologist", "/Doctors"] },
-      { id: 6, title: "Resources", icon: <FaBook size={20} />, path: "/resources" },
-      { id: 7, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
+      // Doctors is always visible
+      { id: 5, title: "Psychologists", icon: <FaUserMd size={20} />, path: "/Doctors" },
+      // Associated Psychologist only if exists
+      ...(hasAssociatedPsychologist
+        ? [
+            {
+              id: 6,
+              title: "Associated Doctor",
+              icon: <FaUserMd size={20} />,
+              path: "/AssociatedPsychologist",
+            } as MenuItem,
+          ]
+        : []),
+      //{ id: 7, title: "Resources", icon: <FaBook size={20} />, path: "/resources" },
+      //{ id: 8, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
     ];
   } else if (userType === "doctor") {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
-      { id: 2, title: "Calendar", icon: <FaHistory size={20} />, path: "/calendar" },
+      //{ id: 2, title: "Calendar", icon: <FaHistory size={20} />, path: "/calendar" },
       { id: 3, title: "Patients", icon: <FaUserMd size={20} />, path: "/Patient" },
-      { id: 4, title: "Messages", icon: <FaQuoteRight size={20} />, path: "/messages" },
+      //{ id: 4, title: "Messages", icon: <FaQuoteRight size={20} />, path: "/messages" },
       { id: 5, title: "Requests", icon: <FaBook size={20} />, path: "/requests" },
-      { id: 6, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
-      { id: 7, title: "Settings", icon: <FaRobot size={20} />, path: "/settings" },
+      //{ id: 6, title: "Profile", icon: <FaUser size={20} />, path: "/profile" },
+      //{ id: 7, title: "Settings", icon: <FaRobot size={20} />, path: "/settings" },
     ];
   } else if (userType === "organization") {
     menuItems = [
       { id: 1, title: "Dashboard", icon: <FaHome size={20} />, path: "/dashboard" },
-      { id: 2, title: "Doctors", icon: <FaUserMd size={20} />, path: "/Doctors" },
-      { id: 3, title: "Calendar", icon: <FaCalendarAlt size={20} />, path: "/calendar" },
-      { id: 4, title: "Pending Requests", icon: <FaHistory size={20} />, path: "/pending-requests" },
-      { id: 5, title: "Analytics / Reports", icon: <FaChartBar size={20} />, path: "/analytics" },
+      //{ id: 2, title: "Doctors", icon: <FaUserMd size={20} />, path: "/Doctors" },
+      //{ id: 3, title: "Calendar", icon: <FaCalendarAlt size={20} />, path: "/calendar" },
+      //{ id: 4, title: "Pending Requests", icon: <FaHistory size={20} />, path: "/pending-requests" },
+      { id: 5, title: "Analytics / Reports", icon: <FaChartBar size={20} />, path: "/OrganizationAnalytics" },
     ];
   }
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white p-3 rounded-full shadow-lg"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-      </button>
+      {/* Mobile Menu Button (Hamburger only) */}
+      {!isMobileMenuOpen && (
+        <button
+          className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white p-3 rounded-full shadow-lg"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <FaBars size={20} />
+        </button>
+      )}
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
@@ -98,13 +125,23 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out z-40 ${
+        className={`fixed left-0 top-0 min-h-screen bg-gradient-to-r from-[#2f51c7] to-[#071c69] text-white transition-all duration-300 ease-in-out z-40 ${
           "lg:block lg:w-20 lg:hover:w-64 lg:rounded-r-[20px]"
         } ${isMobileMenuOpen ? "block w-64" : "hidden lg:block"}`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
-        {/* Logo Section (clickable to landing page) */}
+        {/* Close button inside sidebar (top-right) */}
+        {isMobileMenuOpen && (
+          <button
+            className="absolute top-4 right-4 text-white z-50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <FaTimes size={24} />
+          </button>
+        )}
+
+        {/* Logo */}
         <Link
           href="/"
           aria-label="Go to landing page"
@@ -127,7 +164,7 @@ const Sidebar = () => {
           </div>
         </Link>
 
-        {/* Navigation Items */}
+        {/* Navigation */}
         <nav className="mt-4">
           {menuItems.map((item) => {
             const isActive = Array.isArray(item.path)
@@ -158,7 +195,7 @@ const Sidebar = () => {
           })}
         </nav>
 
-        {/* Logout Icon at Bottom */}
+        {/* Logout */}
         <div className="absolute bottom-8 left-0 w-full">
           <Link href="/logout" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="flex items-center h-14 px-6 cursor-pointer transition-colors hover:bg-white/5 text-white w-full">

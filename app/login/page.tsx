@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, ChangeEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../LandingPage/constants/navbar";

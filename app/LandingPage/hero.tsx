@@ -13,9 +13,7 @@ export default function HeroSection() {
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.id) {
-            setIsLoggedIn(true);
-          }
+          if (parsed && parsed.id) setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
         }
@@ -24,17 +22,14 @@ export default function HeroSection() {
   }, []);
 
   const handlePrimaryClick = () => {
-    if (isLoggedIn) {
-      router.push("/dashboard");
-    } else {
-      router.push("/register");
-    }
+    if (isLoggedIn) router.push("/dashboard");
+    else router.push("/register");
   };
 
   return (
     <section
       id="home"
-      className="relative h-screen px-4 pt-20 md:pt-24 lg:pt-28 pb-32 bg-blue-50 overflow-hidden"
+      className="relative min-h-screen px-4 pt-20 md:pt-24 lg:pt-28 pb-32 bg-blue-50 overflow-hidden"
       style={{ borderBottom: "5px solid #D0E3FFC7" }}
     >
       {/* Background image */}
@@ -49,33 +44,61 @@ export default function HeroSection() {
           alt="Background Mobile"
           className="w-full h-full object-cover block sm:hidden"
         />
+        {/* Mobile-only contrast overlay (no change to desktop) */}
+        <div className="absolute inset-0 sm:hidden" />
       </div>
 
       {/* Content Grid */}
       <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-6 text-white">
         {/* Left column */}
-        <div className="flex flex-col justify-center items-center space-y-6 px-4 mt-36">
-          <h1 className="text-heading text-6xl font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]">
+        <div className="flex flex-col justify-center items-center space-y-5 sm:space-y-6 px-3 sm:px-4 mt-24 md:mt-36">
+          <h1
+            className="
+              text-heading font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.3)]
+              text-4xl sm:text-5xl md:text-6xl
+            "
+          >
             Welcome to RAISC
           </h1>
-          <h2 className="text-heading2 text-xl max-w-md">
+
+          <h2 className="text-heading2 text-center max-w-sm sm:max-w-md text-base sm:text-xl">
             Your mental wellness companion.
           </h2>
-          <p className="text-normal text-center max-w-md">
+
+          <p className="text-normal text-center max-w-sm sm:max-w-md text-sm sm:text-base leading-relaxed">
             Connect with licensed psychologists and psychiatrists in a safe,
             confidential environment. Begin your journey to better mental health
             today.
           </p>
-          <div className="flex gap-4">
+
+          <div
+            className="
+              flex gap-3 sm:gap-4
+              flex-col sm:flex-row
+              w-full sm:w-auto
+              px-2 sm:px-0
+            "
+          >
             <button
               onClick={handlePrimaryClick}
-              className="bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white px-6 py-2 shadow-sm rounded-full hover:opacity-90"
+              className="
+                bg-gradient-to-b from-[#1E3CA7] to-[#131413] text-white
+                px-6 py-2 shadow-sm rounded-full hover:opacity-90
+                w-full sm:w-auto
+              "
             >
-              {isLoggedIn ? "Dashboard" : "Get Started"}
+              {isLoggedIn ? "Dashboard" : "Join the Waitlist"}
             </button>
+
             {!isLoggedIn && (
-              <a href="#about">
-                <button className="bg-white border-2 border-black text-black py-2 px-6 rounded-full shadow-sm hover:bg-blue-100 transition duration-200">
+              <a href="#about" className="w-full sm:w-auto">
+                <button
+                  className="
+                    bg-white border-2 border-black text-black py-2 px-6 rounded-full
+                    shadow-sm hover:bg-blue-100 transition duration-200
+                    w-full sm:w-auto
+                  "
+                >
                   Learn More
                 </button>
               </a>

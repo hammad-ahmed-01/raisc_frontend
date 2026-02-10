@@ -1,74 +1,125 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Header } from './components/Header';
-import { QuoteCarousel } from './components/QuoteCarousel';
-import { Resources } from './components/Resources';
-import { TherapistCard } from './components/TherapistCard';
-import TopRightIcons from "@/components/TopRightIcons";
-import { ChatBot } from './components/ChatBot';
 
-interface User {
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import TopRightIcons from "@/components/TopRightIcons";
+import { Header } from "./components/Header";
+import { QuoteCarousel } from "./components/QuoteCarousel";
+import { Resources } from "./components/Resources";
+import { TherapistCard } from "./components/TherapistCard";
+import { ChatBot } from "./components/ChatBot";
+import { fetchMe } from "@/lib/auth";
+
+/* ----------------------------- types ----------------------------- */
+
+type RequestStatus = "none" | "pending" | "accepted";
+
+interface UserShape {
   username: string;
   patient_profile?: {
-    associated_psychologist: string | null;
-    associated_psychologist_name: string | null;
+    associated_psychologist?: string | number | null;
+    associated_psychologist_id?: string | number | null;
+    associated_psychologist_name?: string | null;
     sent_requests?: string[];
-  };
+    profile_data?: Record<string, unknown> | null;
+    level?: number;
+  } | null;
 }
+
+/* ----------------------------- utils ----------------------------- */
+
+const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
+
+const readUserFromLocalStorage = (): UserShape | null => {
+  try {
+    const raw = localStorage.getItem("user_data");
+    return raw ? (JSON.parse(raw) as UserShape) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeUserToLocalStorage = (u: any) => {
+  try {
+    localStorage.setItem("user_data", JSON.stringify(u));
+  } catch {}
+};
+
+/* ----------------------------- page ----------------------------- */
 
 const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [requestedDoctor, setRequestedDoctor] = useState<any>(null);
-  
-  useEffect(() => {
-    // If user is passed as prop, use it
-    if (user) {
-      setCurrentUser(user);
-      return;
-    }
-    
-    // Otherwise fetch from localStorage
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setCurrentUser(parsedUser);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, [user]);
+  const [currentUser, setCurrentUser] = useState<UserShape | null>(null);
+  const refreshingRef = useRef(false);
 
-  useEffect(() => {
-    // First check for a selected doctor directly from localStorage
-    const selectedDoctorData = localStorage.getItem('selectedDoctor');
-    if (selectedDoctorData) {
-      try {
-        const doctor = JSON.parse(selectedDoctorData);
-        if (doctor.requestStatus === 'pending' || doctor.requestStatus === 'accepted') {
-          setRequestedDoctor(doctor);
-          return;
-        }
-      } catch (error) {
-        console.error("Error parsing selected doctor data:", error);
+  // Canonical refresh from backend (fallback to localStorage)
+  const refreshUser = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const me = (await fetchMe().catch(() => null)) as UserShape | null;
+      if (me) {
+        setCurrentUser(me);
+        writeUserToLocalStorage(me);
+      } else {
+        setCurrentUser(readUserFromLocalStorage());
       }
+    } finally {
+      refreshingRef.current = false;
     }
-    
-    // If no doctor from localStorage or not pending/accepted, check user's sent_requests
-    if (currentUser?.patient_profile?.sent_requests?.length) {
-      // If user has sent requests but no selected doctor is found,
-      // we could implement additional logic here to fetch doctor data from another source
-      // For now, we'll rely on the selectedDoctor in localStorage
+  }, []);
+
+  // first load
+  useEffect(() => {
+    (async () => {
+      if (user) {
+        setCurrentUser(user as UserShape);
+      } else {
+        await refreshUser();
+      }
+    })();
+  }, [user, refreshUser]);
+
+  // keep user fresh on visibility/storage/broadcast changes
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshUser();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "user_data") {
+        setCurrentUser(readUserFromLocalStorage());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    let bc: BroadcastChannel | null = null;
+    if ("BroadcastChannel" in window) {
+      bc = new BroadcastChannel("profile-sync");
+      bc.onmessage = (msg: MessageEvent) => {
+        const data = (msg?.data ?? {}) as { type?: string };
+        if (data.type === "profile-updated") void refreshUser();
+      };
     }
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("storage", onStorage);
+      if (bc) bc.close();
+    };
+  }, [refreshUser]);
+
+  const handleViewMoreClick = () => {
+    router.push("/Doctors");
+  };
+
+  // Friendly display name: prefer profile_data.display_name if present
+  const displayName = useMemo(() => {
+    const pd = (currentUser?.patient_profile?.profile_data ?? {}) as Record<string, unknown>;
+    return (pd?.display_name as string) || currentUser?.username || "Hira";
   }, [currentUser]);
 
-  // Navigate to doctors page
-  const handleViewMoreClick = () => {
-    router.push('/Doctors');
-  };
-  
   return (
     <div
       className="flex min-h-screen bg-cover bg-center ml-8 px-2 sm:px-4 lg:px-0"
@@ -76,12 +127,11 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
     >
       <div className="flex-1 px-1 sm:px-2 lg:px-6 py-4 sm:py-6">
         {/* Header */}
-      <TopRightIcons />
-
-        <Header name={currentUser?.username || "Hira"} />
+        <TopRightIcons />
+        <Header name={displayName} />
 
         {/* Three Column Layout */}
-        <div className="mb-8 sm:mb-16 grid grid-cols-1 lg:grid-cols-3 mt-8 sm:mt-12 lg:mt-24 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 mt-8 sm:mt-12 lg:mt-24 gap-3 sm:gap-4 lg:gap-6">
           {/* Column 1: Quote + Resources */}
           <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 lg:gap-6 order-2 lg:order-1">
             <QuoteCarousel />
@@ -89,17 +139,15 @@ const Dashboard: React.FC<{ user?: any }> = ({ user }) => {
           </div>
 
           {/* Column 2: Therapist Card */}
-          <div className="mb-8 sm:mb-16 flex justify-center order-1 lg:order-2">
-            <TherapistCard 
-              doctor={requestedDoctor}
-              hasRequest={!!requestedDoctor}
-              requestStatus={requestedDoctor?.requestStatus || 'none'}
-              onViewMoreClick={handleViewMoreClick}
-            />
+          <div className="flex justify-center order-1 lg:order-2">
+            {/* The card now fetches doctors + shows pending/accepted itself.
+                No props (doctor/hasRequest/requestStatus) needed here, which
+                removes the TypeScript error you were seeing. */}
+            <TherapistCard onViewMoreClick={handleViewMoreClick} />
           </div>
 
           {/* Column 3: ChatBot */}
-          <div className="flex justify-center items-end order-3 mb-8 sm:mb-16">
+          <div className="flex justify-center items-center order-3">
             <ChatBot />
           </div>
         </div>

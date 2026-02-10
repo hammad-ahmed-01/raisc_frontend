@@ -1,8 +1,8 @@
+// app/api/register/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
-/** ========= Zoho Helpers ========= **/
 const ZOHO_TOKEN_URL = (dc: string) => `https://accounts.zoho.${dc}/oauth/v2/token`;
 const ZOHO_MAIL_SEND_URL = (accountId: string) =>
   `https://mail.zoho.com/api/accounts/${accountId}/messages`;
@@ -51,7 +51,6 @@ function escapeHtml(str: string) {
     .replaceAll("'", "&#039;");
 }
 
-// Normalize doctor_profile input from the form/UI
 function normalizeDoctorProfile(full_name: string, raw: any = {}) {
   const expertise =
     Array.isArray(raw.expertise)
@@ -71,10 +70,10 @@ function normalizeDoctorProfile(full_name: string, raw: any = {}) {
     profile_image: raw.profile_image ?? "",
     rating: Number(raw.rating ?? 0),
     rates: String(raw.rates ?? "0"),
+    description: String(raw.description || ""), // <-- NEW
   };
 }
 
-/** ========= Route ========= **/
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -150,7 +149,7 @@ export async function POST(request: Request) {
     }
     const token = loginData.token as string;
 
-    // 3) Enforce the chosen role once (patients: level 0; doctors: keep doctor role)
+    // 3) Set role (unchanged)
     const meUrl = `${base.replace(/\/+$/, "")}/users/user/`;
     if (intendedRole === "patient") {
       await fetch(meUrl, {
@@ -187,7 +186,7 @@ export async function POST(request: Request) {
       }
     } catch {}
 
-    /** ========= Emails (Zoho) ========= **/
+    /** ===== Emails (Zoho) – unchanged ===== **/
     const ACCOUNT_ID = process.env.ZOHO_ACCOUNT_ID || "";
     const FROM = process.env.EMAIL_FROM || "";
     const ADMIN_TO = process.env.CONTACT_RECIPIENT_EMAIL || "info@raisc.org";

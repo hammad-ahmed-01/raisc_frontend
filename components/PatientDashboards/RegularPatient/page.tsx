@@ -4,12 +4,12 @@
 import PreviousSessionCard from "./components/PreviousSessionCard";
 import PsychologistCard from "./components/PsychologistCard";
 import TipAndSupportCard from "./components/TipAndSupportCard";
-import { User } from "@/app/dashboard/page";
+import { UserShape } from "@/app/dashboard/page";
 import TopRightIcons from "@/components/TopRightIcons";
 
 
 interface RegularPatientHomeProps {
-  user: User;
+  user: UserShape;
 }
 
 export default function RegularPatientHome({ user }: RegularPatientHomeProps) {

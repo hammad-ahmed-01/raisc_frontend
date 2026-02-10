@@ -1,270 +1,751 @@
-"use client"
+// app/AssociatedPsychologist/components/Psychologist.tsx
+"use client";
 
-import { Star } from "lucide-react";
-import { useEffect, useState } from "react";
-import SecondaryButton from "@/components/Buttons/SecondaryButton";
 import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getToken, fetchMe } from "@/lib/auth";
+import { Star } from "lucide-react";
 
-// Define types for the psychologist data
+/* ----------------------------- types ----------------------------- */
+
 interface PsychologistData {
   name: string;
   role: string;
-  affiliation: string;
+  affiliationOrg: string; // bold org name
+  affiliationCity: string; // appended in parentheses after org
   image: string;
   about: string;
   qualifications: string[];
   languages: string[];
   experience: string;
-  rating: number;
-  reviews: number;
+  rating?: number;
+  reviews?: number;
 }
 
-const RatingStars = ({ rating = 4.6 }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating % 1 !== 0;
-  const totalStars = 5;
+type Doctor = {
+  id: number;
+  user_id?: number;
+  organization_id: number | null;
+  username?: string;
+  name: string;
+  profile_image: string;
+  specialization: string;
+  location: string;
+  experience: string | number;
+  rating: number;
+  expertise: string[];
+  education: string;
+  description?: string;
+  rates?: string;
+  phone?: string;
+  affiliated_organization?: string;
+  availability?: string;
+  website?: string;
+};
 
+/* ----------------------------- utils ----------------------------- */
+
+const BASE = (process.env.NEXT_PUBLIC_DJANGO_BASE_URL || "").replace(
+  /\/+$/,
+  ""
+);
+const isBackendConnected = process.env.NEXT_PUBLIC_BACKEND_CONNECTED === "true";
+
+const safeStr = (v: unknown) => (v == null ? "" : String(v).trim());
+
+function toArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => safeStr(x)).filter(Boolean);
+  const s = safeStr(v);
+  if (!s) return [];
+  return s
+    .split(/[,\|]/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function pickImage(src: any): string {
+  const p =
+    src?.professional_information || src?.professionalInformation || src || {};
   return (
-    <div className="flex gap-1 mt-2">
-      {Array.from({ length: totalStars }, (_, i) => {
-        const isFilled = i < fullStars;
-        const isHalf = i === fullStars && hasHalf;
+    safeStr(p.avatar_url) ||
+    safeStr(p.profile_image_url) ||
+    safeStr(p.profileImageUrl) ||
+    safeStr(p.profile_image) ||
+    safeStr(src.profile_image) ||
+    "/doctor.jpg"
+  );
+}
 
+function normalizeDoctor(raw: any): Doctor {
+  const p = raw?.professional_information || raw?.professionalInformation || {};
+  const username = safeStr(raw?.user?.username || raw?.username);
+  const displayName =
+    safeStr(p?.display_name || p?.displayName) ||
+    safeStr(raw?.name) ||
+    username ||
+    "Doctor";
+
+  const description =
+    safeStr(p?.description) ||
+    safeStr((p as any)?.bio) ||
+    safeStr(raw?.description) ||
+    safeStr(raw?.bio);
+
+  const user_id =
+    raw?.user_id != null
+      ? Number(raw.user_id)
+      : raw?.user?.id != null
+      ? Number(raw.user.id)
+      : undefined;
+
+  const affiliatedOrg =
+    safeStr(p?.affiliated_organization) ||
+    safeStr(p?.affiliation) ||
+    safeStr(p?.organization) ||
+    safeStr(p?.hospital);
+
+  const organization_id =
+    raw?.organization_id != null ? Number(raw.organization_id) : null;
+
+  return {
+    id: Number(raw?.id ?? raw?.pk ?? 0),
+    user_id,
+    username,
+    organization_id,
+    name: displayName,
+    profile_image: pickImage(raw),
+    specialization: safeStr(p?.specialization || raw?.specialization),
+    location: safeStr(p?.location || raw?.location),
+    experience: p?.experience ?? raw?.experience ?? "",
+    rating: Number(p?.rating ?? raw?.rating ?? 0),
+    expertise: toArray(p?.expertise ?? raw?.expertise),
+    education: safeStr(p?.education || raw?.education),
+    description,
+    rates: safeStr(raw?.rates),
+    phone: safeStr(
+      p?.phone || p?.phone_number || p?.contact || p?.contact_number
+    ),
+    affiliated_organization: affiliatedOrg,
+    availability: safeStr(p?.availability || p?.available_slots || p?.schedule),
+    website: safeStr(p?.website || p?.site),
+  };
+}
+
+function toUI(d: Doctor): PsychologistData {
+  const org =
+    safeStr(d.affiliated_organization) ||
+    "Pakistan Institute of Mental Health (PIMH)";
+  const city = safeStr(d.location);
+  return {
+    name: d.name || d.username || "Doctor",
+    role: d.specialization || "Clinical Psychologist",
+    affiliationOrg: org,
+    affiliationCity: city,
+    image: d.profile_image || "/doctor.jpg",
+    about:
+      d.description ||
+      (d.expertise?.length
+        ? `Specializes in ${
+            d.specialization
+          } with expertise in ${d.expertise.join(", ")}.`
+        : d.specialization
+        ? `Specializes in ${d.specialization}.`
+        : "—"),
+    qualifications: d.education ? [d.education] : [],
+    languages: ["English", "Urdu"],
+    experience: safeStr(d.experience) || "",
+    rating: Number.isFinite(d.rating) ? d.rating : 0,
+    reviews: Math.max(0, Math.floor((Number(d.rating) || 0) * 20)),
+  };
+}
+
+/* ----------------------------- Stars UI ----------------------------- */
+
+const StarBar = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+}) => {
+  return (
+    <div className="flex gap-1 py-2 justify-center">
+      {Array.from({ length: 5 }, (_, i) => {
+        const idx = i + 1;
+        const active = value >= idx;
         return (
-          <Star
-            key={i}
-            className="w-6 h-6"
-            fill={isFilled ? "#FFD700" : isHalf ? "none" : "none"}
-            stroke={isFilled ? "#FFD700" : isHalf ? "#000000" : "#000000"}
-          />
+          <button
+            key={idx}
+            type="button"
+            aria-label={`Rate ${idx} star${idx > 1 ? "s" : ""}`}
+            onClick={() => !disabled && onChange(idx)}
+            className="p-1"
+            disabled={disabled}
+          >
+            <Star
+              className="w-7 h-7 transition-transform"
+              fill={active ? "#FFD700" : "none"}
+              stroke={active ? "#FFD700" : "#000000"}
+            />
+          </button>
         );
       })}
     </div>
   );
 };
 
+/* ----------------------------- component ----------------------------- */
+
+// accepted/pending/none
+type AssocStatus = "accepted" | "pending" | "none";
+
 export default function Psychologist() {
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [psychologist, setPsychologist] = useState<PsychologistData>({
-    name: "Dr. Yusuf Haroon",
+    name: "—",
     role: "Clinical Psychologist",
-    affiliation: "Pakistan Institute of Mental Health (PIMH)",
-    image: "/doctor.jpg", // Updated default image path to match available assets
-    about: "Passionate about helping individuals manage anxiety and emotional challenges.",
-    qualifications: ["MSc in Clinical Psychology", "Certified CBT Therapist"],
+    affiliationOrg: "Pakistan Institute of Mental Health (PIMH)",
+    affiliationCity: "",
+    image: "/doctor.jpg",
+    about: "Once your request is accepted, your psychologist will appear here.",
+    qualifications: [],
     languages: ["English", "Urdu"],
-    experience: "2+ years of experience in trauma, cognitive behavioural therapy, family therapy, anxiety.",
-    rating: 4.6,
-    reviews: 124
+    experience: "",
+    rating: 0,
+    reviews: 0,
   });
-  
-  // State to track the request status
-  const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'accepted'>('none');
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
-  
-  useEffect(() => {
-    // First check if there's a selected doctor in localStorage
-    const selectedDoctorData = localStorage.getItem('selectedDoctor');
-    
-    if (selectedDoctorData) {
-      try {
-        const selectedDoctor = JSON.parse(selectedDoctorData);
-        setSelectedDoctor(selectedDoctor);
-        
-        // Check if this doctor has a pending or accepted request
-        setRequestStatus(selectedDoctor.requestStatus || 'none');
-        
-        // Map the doctor data to our psychologist format
-        setPsychologist({
-          name: selectedDoctor.name,
-          role: selectedDoctor.specialization,
-          affiliation: selectedDoctor.location,
-          image: selectedDoctor.profile_image,
-          about: `Specializes in ${selectedDoctor.specialization} with expertise in ${selectedDoctor.expertise.join(', ')}.`,
-          qualifications: [selectedDoctor.education],
-          languages: ["English", "Urdu"], // Default languages if not available
-          experience: selectedDoctor.experience,
-          rating: selectedDoctor.rating,
-          reviews: Math.floor(selectedDoctor.rating * 20) // Generate random number of reviews based on rating
-        });
-        
-        return; // Exit the function since we already have the data
-      } catch (error) {
-        console.error("Error parsing selected doctor data:", error);
-      }
+
+  const [assocStatus, setAssocStatus] = useState<AssocStatus>("none");
+
+  // rating state
+  const [selectedRating, setSelectedRating] = useState<number>(0);
+  const [submitting, setSubmitting] = useState(false);
+
+  // request state
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const pollStopAt = useRef<number>(0);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // State for real organization name & city
+  const [realAffiliationOrg, setRealAffiliationOrg] = useState<string>("");
+  const [realAffiliationCity, setRealAffiliationCity] = useState<string>("");
+
+  /* ----------------------------- helpers ----------------------------- */
+
+  const computeAssocStatus = (doc: Doctor | null, me: any): AssocStatus => {
+    if (!doc || !me) return "none";
+    const pp = me?.patient_profile || {};
+    const assocRaw =
+      pp?.associated_psychologist ?? pp?.associated_psychologist_id ?? null;
+    const assocName = safeStr(pp?.associated_psychologist_name);
+
+    const assocId =
+      assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+
+    // accepted by id (could match user_id or doctor.id depending on backend)
+    if (
+      assocId != null &&
+      (Number(doc.user_id) === assocId || Number(doc.id) === assocId)
+    ) {
+      return "accepted";
     }
-    
-    // If no selected doctor or parsing failed, fall back to backend or default data
-    const fetchData = async () => {
-      if (process.env.NEXT_PUBLIC_BACKEND_CONNECTED === 'true') {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_BASE_URL}api/psychologist/current`);
-          if (response.ok) {
-            const data = await response.json();
-            setPsychologist(data);
-          }
-        } catch (error) {
-          console.error("Failed to fetch psychologist data:", error);
-        }
+
+    // accepted by name fallback
+    if (
+      assocName &&
+      (assocName.toLowerCase() === safeStr(doc.name).toLowerCase() ||
+        assocName.toLowerCase() === safeStr(doc.username).toLowerCase())
+    ) {
+      return "accepted";
+    }
+
+    // pending if request already sent
+    const sentArr: string[] = Array.isArray(pp?.sent_requests)
+      ? pp.sent_requests
+      : [];
+    if (
+      sentArr.includes(String(doc.id)) ||
+      (doc.user_id != null && sentArr.includes(String(doc.user_id)))
+    ) {
+      return "pending";
+    }
+
+    return "none";
+  };
+
+  const tryLocalSelectedDoctor = (): Doctor | null => {
+    try {
+      const raw = localStorage.getItem("selectedDoctor");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return normalizeDoctor(parsed);
+    } catch {
+      return null;
+    }
+  };
+
+  const tryApiCurrent = async (
+    token: string | null
+  ): Promise<Doctor | null> => {
+    try {
+      const headers: HeadersInit = token
+        ? { Authorization: `Token ${token}` }
+        : {};
+      const res = await fetch("/api/psychologist/current", {
+        headers,
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const doc = normalizeDoctor(data);
+      return doc.id || doc.user_id ? doc : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const tryDirectoryMatch = async (
+    token: string | null
+  ): Promise<Doctor | null> => {
+    try {
+      const me: any = await fetchMe().catch(() => null);
+      const assocRaw =
+        me?.patient_profile?.associated_psychologist ??
+        me?.patient_profile?.associated_psychologist_id ??
+        null;
+      const assocName = safeStr(
+        me?.patient_profile?.associated_psychologist_name
+      );
+      const assocId =
+        assocRaw != null && !isNaN(Number(assocRaw)) ? Number(assocRaw) : null;
+
+      const headers: HeadersInit = token
+        ? { Authorization: `Token ${token}` }
+        : {};
+      const res = await fetch("/api/doctors/list", {
+        headers,
+        cache: "no-store",
+      });
+      const list = (await res.json().catch(() => [])) as any[];
+      const docs = Array.isArray(list) ? list.map(normalizeDoctor) : [];
+
+      if (assocId != null) {
+        const byUID = docs.find((d) => Number(d.user_id) === Number(assocId));
+        if (byUID) return byUID;
+        const byDoc = docs.find((d) => Number(d.id) === Number(assocId));
+        if (byDoc) return byDoc;
       }
-      // If NEXT_PUBLIC_BACKEND_CONNECTED is false, we'll use the default dummy data set in useState
-    };
-    
-    fetchData();
+      if (assocName) {
+        const lower = assocName.toLowerCase();
+        const byName =
+          docs.find((d) => safeStr(d.name).toLowerCase() === lower) ||
+          docs.find((d) => safeStr(d.username).toLowerCase() === lower) ||
+          null;
+        if (byName) return byName;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const refreshAssocStatus = useCallback(async (doc: Doctor | null) => {
+    const me = await fetchMe().catch(() => null);
+    setAssocStatus(computeAssocStatus(doc, me));
   }, []);
 
-  // Function to send a request to a doctor
-  const sendRequest = async () => {
-    if (!selectedDoctor) return;
-    
-    // Update the doctor's request status in localStorage
-    const updatedDoctor = { ...selectedDoctor, requestStatus: 'pending' };
-    localStorage.setItem('selectedDoctor', JSON.stringify(updatedDoctor));
-    
-    // Update user's sent_requests in localStorage
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      const updatedSentRequests = [
-        ...(parsedUser.patient_profile?.sent_requests || []),
-        selectedDoctor.id.toString()
-      ];
-      
-      const updatedUser = {
-        ...parsedUser,
-        patient_profile: {
-          ...(parsedUser.patient_profile || {}),
-          sent_requests: updatedSentRequests
+  const fetchRealOrganization = async (orgId: number) => {
+    try {
+      const res = await fetch(`/api/organization/profile?organization_id=${orgId}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to fetch org");
+      const data = await res.json();
+      setRealAffiliationOrg(data.name || "Unknown Organization");
+      setRealAffiliationCity(data.location || "");
+    } catch (err) {
+      console.error("Failed to fetch real organization:", err);
+      setRealAffiliationOrg("Unknown Organization");
+      setRealAffiliationCity("");
+    }
+  };
+
+  const resolveDoctor = useCallback(async () => {
+    const token = getToken();
+
+    // 1) localStorage handoff
+    const fromLocal = tryLocalSelectedDoctor();
+    if (fromLocal) {
+      setSelectedDoctor(fromLocal);
+      setPsychologist(toUI(fromLocal));
+      await refreshAssocStatus(fromLocal);
+
+      // Fetch real organization name if organization_id exists
+      if (fromLocal.organization_id) {
+        await fetchRealOrganization(fromLocal.organization_id);
+      }
+      return true;
+    }
+
+    // 2) dedicated endpoint
+    const fromCurrent = await tryApiCurrent(token);
+    if (fromCurrent) {
+      setSelectedDoctor(fromCurrent);
+      setPsychologist(toUI(fromCurrent));
+      await refreshAssocStatus(fromCurrent);
+
+      if (fromCurrent.organization_id) {
+        await fetchRealOrganization(fromCurrent.organization_id);
+      }
+      return true;
+    }
+
+    // 3) directory match
+    const fromDirectory = await tryDirectoryMatch(token);
+    if (fromDirectory) {
+      setSelectedDoctor(fromDirectory);
+      setPsychologist(toUI(fromDirectory));
+      await refreshAssocStatus(fromDirectory);
+
+      if (fromDirectory.organization_id) {
+        await fetchRealOrganization(fromDirectory.organization_id);
+      }
+      return true;
+    }
+
+    return false;
+  }, [refreshAssocStatus]);
+
+  useEffect(() => {
+    resolveDoctor();
+  }, [resolveDoctor]);
+
+  // Re-check status when tab becomes active
+  useEffect(() => {
+    const onFocus = () => refreshAssocStatus(selectedDoctor);
+    const onVis = () => {
+      if (document.visibilityState === "visible")
+        refreshAssocStatus(selectedDoctor);
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [selectedDoctor, refreshAssocStatus]);
+
+  // Listen for cross-tab profile updates (e.g., doctor accepts)
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("profile-sync");
+      bc.onmessage = (ev) => {
+        if (ev?.data?.type === "profile-updated") {
+          refreshAssocStatus(selectedDoctor);
         }
       };
-      
-      localStorage.setItem("user_data", JSON.stringify(updatedUser));
+    } catch {}
+    return () => {
+      if (bc) bc.close();
+    };
+  }, [selectedDoctor, refreshAssocStatus]);
+
+  // Gentle polling until associated doctor appears / state changes
+  useEffect(() => {
+    if (pollTimer.current) return;
+    pollStopAt.current = Date.now() + 2 * 60 * 1000;
+    pollTimer.current = setInterval(async () => {
+      await refreshAssocStatus(selectedDoctor);
+      if (Date.now() > pollStopAt.current) {
+        if (pollTimer.current) {
+          clearInterval(pollTimer.current);
+          pollTimer.current = null;
+        }
+      }
+    }, 10_000);
+    return () => {
+      if (pollTimer.current) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+    };
+  }, [selectedDoctor, refreshAssocStatus]);
+
+  /* ----------------------------- actions ----------------------------- */
+
+  const sendRequest = async () => {
+    if (!selectedDoctor || sending) return;
+
+    setSending(true);
+
+    // Demo fallback
+    if (!isBackendConnected || !BASE) {
+      setSent(true);
+      setSending(false);
+      setAssocStatus("pending");
+      return;
     }
-    
-    setRequestStatus('pending');
+
+    try {
+      const token = getToken();
+      if (!token) {
+        console.error("Missing auth token");
+        setSending(false);
+        return;
+      }
+
+      const resp = await fetch(
+        `${BASE}/users/doctor/request/${selectedDoctor.id}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
+
+      if (!resp.ok) {
+        const t = await resp.text();
+        console.error("Request failed", resp.status, t);
+        setSending(false);
+        return;
+      }
+
+      setSent(true);
+      setAssocStatus("pending");
+
+      // mirror DoctorsPage local state (so UI stays in sync across pages)
+      try {
+        const raw = localStorage.getItem("user_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const sentSet = new Set(parsed?.patient_profile?.sent_requests ?? []);
+          sentSet.add(String(selectedDoctor.id));
+          parsed.patient_profile = {
+            ...(parsed.patient_profile || {}),
+            sent_requests: [...sentSet],
+          };
+          localStorage.setItem("user_data", JSON.stringify(parsed));
+          try {
+            new BroadcastChannel("profile-sync").postMessage({
+              type: "profile-updated",
+            });
+          } catch {}
+        }
+      } catch {}
+    } catch (e) {
+      console.error("sendRequest error", e);
+    } finally {
+      setSending(false);
+    }
   };
 
-  // Function to remove a request
-  const removeRequest = async () => {
-    if (!selectedDoctor) return;
-    
-    // Update the doctor's request status in localStorage
-    const updatedDoctor = { ...selectedDoctor, requestStatus: 'none' };
-    localStorage.setItem('selectedDoctor', JSON.stringify(updatedDoctor));
-    
-    // Update user's sent_requests in localStorage
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      
-      if (parsedUser.patient_profile?.sent_requests) {
-        const updatedSentRequests = parsedUser.patient_profile.sent_requests.filter(
-          (id: string) => id !== selectedDoctor.id.toString()
-        );
-        
-        const updatedUser = {
-          ...parsedUser,
-          patient_profile: {
-            ...parsedUser.patient_profile,
-            sent_requests: updatedSentRequests
-          }
-        };
-        
-        localStorage.setItem("user_data", JSON.stringify(updatedUser));
-      }
+  const submitRating = async () => {
+    if (!selectedDoctor || selectedRating < 1 || selectedRating > 5) return;
+
+    const token = getToken();
+    if (!token) {
+      console.error("No token found. Please log in.");
+      return;
     }
-    
-    setRequestStatus('none');
+
+    setSubmitting(true);
+    try {
+      const resp = await fetch("/api/doctors/rate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({
+          doctor_id: selectedDoctor.id,
+          rating: selectedRating,
+          comment: "",
+        }),
+      });
+
+      const payloadText = await resp.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(payloadText);
+      } catch {}
+
+      if (!resp.ok) {
+        console.error("Rating failed:", resp.status, payloadText);
+        return;
+      }
+
+      const newAvg = Number(data?.average ?? psychologist.rating);
+      const newCount = Number(data?.count ?? psychologist.reviews);
+
+      setPsychologist((prev) => ({
+        ...prev,
+        rating: Number.isFinite(newAvg) ? newAvg : prev.rating,
+        reviews: Number.isFinite(newCount) ? newCount : prev.reviews,
+      }));
+
+      setSelectedRating(0);
+    } catch (e) {
+      console.error("Rating request error:", e);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  /* -------------------------------- render -------------------------------- */
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-4 mt-6 sm:mt-10">      
-      {/* Header Card */}
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-white rounded-2xl shadow-lg p-3 sm:p-6 gap-3 sm:gap-0">
-        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-          <Image
-            src={psychologist.image}
-            alt={psychologist.name}
-            width={80}
-            height={80}
-            className="w-16 sm:w-20 h-16 sm:h-20 rounded-full border-2 border-blue-300 object-cover"
-          />
-          <div className="text-center sm:text-left">
-            <h2 className="text-sm sm:text-lg font-bold font-weight-700 text-heading">{psychologist.name}</h2>
-            <p className="text-heading2 font-weight-400 text-xs sm:text-base">{psychologist.role}</p>
-            <p className="text-xs sm:text-sm text-heading2">
-              <span className="text-red-500">📍</span> Location: <strong>{psychologist.affiliation}</strong>
-            </p>
-            <div className="flex items-center justify-center sm:justify-start gap-1 mt-1">
-              <span className="text-yellow-400">★</span>
-              <span className="font-weight-400 text-xs sm:text-sm">{psychologist.rating} Rating</span>
+    <div className="flex flex-col gap-2 sm:gap-4 mt-6 sm:mt-10">
+      {/* HEADER CARD – light blue bg, blue border, round avatar, single-line button */}
+      <div
+        className="rounded-2xl p-4 sm:p-5 shadow"
+        style={{ backgroundColor: "#DAECFF", border: "2px solid #2196F3" }}
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3 sm:gap-4">
+            {/* fully round, equal width/height */}
+            <div className="rounded-full overflow-hidden w-16 sm:w-20 h-16 sm:h-20 ring-2 ring-offset-0 bg-white flex-shrink-0">
+              <Image
+                src={psychologist.image || "/doctor.jpg"}
+                alt={psychologist.name}
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
+                priority
+              />
+            </div>
+
+            <div>
+              <h2 className="text-[#123AAB] font-bold text-lg sm:text-2xl leading-tight">
+                {psychologist.name}
+              </h2>
+              <p className="text-[#123AAB] text-sm sm:text-base">
+                {psychologist.role}
+              </p>
+
+              {/* Affiliation line with bold REAL org name; city in parentheses */}
+              <p className="text-[#123AAB] text-sm sm:text-base mt-1">
+                Affiliated with{" "}
+                <strong className="font-semibold">
+                  {realAffiliationOrg || psychologist.affiliationOrg}
+                </strong>
+                {realAffiliationCity && ` (${realAffiliationCity})`}
+              </p>
             </div>
           </div>
+
+          {/* One-line pill button — hidden if accepted */}
+          {assocStatus !== "accepted" && (
+            <div className="flex-shrink-0">
+              <button
+                type="button"
+                onClick={sendRequest}
+                disabled={
+                  !selectedDoctor ||
+                  sending ||
+                  sent ||
+                  assocStatus === "pending"
+                }
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-6 py-2 bg-white text-[#123AAB] font-semibold shadow-sm disabled:opacity-60"
+                style={{ border: "1px solid #2196F3" }}
+                title={
+                  assocStatus === "pending"
+                    ? "Request already sent"
+                    : sent
+                    ? "Request sent"
+                    : "Send Request"
+                }
+              >
+                {assocStatus === "pending"
+                  ? "Request Sent"
+                  : sent
+                  ? "Request Sent"
+                  : sending
+                  ? "Sending…"
+                  : "Send Request"}
+              </button>
+            </div>
+          )}
         </div>
-        
-        {/* Request action buttons */}
-        
       </div>
 
-      {/* Info Grid */}      
+      {/* INFO GRID (about / qualification / languages / experience + rating section) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-        {/* Left Sub-Column */}
+        {/* Left column */}
         <div className="flex flex-col gap-2 sm:gap-4">
-          {/* About Me */}
           <div className="bg-[#FFF8ECDB] p-3 sm:p-4 rounded-xl">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-              <span role="img" aria-label="about">👤</span> About Me
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
+              👤 About Me
             </h3>
             <p className="text-xs sm:text-sm text-heading2">
-              {psychologist.about}
+              {psychologist.about || "—"}
             </p>
 
-            {/* Qualifications */}
-            <h3 className="font-semibold text-heading mt-2 sm:mt-3 mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-              <span role="img" aria-label="qualification">🎓</span> Qualification
+            <h3 className="font-semibold text-heading mt-3 mb-1 flex items-center gap-2 text-sm sm:text-base">
+              🎓 Qualification
             </h3>
             <p className="text-xs sm:text-sm text-heading2">
-              {psychologist.qualifications.map((qual, index) => (
-                <span key={index}>
-                  {qual}
-                  {index < psychologist.qualifications.length - 1 && <br />}
-                </span>
-              ))}
+              {psychologist.qualifications.length
+                ? psychologist.qualifications.map((qual, i) => (
+                    <span key={i}>
+                      {qual}
+                      {i < psychologist.qualifications.length - 1 && <br />}
+                    </span>
+                  ))
+                : "—"}
             </p>
           </div>
 
-          {/* Languages */}
           <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-xl border border-[#D7E2FE]">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-              <span role="img" aria-label="languages">💬</span> Languages Spoken
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
+              💬 Languages Spoken
             </h3>
-            <p className="text-xs sm:text-sm text-heading2">{psychologist.languages.join(", ")}</p>
+            <p className="text-xs sm:text-sm text-heading2">
+              {psychologist.languages.join(", ")}
+            </p>
           </div>
-        </div>        
+        </div>
 
-        {/* Right Sub-Column */}
+        {/* Right column */}
         <div className="flex flex-col gap-2 sm:gap-4">
-          {/* Experience */}
           <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-xl border border-[#D7E2FE]">
-            <h3 className="font-semibold text-heading mb-1 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-              <span role="img" aria-label="experience">🧳</span> Experience
+            <h3 className="font-semibold text-heading mb-1 flex items-center gap-2 text-sm sm:text-base">
+              🧳 Experience
             </h3>
             <p className="text-xs sm:text-sm text-heading2">
-              {psychologist.experience}
+              {psychologist.experience || "—"}
             </p>
           </div>
 
-          {/* Ratings */}
+          {/* Rating / Reviews */}
           <div className="bg-[#FFFEFE] p-3 sm:p-4 rounded-2xl border border-[#D7E2FE] shadow-sm">
-            <h3 className="font-semibold text-heading2 text-sm sm:text-lg mb-2 flex items-center gap-1 sm:gap-2">
-              <span>⭐</span> Rating / Reviews
+            <h3 className="font-semibold text-heading2 text-sm sm:text-lg mb-2 flex items-center gap-2">
+              ⭐ Rating / Reviews
             </h3>
             <p className="text-heading2 mb-2 sm:mb-3 flex items-center gap-1 text-xs sm:text-sm">
-              <span>⭐</span> {psychologist.rating} rating
+              <span>⭐</span> {Number(psychologist.rating || 0).toFixed(1)}{" "}
+              rating
             </p>
-            <button className="w-full bg-[#E9F5FE] text-heading2 font-medium py-1.5 sm:py-2 rounded-full hover:bg-blue-100 transition text-xs sm:text-sm">
-              Submit your rating
+            <button
+              className="w-full bg-[#E9F5FE] text-heading2 font-medium py-1.5 sm:py-2 rounded-full hover:bg-blue-100 transition text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={submitRating}
+              disabled={submitting || selectedRating === 0 || !selectedDoctor}
+            >
+              {submitting ? "Submitting..." : "Submit your rating"}
             </button>
-            <RatingStars rating={4.6} />
+            <StarBar
+              value={selectedRating}
+              onChange={setSelectedRating}
+              disabled={submitting || !selectedDoctor}
+            />
           </div>
         </div>
       </div>

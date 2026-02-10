@@ -7,25 +7,21 @@ import { useRouter } from "next/navigation";
 export default function Requests() {
   const [authError, setAuthError] = useState("");
   const [authVerified, setAuthVerified] = useState(false);
-  const [hydrated, setHydrated] = useState(false); // Add hydration state
+  const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setHydrated(true); // Mark as hydrated on client
+    setHydrated(true);
     const performAuthCheck = async () => {
       const authResult = await checkAuth();
       if (!authResult.isAuthenticated) {
         setAuthError(authResult.error || "Authentication failed");
-        setTimeout(() => {
-          redirectToLogin();
-        }, 2000);
+        setTimeout(() => redirectToLogin(), 2000);
         return;
       }
       if (authResult.user?.user_type === "patient") {
         setAuthError("Patients cannot access the Requests page");
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2000);
+        setTimeout(() => router.push("/dashboard"), 2000);
         return;
       }
       setAuthVerified(true);
@@ -33,7 +29,7 @@ export default function Requests() {
     performAuthCheck();
   }, [router]);
 
-  if (!hydrated) return null; // Prevent SSR access to localStorage
+  if (!hydrated) return null;
 
   if (authError) {
     return (

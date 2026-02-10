@@ -17,7 +17,7 @@ const Card: React.FC<CardProps> = ({ image, heading, description, backgroundColo
         borderColor: "#2196F3",
         borderWidth: "2px",
         boxShadow: "0px 4px 4px 0px #00000040",
-        borderBottom: "5px solid #D0E3FFC7",
+        borderBottom: "2px solid #2196F3",
       }}
     >
       <div

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Phone, Mail } from 'lucide-react';
 
 interface FormData {
   firstName: string;
@@ -139,7 +139,7 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative px-4 pt-12 pb-32 bg-blue-50 h-screen overflow-hidden">
+    <section id="contact" className="relative px-4 pt-12 pb-32 bg-blue-50 min-h-screen overflow-hidden">
       <div className="mb-2">
          <img
            src="/contact.png" 
@@ -209,7 +209,7 @@ export default function ContactSection() {
           {/* Status Messages */}
           {submitStatus === 'success' && (
             <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-              Thank you! Your message has been sent successfully. We'll get back to you soon.
+              Thank you! Your message has been sent successfully. We&apos;ll get back to you soon.
             </div>
           )}
           {submitStatus === 'error' && (

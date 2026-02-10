@@ -6,8 +6,8 @@ export default function RequestsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Sidebar on top */}
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
+      {/* Sidebar on top (fixed) */}
       <header className="w-full h-20 fixed top-0 left-0 z-20">
         <Sidebar />
       </header>

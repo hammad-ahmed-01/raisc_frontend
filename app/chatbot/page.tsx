@@ -10,31 +10,27 @@ export default function Home() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const performAuthCheck = async () => {
       const authResult = await checkAuth();
-      
+
       if (!authResult.isAuthenticated) {
         setAuthError(authResult.error || "Authentication failed");
-        setTimeout(() => {
-          redirectToLogin();
-        }, 2000);
+        setTimeout(() => { redirectToLogin(); }, 2000);
         return;
       }
-      
-      // Check if user is a doctor (not allowed to access chatbot)
+
+      // Doctors cannot access chatbot
       if (authResult.user?.user_type === 'doctor') {
         setAuthError("Doctors cannot access the chatbot");
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 2000);
+        setTimeout(() => { window.location.href = "/dashboard"; }, 2000);
         return;
       }
-      
+
       setIsLoading(false);
     };
-
     performAuthCheck();
   }, []);
 
@@ -50,43 +46,59 @@ export default function Home() {
     );
   }
 
-  if (isLoading) {
-    return <p className="text-center text-gray-600 mt-10">Loading...</p>;
-  }
+  if (isLoading) return <p className="text-center text-gray-600 mt-10">Loading...</p>;
 
-  const handleSelectChat = (chatId: string) => {
-    setActiveChatId(chatId);
-  };
-
-  const handleNewChat = () => {
-    setActiveChatId(null);
-  };
-
-  const handleBackToDashboard = () => {
-    window.location.href = "/dashboard";
-  };
+  const handleSelectChat = (chatId: string) => setActiveChatId(chatId);
+  const handleNewChat = () => setActiveChatId(null);
+  const handleBackToDashboard = () => { window.location.href = "/dashboard"; };
 
   return (
-    <div className="h-screen w-screen bg-blue-100 font-quicksand flex overflow-hidden">
-      {/* Sidebar */}
-      <ChatHistory
-        onSelectChat={handleSelectChat}
-        onNewChat={handleNewChat}
-        onBackToDashboard={handleBackToDashboard}
-      />
+    <div className="h-screen md:h-screen w-screen bg-[#EEF5FF] font-quicksand flex flex-col md:flex-row overflow-hidden">
+      {/* Mobile header (clicking hamburger opens overlay) */}
+      <div className="md:hidden sticky top-0 z-20">
+        <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
+      </div>
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b shadow-sm">
+      {/* Desktop sidebar (unchanged) */}
+      <aside className="hidden md:block md:w-[300px] md:h-full md:overflow-y-auto md:shrink-0">
+        <ChatHistory
+          onSelectChat={handleSelectChat}
+          onNewChat={handleNewChat}
+          onBackToDashboard={handleBackToDashboard}
+        />
+      </aside>
+
+      {/* Main column */}
+      <main className="flex-1 flex flex-col min-h-0 h-full overflow-hidden">
+        {/* Desktop header (unchanged) */}
+        <div className="hidden md:block p-4 shrink-0">
           <Header />
         </div>
 
-        {/* Chat Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <ChatWindow activeChatId={activeChatId} />
+        {/* Chat area (fills the screen under the 56px mobile header) */}
+        <div className="flex-1 min-h-0 p-0 md:p-4 overflow-hidden">
+          <div className="h-[calc(100dvh-56px)] md:h-full">
+            <ChatWindow activeChatId={activeChatId} />
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Mobile overlay for Chat History */}
+      {mobileSidebarOpen && (
+        <ChatHistory
+          overlay
+          onCloseOverlay={() => setMobileSidebarOpen(false)}
+          onSelectChat={(id) => {
+            handleSelectChat(id);
+            setMobileSidebarOpen(false);
+          }}
+          onNewChat={() => {
+            handleNewChat();
+            setMobileSidebarOpen(false);
+          }}
+          onBackToDashboard={handleBackToDashboard}
+        />
+      )}
     </div>
   );
 }

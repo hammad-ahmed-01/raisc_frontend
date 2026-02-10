@@ -27,6 +27,12 @@ export default function Register() {
   const [expertise, setExpertise] = useState<string>(""); // comma separated
   const [profileImage, setProfileImage] = useState<string>("");
   const [rates, setRates] = useState<string>(""); // numeric string
+  const [description, setDescription] = useState<string>(""); // <-- NEW: About me
+
+  const setErr = (msg: string) => {
+    setErrorMessage(msg);
+    return false;
+  };
 
   const validateInputs = () => {
     if (!username.trim()) return setErr("Full name is required.");
@@ -52,11 +58,6 @@ export default function Register() {
     return true;
   };
 
-  const setErr = (msg: string) => {
-    setErrorMessage(msg);
-    return false;
-  };
-
   const handleRegister = async () => {
     setErrorMessage("");
     if (!validateInputs()) return;
@@ -80,6 +81,7 @@ export default function Register() {
           expertise: expertise, // comma-separated; backend normalizes
           profile_image: profileImage.trim(),
           rates: rates.trim(),
+          description: description.trim(), // <-- NEW
         };
       }
 
@@ -96,16 +98,11 @@ export default function Register() {
         return;
       }
 
-      // Save session (token + user) returned by API
       const token = json?.token as string | undefined;
       const apiUser = (json?.user as any) || null;
 
-      if (token) {
-        localStorage.setItem("session_key", token);
-      }
+      if (token) localStorage.setItem("session_key", token);
 
-      // --- 🔧 TWEAK: Guarantee the stored user role matches the selection when doctor ---
-      // This avoids any transient "patient" leftovers and makes /dashboard render DoctorDashboard immediately.
       if (apiUser) {
         if (userType === "doctor") {
           const fixedUser = { ...apiUser, user_type: "doctor" as const };
@@ -115,7 +112,6 @@ export default function Register() {
         }
       }
 
-      // Go to the dashboard; your Dashboard page gates by user.user_type and shows the right UI.
       router.replace("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
@@ -173,7 +169,7 @@ export default function Register() {
                   />
                   <span className="ml-2 text-gray-700">Patient</span>
                 </label>
-                <label className="inline-flex items-center cursor-pointer">
+                {/* <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="radio"
                     className="form-radio"
@@ -183,7 +179,7 @@ export default function Register() {
                     onChange={() => setUserType("doctor")}
                   />
                   <span className="ml-2 text-gray-700">Doctor</span>
-                </label>
+                </label> */}
               </div>
             </div>
 
@@ -292,6 +288,18 @@ export default function Register() {
                     onChange={(e) => setExpertise(e.target.value)}
                     className="w-full border-0 border-b-2 border-blue-300 bg-transparent focus:outline-none focus:border-blue-500 text-gray-700 py-2"
                     placeholder="e.g., CBT, Anxiety"
+                  />
+                </div>
+
+                {/* NEW: About me (stored as 'description') */}
+                <div className="mb-6 text-left">
+                  <label className="block text-gray-700 text-base mb-1">About me</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    className="w-full border-0 border-b-2 border-blue-300 bg-transparent focus:outline-none focus:border-blue-500 text-gray-700 py-2"
+                    placeholder="Tell patients about your approach, training, and what to expect."
                   />
                 </div>
 
