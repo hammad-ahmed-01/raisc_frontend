@@ -8,13 +8,14 @@ interface DoctorProfileCardProps {
   doctor: {
     name: string;
     specialization: string;
-    rating?: number;     // now optional; we’ll also use stats/backend
+    rating?: number;
     experience: string;
     rates: string;
     organization: string;
-    location?: string;   // can come from backend
-    imageUrl?: string;   // NEW: uniform avatar from backend
+    location: string;
+    imageUrl: string;
   };
+  onViewOrganization?: () => void; 
 }
 
 interface DoctorStats {
@@ -48,7 +49,10 @@ const buildAuthHeader = (): HeadersInit => {
   return { Authorization: /^token\s+/i.test(v) ? v : `Token ${v}` };
 };
 
-export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) => {
+export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ 
+  doctor, 
+  onViewOrganization 
+}) => {
   const [stats, setStats] = useState<DoctorStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -214,12 +218,13 @@ export const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor }) 
           </div>
 
           <div className="text-center">
-            <a
-              href="#"
-              className="text-lg md:text-xl text-[#0004F6] underline hover:no-underline font-bold"
+            <button
+              onClick={onViewOrganization}
+              className="text-lg md:text-xl text-[#0004F6] underline hover:no-underline font-bold cursor-pointer"
             >
+            
               View More
-            </a>
+            </button>
           </div>
         </div>
       </div>

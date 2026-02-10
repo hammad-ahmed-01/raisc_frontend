@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "./components/Header";
 import { DoctorProfileCard } from "./components/DoctorProfileCard";
 import { QuoteSection } from "./components/QuoteSection";
@@ -9,25 +10,42 @@ import TopRightIcons from "../TopRightIcons";
 
 interface User {
   username: string;
-  profile_image?: string; // sometimes on top-level
+  profile_image?: string;
   avatar?: string;
   doctor_profile?: {
-    profile_image?: string; // some serializers put it here
+    profile_image?: string;
     location?: string;
+    organization_id?: number;
+    organization?: number;
     professional_information?: {
       specialization?: string;
       experience?: string;
       qualifications?: string;
-      profile_image?: string; // most common place
+      profile_image?: string;
       location?: string;
       rating?: number;
+      organization_id?: number;
     };
     rates?: string;
   };
 }
 
+interface OrganizationDetails {
+  id?: number;
+  name?: string;
+  location?: string;
+  description?: string;
+  logo?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  user_id?: number;
+}
+
 const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [organizationDetails, setOrganizationDetails] = useState<OrganizationDetails | null>(null);
+  const [isLoadingOrg, setIsLoadingOrg] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,6 +59,58 @@ const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
       console.error("Error parsing user data from localStorage:", e);
     }
   }, [user]);
+
+  // Fetch organization details based on doctor's organization_id
+  useEffect(() => {
+    const fetchOrganizationProfile = async () => {
+      // Get organization_id from doctor profile
+      const organizationId =
+        currentUser?.doctor_profile?.organization_id ||
+        currentUser?.doctor_profile?.organization ||
+        currentUser?.doctor_profile?.professional_information?.organization_id;
+
+      if (!organizationId) {
+        console.warn("No organization_id found in doctor profile");
+        return;
+      }
+
+      setIsLoadingOrg(true);
+      try {
+        const response = await fetch(
+          `/api/organization/profile?organization_id=${organizationId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setOrganizationDetails(data);
+          
+          // Store organization_user_id in localStorage for organization-details page
+          if (data.user_id) {
+            localStorage.setItem("organization_user_id", String(data.user_id));
+          }
+        } else {
+          console.error("Failed to fetch organization profile:", response.status);
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Error details:", errorData);
+        }
+      } catch (error) {
+        console.error("Error fetching organization profile:", error);
+      } finally {
+        setIsLoadingOrg(false);
+      }
+    };
+
+    if (currentUser) {
+      fetchOrganizationProfile();
+    }
+  }, [currentUser]);
 
   const name =
     currentUser?.username
@@ -69,15 +139,37 @@ const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
     );
   }, [currentUser]);
 
-  // Location from backend (prefer professional_information → doctor_profile)
+  // Location from backend (prefer professional_information → doctor_profile → organization)
   const locationText =
     currentUser?.doctor_profile?.professional_information?.location ||
     currentUser?.doctor_profile?.location ||
+    organizationDetails?.location ||
     "—";
 
   // Backend rating on profile, fallback to null (stats will refine in the card)
   const backendRating =
     currentUser?.doctor_profile?.professional_information?.rating;
+
+  // Organization name from fetched details or fallback
+  const organizationName =
+    organizationDetails?.name ||
+    "Pakistan Institute of Mental Health(PIMH)";
+
+  // Handler for "View More" button
+  const handleViewOrganization = () => {
+    const organizationUserId = organizationDetails?.user_id;
+    
+    if (organizationUserId) {
+      // Store in localStorage for the organization-details page
+      localStorage.setItem("organization_user_id", String(organizationUserId));
+      // Navigate to organization details page
+      router.push("/organization-details");
+    } else {
+      console.warn("No organization user_id available");
+      // Still navigate but the page will show appropriate error
+      router.push("/organization-details");
+    }
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -104,13 +196,14 @@ const DoctorDashboard: React.FC<{ user: User | null }> = ({ user }) => {
               doctor={{
                 name,
                 specialization,
-                rating: backendRating, // stats in card may override with fresher value
+                rating: backendRating,
                 experience,
                 rates,
-                organization: "Pakistan Institute of Mental Health(PIMH)",
+                organization: organizationName,
                 location: locationText,
-                imageUrl, // NEW: uniform image from backend
+                imageUrl,
               }}
+              onViewOrganization={handleViewOrganization}
             />
           </section>
 
