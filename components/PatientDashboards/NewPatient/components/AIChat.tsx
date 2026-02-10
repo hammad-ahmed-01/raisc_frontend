@@ -4,7 +4,7 @@ import Image from "next/image";
 import ChatBotImage from "@/public/chatbot-dash.png";
 import { useEffect, useState } from "react";
 import PrimaryButton from "@/components/Buttons/PrimaryButton";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
 interface ChatBotData {
   greeting: string;
