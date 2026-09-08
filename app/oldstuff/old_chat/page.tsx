@@ -28,10 +28,11 @@ export default function ChatPage() {
     const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
     const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
-    //Hardcoded, Change it to be retrieved when patient logs in.
-    const session_key = "1418aab34aaef212fcc5f47b824fdf229a9a66bb";
+    const getSessionKey = () =>
+        typeof window !== "undefined" ? localStorage.getItem("session_key") : null;
 
     useEffect(() => {
+        const session_key = getSessionKey();
         if (session_key) fetchChatHistory(session_key);
         
         // Initialize STT room connection
@@ -52,6 +53,9 @@ export default function ChatPage() {
 
     const initializeSTTRoom = async () => {
         try {
+            const session_key = getSessionKey();
+            if (!session_key) return;
+
             // Check microphone permission first
             const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
             setMicrophonePermission(permission.state);
@@ -163,6 +167,9 @@ export default function ChatPage() {
     };
 
     const processVoiceTranscription = async (transcription: string) => {
+        const session_key = getSessionKey();
+        if (!session_key) return;
+
         setLoading(true);
         
         try {
@@ -208,6 +215,8 @@ export default function ChatPage() {
 
     const sendMessage = async () => {
         if (!input.trim()) return;
+        const session_key = getSessionKey();
+        if (!session_key) return;
 
         setMessages((prev) => [...prev, { role: "user", content: input }]);
         setLoading(true);
