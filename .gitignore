@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# never commit local data dumps or signup lists
+public/files/*.xlsx
+
 # vercel
 .vercel
 

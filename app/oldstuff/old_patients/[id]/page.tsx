@@ -33,7 +33,6 @@ export default function PatientChatbotProfile() {
     const [showModal, setShowModal] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [modalTitle, setModalTitle] = useState("");
-    const [sessionKey, setSessionKey] = useState('6e50625cbd78c706dc5b5f6309b80d68d9f3bc73');
 
     const router = useRouter();
 
@@ -298,7 +297,7 @@ const generateReport = () => {
                                 <button
                                     onClick={() => {
                                         setModalTitle(`Chat Thread - ${moment(profile.date).format("Do MMM YYYY h:mm A")}`);
-                                        fetchChatThread(sessionKey, profile.session_start_msg, profile.session_end_msg);
+                                        fetchChatThread(profile.session_key, profile.session_start_msg, profile.session_end_msg);
                                     }}
                                     className="mt-auto w-full px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
                                 >
