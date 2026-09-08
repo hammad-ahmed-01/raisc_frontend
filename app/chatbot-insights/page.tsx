@@ -27,10 +27,6 @@ const ChatbotInsightsContent = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<ChatbotProfile[]>([]);
   const [patientName, setPatientName] = useState<string>("");
   const [patientId, setPatientId] = useState<string>("");
-  const [testSessionKey, setTestSessionKey] = useState(
-    process.env.TEST_SESSION_KEY || "97bb09258dcb1dffae5ac9c375809e473c65740b"
-  );
-
   const [filters, setFilters] = useState({ topic: '', date: '', message: '' });
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
